@@ -1,29 +1,40 @@
-*-----------------------------------------------------------
+** -----------------------------------------------------------
 * Title      : Disassembler
 * Written by : 3 Cores
-* Date       : Feb-Mar 2021
-* Description: Machine code disassembler
-*-----------------------------------------------------------
+* Date       : Winter 2021
+* Description: CSS 422 machine code disassembler
+** -----------------------------------------------------------
 
                     ORG    $1000
 START:              
 
 ** -----------------------------------------------------------
 ** MAIN LOGIC
+**
+** Program data
+**   D0 - First 4 bits of instruction
+**   D1 - Multiplication holder for jump
+**   A0 - Jump Table
+**   A1 - Instruction space (the contents being disassembled)
+**
 ** -----------------------------------------------------------
 
                     ** Note: Addresses will be set by user 'eventually'
                     **       testing start and end without the UI for now
-                    MOVE.L  $1000, adrStart
-                    MOVE.L  $2000, adrEnd
+                    MOVE.L  $3000, adrStart
+                    MOVE.L  $3050, adrEnd
                     
-                    LEA     adrStart, A0                * Setup starting address location (will be set by UI)
+                    ** ***************************************
+                    ** BEGIN: TESTS
+                    ** ***************************************
 
-                    ** TEST instructions
-                    MOVE.L $A0006000,$A0006010
-                    MOVE.L #255,$A0006010
-                    MOVE.L #255,D0
-                    MOVE.W #255,A0
+                    LEA     adrStart, A1            * Mem space for tests
+                    
+                    ** TEST MOVE
+                    * MOVE.L $A0006000,$A0006010
+                    * MOVE.L #255,$A0006010
+                    * MOVE.L #255,D0
+                    * MOVE.W #255,A0
 
                     **
                     ** TEST: MOVE - mem to mem
@@ -31,34 +42,50 @@ START:
                     ** MOVE.L $FFFF6000,$FFFF6010
                     **   code: $23F9 FFFF6000 FFFF6010
                     **
-                    LEA     $1000, A0
-                    MOVE.W  #$23F9, (A0)+
-                    MOVE.L  #$A0106000, (A0)+
-                    MOVE.L  #$A0106010, (A0)+
+                    MOVE.W  #$23F9, (A1)+
+                    MOVE.L  #$A0106000, (A1)+
+                    MOVE.L  #$A0106010, (A1)+
 
                     ** TEST: Immediate value to mem
                     **
                     ** MOVE.L #255,$FFFF6010
                     **   code: $23F9 000000FF FFFF6001
                     **
-                    LEA     $1000, A0
-                    MOVE.W  #$23FC, (A0)+
-                    MOVE.L  #$000000FF, (A0)+
-                    MOVE.L  #$A0106010, (A0)+
-                                                          
-fn_MAIN_Loop        MOVE.W  (A0)+, opWord            * load OpCode Word from increment pointer for processing
+                    *MOVE.W  #$23FC, (A1)+
+                    *MOVE.L  #$000000FF, (A1)+
+                    *MOVE.L  #$A0106010, (A1)+
+                    
+                    ** ***************************************
+                    ** END: TESTS
+                    ** ***************************************
+                             
+                    LEA     Fn_MAIN_Jump, A0         * Mem space for jump table   
+                    LEA     adrStart, A1             * Mem space for disassembly
+                     
+fn_MAIN_Loop        MOVE.W  (A1)+, opWord            * load OpCode Word from increment pointer
 
-                    ** Reached end of memory @ A0 - stop main logic, ask to do it again
-                    CMP.L   adrEnd, A0
+                    ** Reached end of memory @ A1 - stop main logic, ask to do it again
+                    **
+                    CMP.L   adrEnd, A1
                     BEQ     SR_UI_ANOTHER
                     
                     ** Jump table to instruction subroutine - will return back
-                    
+                    **
+                    MOVE.W  opWord, D0           * opWord to D0 for multiplication
+                    MOVE.B  #12,D1               
+                    LSR.W   D1,D0                * Shift 12 bits to the right (to get first 4 bits)
+                    MULU    #6,D0                * offset is multiple of 6
+                    JSR     0(A0,D0)             * Jump indirect with index
+                 
                     ** Display result
+                    **
                     
                     ** Max lines display stop, wait for enter
+                    **
 
                     BRA     Fn_MAIN_Loop             * Loop around and check another Word
+                    
+                    BRA     Fn_MAIN_Done             * Exit the program
                     
 ** -----------------------------------------------------------
 ** JUMP TABLE: First 4 bits of instruction
@@ -107,9 +134,7 @@ SR_UI_INPUT
 ** UI: Display item
 ** ----------------------------------------------------------- 
 SR_UI_DISPLAY
-                    
 
-                    BRA     Fn_MAIN_Done             * Exit the program
 
                     INCLUDE 'SR_IDX.X68'
                     INCLUDE 'SR_MOVE.X68'
@@ -159,6 +184,7 @@ opStrComma          DC.B     ',',0                   * Comma, comma; comma.
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 

@@ -164,13 +164,13 @@ Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byt
                     BEQ     Fn_MOVE_DtaSrcLng           * Load next long
                     BRA     Fn_MOVE_Error               * Invalid opID (this should never happen)
                     
-Fn_MOVE_DtaSrcByt   MOVE.B  (A0)+, opDta1               * Load byte and increment address count
+Fn_MOVE_DtaSrcByt   MOVE.B  (A1)+, opDta1               * Load byte and increment address count
                     MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-Fn_MOVE_DtaSrcWrd   MOVE.W  (A0)+, opDta1               * Load word and increment address count
+Fn_MOVE_DtaSrcWrd   MOVE.W  (A1)+, opDta1               * Load word and increment address count
                     MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-Fn_MOVE_DtaSrcLng   MOVE.L  (A0)+, opDta1               * Load long and increment address count
+Fn_MOVE_DtaSrcLng   MOVE.L  (A1)+, opDta1               * Load long and increment address count
                     MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 
@@ -185,16 +185,17 @@ Fn_MOVE_ChkDstReg   CMP.B   #0, opDstReg                * Check if destination r
                     BEQ     Fn_MOVE_DtaDstLng           * Load next long
                     BRA     fn_MOVE_Error               * Invalid registration Mode
                     
-Fn_MOVE_DtaDstWrd   MOVE.W  (A0)+, opDta2               * Load word and increment address count
+Fn_MOVE_DtaDstWrd   MOVE.W  (A1)+, opDta2               * Load word and increment address count
                     MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
                     BRA     Fn_MOVE_Done
-Fn_MOVE_DtaDstLng   MOVE.L  (A0)+, opDta2               * Load long and increment address count
+Fn_MOVE_DtaDstLng   MOVE.L  (A1)+, opDta2               * Load long and increment address count
                     MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
                     BRA     Fn_MOVE_Done
 
 Fn_MOVE_Error       MOVE.B  #1, opErr                   * Set error flag - denotes that this is only data
                    
 Fn_MOVE_Done        RTS
+
 
 
 
