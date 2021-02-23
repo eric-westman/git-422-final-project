@@ -7,6 +7,11 @@
 
                     ORG    $1000
 START:              
+
+** -----------------------------------------------------------
+** MAIN LOGIC
+** -----------------------------------------------------------
+
                     ** Note: Addresses will be set by user 'eventually'
                     **       testing start and end without the UI for now
                     MOVE.L  $1000, adrStart
@@ -45,7 +50,7 @@ fn_MAIN_Loop        MOVE.W  (A0)+, opWord            * load OpCode Word from inc
 
                     ** Reached end of memory @ A0 - stop main logic, ask to do it again
                     CMP.L   adrEnd, A0
-                    BEQ     Fn_MAIN_Another
+                    BEQ     SR_UI_ANOTHER
                     
                     ** Jump table to instruction subroutine - will return back
                     
@@ -55,27 +60,74 @@ fn_MAIN_Loop        MOVE.W  (A0)+, opWord            * load OpCode Word from inc
 
                     BRA     Fn_MAIN_Loop             * Loop around and check another Word
                     
-Fn_MAIN_Jump
-
+** -----------------------------------------------------------
+** JUMP TABLE: First 4 bits of instruction
+**
+** Jump instruction: pointing to label (xxx).L
+**  |0100 1110 |11 111 001 |   |   |   |
+**  |4    E    |F    9     |00 |00 |04 |80 - Offset 6 bytes
+**                          label address (Long)
+**
+** e.g. If looking for code0010 - 6 bytes * 4 bit code
+**
+** Note: should find a value since 4 bits is 0 to F
+** Note: There aren't any instructions that start with F
+**
+** -----------------------------------------------------------
+Fn_MAIN_Jump        JMP     SR_IDX                  * No instructions @ ID=0
+                    JSR     SR_ID3
+                    JSR     SR_ID3
+                    JSR     SR_ID3                  * Instructions @ ID=1,2,3 MOVE, MOVEA
+                    JMP     SR_ID4
+                    JMP     SR_ID5
+                    JMP     SR_ID6
+                    JMP     SR_ID7
+                    JMP     SR_ID8
+                    JMP     SR_ID9
+                    JMP     SR_IDA
+                    JMP     SR_IDB
+                    JMP     SR_IDC
+                    JMP     SR_IDD
+                    JMP     SR_IDE
+                    JMP     SR_IDX                   * No instructions @ ID=15
 
                     RTS                              * Return back to main logic
 
-Fn_MAIN_Another                    
+** -----------------------------------------------------------
+** UI: Ask for another run or quit
+** -----------------------------------------------------------
+SR_UI_ANOTHER                    
 
-** UI INPUTS          
-SR_INPUT
+** -----------------------------------------------------------
+** UI: User mem input
+** -----------------------------------------------------------         
+SR_UI_INPUT
 
-** UI DISPLAY
-SR_DISPLAY
+** -----------------------------------------------------------
+** UI: Display item
+** ----------------------------------------------------------- 
+SR_UI_DISPLAY
                     
 
                     BRA     Fn_MAIN_Done             * Exit the program
 
+                    INCLUDE 'SR_IDX.X68'
                     INCLUDE 'SR_MOVE.X68'
+                    INCLUDE 'SR_ID4.X68'
+                    INCLUDE 'SR_ID5.X68'
+                    INCLUDE 'SR_ID6.X68'
+                    INCLUDE 'SR_ID7.X68'
+                    INCLUDE 'SR_ID8.X68'
+                    INCLUDE 'SR_ID9.X68'
+                    INCLUDE 'SR_IDA.X68'
+                    INCLUDE 'SR_IDB.X68'
+                    INCLUDE 'SR_IDC.X68'
+                    INCLUDE 'SR_IDD.X68'
+                    INCLUDE 'SR_IDE.X68'
 
-** ********************************************************************************
+** -----------------------------------------------------------
 ** Variables and constants
-** ********************************************************************************
+** -----------------------------------------------------------
 
 adrStart            DC.L     $00000000               * Starting address to check - set by user
 adrEnd              DC.L     $00000000               * Ending address to check - set by user
@@ -107,6 +159,7 @@ opStrComma          DC.B     ',',0                   * Comma, comma; comma.
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 
