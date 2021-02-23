@@ -7,6 +7,12 @@
 
                     ORG    $1000
 START:              
+                    ** Note: Addresses will be set by user 'eventually'
+                    **       testing start and end without the UI for now
+                    MOVE.L  $1000, adrStart
+                    MOVE.L  $2000, adrEnd
+                    
+                    LEA     adrStart, A0                * Setup starting address location (will be set by UI)
 
                     ** TEST instructions
                     MOVE.L $A0006000,$A0006010
@@ -34,12 +40,33 @@ START:
                     MOVE.W  #$23FC, (A0)+
                     MOVE.L  #$000000FF, (A0)+
                     MOVE.L  #$A0106010, (A0)+
+                                                          
+fn_MAIN_Loop        MOVE.W  (A0)+, opWord            * load OpCode Word from increment pointer for processing
 
-                    LEA     $1000, A0
-                    ** Store instruction into wordID for processing
-                    **   This could be part of a loop that loads the ID,
-                    **   then runs the decipher algorithm
-                    MOVE.W  (A0)+, opWord            * load OpCode Word and increment pointer
+                    ** Reached end of memory @ A0 - stop main logic, ask to do it again
+                    CMP.L   adrEnd, A0
+                    BEQ     Fn_MAIN_Another
+                    
+                    ** Jump table to instruction subroutine - will return back
+                    
+                    ** Display result
+                    
+                    ** Max lines display stop, wait for enter
+
+                    BRA     Fn_MAIN_Loop             * Loop around and check another Word
+                    
+Fn_MAIN_Jump
+
+
+                    RTS                              * Return back to main logic
+
+Fn_MAIN_Another                    
+
+** UI INPUTS          
+SR_INPUT
+
+** UI DISPLAY
+SR_DISPLAY
                     
 
                     BRA     Fn_MAIN_Done             * Exit the program
@@ -49,6 +76,9 @@ START:
 ** ********************************************************************************
 ** Variables and constants
 ** ********************************************************************************
+
+adrStart            DC.L     $00000000               * Starting address to check - set by user
+adrEnd              DC.L     $00000000               * Ending address to check - set by user
 
 opWord              DC.W     $0000                   * 16 bit instruction Word
 opID                DC.B     $00                     * First 4 bit value ID
@@ -77,6 +107,7 @@ opStrComma          DC.B     ',',0                   * Comma, comma; comma.
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 *~Font name~Courier New~
