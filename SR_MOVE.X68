@@ -7,14 +7,20 @@
 ** Deciphering
 **   This will run after the initial jump instruction
 **
+** Subroutine data
+**  D3 - Subroutine shifting
+**  D4 - Subroutine shifting
+**  A3 - Temp storage space for text
+**
 ** ********************************************************************************
 
 SR_ID3                    
                     ** Reset everything - maybe do this in the main loop (when it gets built)
-                    MOVE.B  $00, opID
-                    MOVE.B  $00, opErr
-                    MOVE.L  $0000, opDspNam
-                    MOVE.L  $0000, opDspSiz
+                    CLR.B   opID
+                    CLR.B   opErr
+                    CLR.B   opDspNam
+                    CLR.B   opDspSiz
+                    CLR.L   opDspAdr
                     
                     MOVE.B  $00, opDstReg
                     MOVE.B  $00, opDstMod
@@ -26,57 +32,87 @@ SR_ID3
                     MOVE.L  $0000, opDta2
                     MOVE.B  $FF, opDta2T
 
-                    ** Read first 4 bits (need to know if 0(byte), 1(word), 2(long) - only for MOVE, MOVEA
+                    ** ***************************************
+                    ** Read first 4 bits 
+                    ** need to know if 0(byte), 1(word), 2(long) - only for MOVE, MOVEA
                     **
-                    MOVE.W  opWord, D0                  * store opWord in D0 so it doesn't get modified
-                    MOVE.B  #12,D1
-                    LSR.W   D1,D0                       * Shift right 12 to get first 4 bits
-                    MOVE.B  D0, opID
+                    ** ***************************************
+                    MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+                    MOVE.B  #12,D4
+                    LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
+                    MOVE.B  D3, opID
 
                     ** Read next 3 bits
                     **
-                    MOVE.W  opWord, D0                  * store opWord in D0 so it doesn't get modified
-                    MOVE.B  #4, D1
-                    LSL.W   D1, D0                      * Shift left 4 to get rid of first 4 bits
-                    MOVE.B  #13,D1
-                    LSR.W   D1,D0                       * Shift right 13 to get next 3 bits
-                    MOVE.B  D0, opDstReg
+                    MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+                    MOVE.B  #4, D4
+                    LSL.W   D4, D3                      * Shift left 4 to get rid of first 4 bits
+                    MOVE.B  #13,D4
+                    LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+                    MOVE.B  D3, opDstReg
 
                     ** Read next 3 bits
                     **
-                    MOVE.W  opWord, D0                  * store opWord in D0 so it doesn't get modified
-                    MOVE.B  #7, D1
-                    LSL.W   D1, D0                      * Shift left 7 to get rid of first 7 bits
-                    MOVE.B  #13,D1
-                    LSR.W   D1,D0                       * Shift right 13 to get next 3 bits
-                    MOVE.B  D0, opDstMod
+                    MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+                    MOVE.B  #7, D4
+                    LSL.W   D4, D3                      * Shift left 7 to get rid of first 7 bits
+                    MOVE.B  #13,D4
+                    LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+                    MOVE.B  D3, opDstMod
 
                     ** Read next 3 bits
                     **
-                    MOVE.W  opWord, D0                  * store opWord in D0 so it doesn't get modified
-                    MOVE.B  #10, D1
-                    LSL.W   D1, D0                      * Shift left 10 to get rid of first 10 bits
-                    MOVE.B  #13,D1
-                    LSR.W   D1,D0                       * Shift right 13 to get next 3 bits
-                    MOVE.B  D0, opSrcMod
+                    MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+                    MOVE.B  #10, D4
+                    LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
+                    MOVE.B  #13,D4
+                    LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+                    MOVE.B  D3, opSrcMod
 
                     ** Read next 3 bits
                     **
-                    MOVE.W  opWord, D0                  * store opWord in D0 so it doesn't get modified
-                    MOVE.B  #13, D1
-                    LSL.W   D1, D0                      * Shift left 10 to get rid of first 10 bits
-                    MOVE.B  #13,D1
-                    LSR.W   D1,D0                       * Shift right 13 to get next 3 bits
-                    MOVE.B  D0, opSrcReg
+                    MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+                    MOVE.B  #13, D4
+                    LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
+                    MOVE.B  #13,D4
+                    LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+                    MOVE.B  D3, opSrcReg
 
-                    ** Verify this is a MOVE or MOVEA instruction
+                    ** ***************************************
+                    ** Verify this is MOVE or MOVEA
+                    **
+                    ** MOVE:  If opID = 1,2,3 & DstMod = 0,2-7
+                    ** MOVEA: If opID =   2,3 & DstMod = 1
+                    **
+                    ** Size: opID = 1: Byte; opID = 2: Long; opID = 3: Word
+                    **
+                    ** ***************************************
+                    CMP.B   #1, opDstMod                * Destination mode is 1 - must be MOVEA
+                    BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
+                    BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
+                    
+Fn_MOVE_Ins01       *LEA     opNam01, A3                 * instruction: MOVE
+                    *MOVE.L  A3, opDspNam                * Load into opDspNam
+                    MOVE.B  opNam01, opDspNam
+                    BRA     Fn_MOVE_Verify                 
+                    
+Fn_MOVE_Ins02       CMP.B   #1, opID
+                    BEQ     Fn_MOVE_Error               * MOVEA cannot have opID = 1 (byte)
+                    MOVE.B  opNam02, opDspNam
+                    *LEA     opNam02, A3                 * instruction: MOVEA
+                    *MOVE.L  A3, opDspNam                * Load into opDspNam
+                    BRA     Fn_MOVE_Verify
+
+                    ** ***************************************
+                    ** Verify other instruction parameters are correct
                     **
                     **    DstMod = 0, 2 to 6
                     **    DstReg = 0 to 7
                     **    SrcMod = 0 to 7
                     **    SrcReg = 0 to 7
                     **
-                    CMP.B   #0, opDstMod                * Destination mode is >= 0
+                    ** ***************************************
+Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >= 0
                     BLT     Fn_MOVE_Error
                     CMP.B   #2, opDstMod                * Destination mode is >= 2
                     BLT     Fn_MOVE_Error
@@ -96,36 +132,20 @@ SR_ID3
                     CMP.B   #7, opSrcReg                * Destination register <= 7
                     BGT     Fn_MOVE_Error
                     
-                    ** Load instruction name and size
-                    **
-                    ** MOVE:  If opID = 4 & DstMod = 0,2-7
-                    ** MOVEA: If opID = 4 & DstMod = 1
-                    **
-                    ** Size: opID = 1: Byte; opID = 2: Long; opID = 3: Word
-                    **
-                    CMP.B   #1, opDstMod                * Destination mode is 1 - must be MOVEA
-                    BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
-                    BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
-                    
-Fn_MOVE_Ins01       LEA     opNam01, A1                 * instruction: MOVE
-                    MOVE.L  A1, opDspNam                * Load into opDspNam                    
-                    
-Fn_MOVE_Ins02       LEA     opNam02, A1                 * instruction: MOVEA
-                    MOVE.L  A2, opDspNam                * Load into opDspNam
-                    
                     CMP.B   #1, opID                    * Instruction size is Byte
                     BEQ     Fn_MOVE_Siz00
                     CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
                     BEQ     Fn_MOVE_Siz01
                     CMP.B   #2, opID                    * Instruction size is Long
                     BEQ     Fn_MOVE_Siz02
-Fn_MOVE_Siz00       LEA     opSiz00, A1                 * Display size is byte
-                    MOVE.L  A1, opDspSiz
-Fn_MOVE_Siz01       LEA     opSiz01, A1                 * Display size is word
-                    MOVE.L  A1, opDspSiz
-Fn_MOVE_Siz02       LEA     opSiz02, A1                 * Display size is long
-                    MOVE.L  A1, opDspSiz
-
+Fn_MOVE_Siz00       LEA     opSiz00, A3                 * Display size is byte
+                    MOVE.L  A3, opDspSiz
+Fn_MOVE_Siz01       LEA     opSiz01, A3                 * Display size is word
+                    MOVE.L  A3, opDspSiz
+Fn_MOVE_Siz02       LEA     opSiz02, A3                 * Display size is long
+                    MOVE.L  A3, opDspSiz
+                    
+                    ** ***************************************
                     ** Grab extra DATA if needed
                     **
                     **    If DstMod = 7
@@ -141,7 +161,8 @@ Fn_MOVE_Siz02       LEA     opSiz02, A1                 * Display size is long
                     **
                     ** SOURCE
                     **
-Fn_MOVE_ChkSrcMod   CMP.B   #7, opSrcMod                * Check if source mode is 7
+                    ** ***************************************
+Fn_MOVE_SrcMod      CMP.B   #7, opSrcMod                * Check if source mode is 7
                     BEQ     Fn_MOVE_ChkSrcReg           * Check source register
                     BRA     Fn_MOVE_ChkDstMod           * Source not 7, now check destination Mod                    
 Fn_MOVE_ChkSrcReg   CMP.B   #0, opSrcReg                * Check is source register is 0
@@ -164,13 +185,13 @@ Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byt
                     BEQ     Fn_MOVE_DtaSrcLng           * Load next long
                     BRA     Fn_MOVE_Error               * Invalid opID (this should never happen)
                     
-Fn_MOVE_DtaSrcByt   MOVE.B  (A1)+, opDta1               * Load byte and increment address count
+Fn_MOVE_DtaSrcByt   MOVE.B  (A2)+, opDta1               * Load byte and increment address count
                     MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-Fn_MOVE_DtaSrcWrd   MOVE.W  (A1)+, opDta1               * Load word and increment address count
+Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
                     MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-Fn_MOVE_DtaSrcLng   MOVE.L  (A1)+, opDta1               * Load long and increment address count
+Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
                     MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 
@@ -185,16 +206,22 @@ Fn_MOVE_ChkDstReg   CMP.B   #0, opDstReg                * Check if destination r
                     BEQ     Fn_MOVE_DtaDstLng           * Load next long
                     BRA     fn_MOVE_Error               * Invalid registration Mode
                     
-Fn_MOVE_DtaDstWrd   MOVE.W  (A1)+, opDta2               * Load word and increment address count
+Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and increment address count
                     MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
                     BRA     Fn_MOVE_Done
-Fn_MOVE_DtaDstLng   MOVE.L  (A1)+, opDta2               * Load long and increment address count
+Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
                     MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
                     BRA     Fn_MOVE_Done
 
 Fn_MOVE_Error       MOVE.B  #1, opErr                   * Set error flag - denotes that this is only data
                    
 Fn_MOVE_Done        RTS
+
+
+
+
+
+
 
 
 

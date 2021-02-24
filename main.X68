@@ -12,19 +12,23 @@ START:
 ** MAIN LOGIC
 **
 ** Program data
-**   D0 - First 4 bits of instruction
-**   D1 - Line Counter
-**   D2 - temp storage for bit shift etc.
+**   D0 - Reserved for Trap
+**   D1 - Reserved for Trap
+**   D2 - Reserved for Trap
+**   D5 - First 4 bits of instruction
+**   D6 - temp storage for bit shift etc.
+**   D7 - Line Counter
 
 **   A0 - Jump Table
-**   A1 - Instruction space (the contents being disassembled)
+**   A1 - Reserved for Trap
+**   A2 - Instruction space (the contents being disassembled)
 **
 ** -----------------------------------------------------------
 Fn_MAIN_Start
                     ** ***************************************
                     ** RESET: Program variables
                     ** *************************************** 
-                    CLR.B   D1                       * Reset line counter to zero
+                    CLR.B   D7                       * Reset line counter to zero
                     
                     ** Note: Addresses will be set by user 'eventually'
                     **       testing start and end without the UI for now
@@ -37,49 +41,44 @@ Fn_MAIN_Start
                     ** BEGIN: TESTS
                     ** ***************************************
 
-                    LEA     adrStart, A1            * Mem space for tests
-                    
-                    ** TEST MOVE
-                    * MOVE.L $A0006000,$A0006010
-                    * MOVE.L #255,$A0006010
-                    * MOVE.L #255,D0
-                    * MOVE.W #255,A0
+                    LEA     adrStart, A2            * Mem space for tests
 
-                    **
                     ** TEST: MOVE - mem to mem
                     **
                     ** MOVE.L $FFFF6000,$FFFF6010
                     **   code: $23F9 FFFF6000 FFFF6010
                     **
-                    MOVE.W  #$23F9, (A1)+
-                    MOVE.L  #$A0106000, (A1)+
-                    MOVE.L  #$A0106010, (A1)+
+                    MOVE.W  #$23F9, (A2)+
+                    MOVE.L  #$A0106000, (A2)+
+                    MOVE.L  #$A0106010, (A2)+
 
                     ** TEST: Immediate value to mem
                     **
                     ** MOVE.L #255,$FFFF6010
                     **   code: $23F9 000000FF FFFF6001
                     **
-                    *MOVE.W  #$23FC, (A1)+
-                    *MOVE.L  #$000000FF, (A1)+
-                    *MOVE.L  #$A0106010, (A1)+
+                    *MOVE.W  #$23FC, (A2)+
+                    *MOVE.L  #$000000FF, (A2)+
+                    *MOVE.L  #$A0106010, (A2)+
                     
                     ** ***************************************
                     ** END: TESTS
                     ** ***************************************
                              
                     LEA     Fn_MAIN_Jump, A0         * Mem space for jump table   
-                    LEA     adrStart, A1             * Mem space for disassembly
+                    LEA     adrStart, A2             * Mem space for disassembly
                      
-fn_MAIN_Loop        MOVE.W  (A1)+, opWord            * load OpCode Word from increment pointer
+fn_MAIN_Loop        MOVE.L  A2, opDspAdr             * load instruction address for display
+
+                    MOVE.W  (A2)+, opWord            * load OpCode Word from increment pointer
                     
                     ** Jump table to instruction subroutine - will return back
                     **
-                    MOVE.W  opWord, D0             * opWord to D0 for multiplication
-                    MOVE.B  #12, D2               
-                    LSR.W   D2, D0                 * Shift 12 bits to the right (to get first 4 bits)
-                    MULU    #8, D0                 * offset is multiple of 8
-                    JSR     0(A0,D0)               * Jump indirect with index
+                    MOVE.W  opWord, D5             * opWord to D5 for multiplication
+                    MOVE.B  #12, D6               
+                    LSR.W   D6, D5                 * Shift 12 bits to the right (to get first 4 bits)
+                    MULU    #8, D5                 * offset is multiple of 8
+                    JSR     0(A0,D5)               * Jump indirect with index
                  
                     ** Display result
                     **
@@ -87,15 +86,17 @@ fn_MAIN_Loop        MOVE.W  (A1)+, opWord            * load OpCode Word from inc
                    
                     ** Max lines display stop, wait for enter
                     **
-Fn_MAIN_ChkLin      ADDI.B  #1, D1                  
-                    CMP.B   maxLines, D1
+Fn_MAIN_ChkLin      ADDI.B  #1, D7                  
+                    CMP.B   maxLines, D7
                     BGE     Fn_MAIN_ChkPag          * Reached the maximum number of lines per page
                     BRA     Fn_MAIN_ChkEnd          * Continue to Check if at End of address space
 Fn_MAIN_ChkPag      ** Logic to check ENTER key to show next page
+                    MOVE.B  #2,D0               * Trap task 2 does the following:
+                    TRAP    #15                 * Read characters into (A2), length in D1.W
                     
-                    ** Reached end of memory @ A1 - stop main logic, ask to do it again
+                    ** Reached end of memory @ A2 - stop main logic, ask to do it again
                     **
-Fn_MAIN_ChkEnd      CMP.L   adrEnd, A1
+Fn_MAIN_ChkEnd      CMP.L   adrEnd, A2
                     BEQ     Fn_MAIN_ChkAgn          * Reached end of memory region
                     BRA     Fn_MAIN_Continue        * Continue to next loop iteration
 Fn_MAIN_ChkAgn      ** Logic to check for for Y or N to check another region of memory
@@ -151,12 +152,7 @@ Fn_MAIN_Jump        JSR     SR_IDX                  * No instructions @ ID=0
                     JSR     SR_IDE
                     RTS
                     JSR     SR_IDX                   * No instructions @ ID=15
-                    RTS
-
-** -----------------------------------------------------------
-** UI: Ask for another run or quit
-** -----------------------------------------------------------
-SR_UI_ANOTHER                    
+                    RTS                   
 
 ** -----------------------------------------------------------
 ** UI: User mem input
@@ -171,9 +167,13 @@ SR_DSP_DISPLAY
                     BEQ     Fn_Dsp_Data             * Error flag - must be data
                     BRA     Fn_Dsp_Instr            * No error flag - must be instruction
 Fn_Dsp_Data
-
+                    LEA     opNam00,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
 Fn_Dsp_Instr
-
+                    LEA     opDspNam,A1             * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
 Fn_Dsp_Done
                     RTS
 
@@ -205,8 +205,9 @@ maxLines            DC.B     $1                      * Max lines to display (30)
 opWord              DC.W     $0000                   * 16 bit instruction Word
 opID                DC.B     $00                     * First 4 bit value ID
 opErr               DC.B     $00                     * Error byte: if set to 1, the opWord is junk data; otherwise instruction
-opDspNam            DC.L     $0000                   * Placeholder for full text name e.g. 'MOVE'
-opDspSiz            DC.L     $0000                   * Placeholder for full text size e.g. 'B','W','L'
+opDspNam            DC.B     $0000                   * Placeholder for full text name e.g. 'MOVE'
+opDspSiz            DC.B     $0000                   * Placeholder for full text size e.g. 'B','W','L'
+opDspAdr            DC.L     $00000000               * Instruction address
 
 opDstReg            DC.B     $00                     * Destination Register Value
 opDstMod            DC.B     $00                     * Destination Mode Value
@@ -218,6 +219,10 @@ opDta1T             DC.B     $FF                     * Data value one type ($FF 
 opDta2              DC.L     $0000                   * Data value two (most likely destination)
 opDta2T             DC.B     $FF                     * Data value two type ($FF not set, 0=byte, 1=word, 2=long)
 
+CR                  EQU      $0D                     * ASCII code for Carriage Return
+LF                  EQU      $0A                     * ASCII code for Line Feed
+
+opNam00             DC.B     'DATA',0
 opNam01             DC.B     'MOVE',0                * String value for instrution 'MOVE'
 opNam02             DC.B     'MOVEA',0               * String value for instrution 'MOVEA'
 
@@ -229,6 +234,12 @@ opStrComma          DC.B     ',',0                   * Comma, comma; comma.
 
 Fn_MAIN_Done        
                     END      START
+
+
+
+
+
+
 
 
 
