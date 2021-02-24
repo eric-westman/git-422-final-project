@@ -13,14 +13,23 @@ START:
 **
 ** Program data
 **   D0 - First 4 bits of instruction
-**   D1 - Multiplication holder for jump
+**   D1 - Line Counter
+**   D2 - temp storage for bit shift etc.
+
 **   A0 - Jump Table
 **   A1 - Instruction space (the contents being disassembled)
 **
 ** -----------------------------------------------------------
-
+Fn_MAIN_Start
+                    ** ***************************************
+                    ** RESET: Program variables
+                    ** *************************************** 
+                    CLR.B   D1                       * Reset line counter to zero
+                    
                     ** Note: Addresses will be set by user 'eventually'
                     **       testing start and end without the UI for now
+                    **       In other words - this is where user interface will live
+                    **
                     MOVE.L  $3000, adrStart
                     MOVE.L  $3050, adrEnd
                     
@@ -63,62 +72,86 @@ START:
                     LEA     adrStart, A1             * Mem space for disassembly
                      
 fn_MAIN_Loop        MOVE.W  (A1)+, opWord            * load OpCode Word from increment pointer
-
-                    ** Reached end of memory @ A1 - stop main logic, ask to do it again
-                    **
-                    CMP.L   adrEnd, A1
-                    BEQ     SR_UI_ANOTHER
                     
                     ** Jump table to instruction subroutine - will return back
                     **
-                    MOVE.W  opWord, D0           * opWord to D0 for multiplication
-                    MOVE.B  #12,D1               
-                    LSR.W   D1,D0                * Shift 12 bits to the right (to get first 4 bits)
-                    MULU    #6,D0                * offset is multiple of 6
-                    JSR     0(A0,D0)             * Jump indirect with index
+                    MOVE.W  opWord, D0             * opWord to D0 for multiplication
+                    MOVE.B  #12, D2               
+                    LSR.W   D2, D0                 * Shift 12 bits to the right (to get first 4 bits)
+                    MULU    #8, D0                 * offset is multiple of 8
+                    JSR     0(A0,D0)               * Jump indirect with index
                  
                     ** Display result
                     **
-                    
+                    JSR     SR_DSP_DISPLAY
+                   
                     ** Max lines display stop, wait for enter
                     **
-
-                    BRA     Fn_MAIN_Loop             * Loop around and check another Word
+Fn_MAIN_ChkLin      ADDI.B  #1, D1                  
+                    CMP.B   maxLines, D1
+                    BGE     Fn_MAIN_ChkPag          * Reached the maximum number of lines per page
+                    BRA     Fn_MAIN_ChkEnd          * Continue to Check if at End of address space
+Fn_MAIN_ChkPag      ** Logic to check ENTER key to show next page
                     
-                    BRA     Fn_MAIN_Done             * Exit the program
+                    ** Reached end of memory @ A1 - stop main logic, ask to do it again
+                    **
+Fn_MAIN_ChkEnd      CMP.L   adrEnd, A1
+                    BEQ     Fn_MAIN_ChkAgn          * Reached end of memory region
+                    BRA     Fn_MAIN_Continue        * Continue to next loop iteration
+Fn_MAIN_ChkAgn      ** Logic to check for for Y or N to check another region of memory
+
+Fn_MAIN_Continue    BRA     Fn_MAIN_Loop            * Loop around and check another Word
+                    
+                    BRA     Fn_MAIN_Done            * Exit the program
                     
 ** -----------------------------------------------------------
 ** JUMP TABLE: First 4 bits of instruction
 **
 ** Jump instruction: pointing to label (xxx).L
-**  |0100 1110 |11 111 001 |   |   |   |
 **  |4    E    |F    9     |00 |00 |04 |80 - Offset 6 bytes
 **                          label address (Long)
 **
-** e.g. If looking for code0010 - 6 bytes * 4 bit code
+** RTS instruction:
+**  |4    E    |7    5     |               - Offset 2 bytes
+**
+** e.g. If looking for code0010 - 8 bytes (offset) * 4 bit code (0 to 15)
 **
 ** Note: should find a value since 4 bits is 0 to F
 ** Note: There aren't any instructions that start with F
 **
 ** -----------------------------------------------------------
-Fn_MAIN_Jump        JMP     SR_IDX                  * No instructions @ ID=0
+Fn_MAIN_Jump        JSR     SR_IDX                  * No instructions @ ID=0
+                    RTS
                     JSR     SR_ID3
+                    RTS
                     JSR     SR_ID3
+                    RTS
                     JSR     SR_ID3                  * Instructions @ ID=1,2,3 MOVE, MOVEA
-                    JMP     SR_ID4
-                    JMP     SR_ID5
-                    JMP     SR_ID6
-                    JMP     SR_ID7
-                    JMP     SR_ID8
-                    JMP     SR_ID9
-                    JMP     SR_IDA
-                    JMP     SR_IDB
-                    JMP     SR_IDC
-                    JMP     SR_IDD
-                    JMP     SR_IDE
-                    JMP     SR_IDX                   * No instructions @ ID=15
-
-                    RTS                              * Return back to main logic
+                    RTS
+                    JSR     SR_ID4
+                    RTS
+                    JSR     SR_ID5
+                    RTS
+                    JSR     SR_ID6
+                    RTS
+                    JSR     SR_ID7
+                    RTS
+                    JSR     SR_ID8
+                    RTS
+                    JSR     SR_ID9
+                    RTS
+                    JSR     SR_IDA
+                    RTS
+                    JSR     SR_IDB
+                    RTS
+                    JSR     SR_IDC
+                    RTS
+                    JSR     SR_IDD
+                    RTS
+                    JSR     SR_IDE
+                    RTS
+                    JSR     SR_IDX                   * No instructions @ ID=15
+                    RTS
 
 ** -----------------------------------------------------------
 ** UI: Ask for another run or quit
@@ -133,9 +166,20 @@ SR_UI_INPUT
 ** -----------------------------------------------------------
 ** UI: Display item
 ** ----------------------------------------------------------- 
-SR_UI_DISPLAY
+SR_DSP_DISPLAY
+                    CMP.B   #1, opErr
+                    BEQ     Fn_Dsp_Data             * Error flag - must be data
+                    BRA     Fn_Dsp_Instr            * No error flag - must be instruction
+Fn_Dsp_Data
 
+Fn_Dsp_Instr
 
+Fn_Dsp_Done
+                    RTS
+
+** -----------------------------------------------------------
+** Includes: Subroutines etc.
+** -----------------------------------------------------------
                     INCLUDE 'SR_IDX.X68'
                     INCLUDE 'SR_MOVE.X68'
                     INCLUDE 'SR_ID4.X68'
@@ -156,10 +200,11 @@ SR_UI_DISPLAY
 
 adrStart            DC.L     $00000000               * Starting address to check - set by user
 adrEnd              DC.L     $00000000               * Ending address to check - set by user
+maxLines            DC.B     $1                      * Max lines to display (30) $1E
 
 opWord              DC.W     $0000                   * 16 bit instruction Word
 opID                DC.B     $00                     * First 4 bit value ID
-opErr               DC.B     $00                     * Error byte: if set to 1, the opWord is junk data; if = opWord is instruction
+opErr               DC.B     $00                     * Error byte: if set to 1, the opWord is junk data; otherwise instruction
 opDspNam            DC.L     $0000                   * Placeholder for full text name e.g. 'MOVE'
 opDspSiz            DC.L     $0000                   * Placeholder for full text size e.g. 'B','W','L'
 
@@ -184,6 +229,7 @@ opStrComma          DC.B     ',',0                   * Comma, comma; comma.
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 
