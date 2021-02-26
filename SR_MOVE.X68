@@ -15,22 +15,6 @@
 ** ********************************************************************************
 
 SR_ID3                    
-                    ** Reset variables
-                    **
-                    MOVE.B  #$00,opID                   * Reset ID (should match subroutine ID, except for MOVE)
-                    MOVE.B  #$00,opErr                  * Reset error $00 (means no error)
-                    MOVE.B  #$FF,opValSiz                * Reset size $FF (means not set)
-                    
-                    MOVE.B  $00, opDstReg
-                    MOVE.B  $00, opDstMod
-                    MOVE.B  $00, opSrcReg
-                    MOVE.B  $00, opSrcMod
-                    
-                    MOVE.L  $0000, opDta1
-                    MOVE.B  $FF, opDta1T
-                    MOVE.L  $0000, opDta2
-                    MOVE.B  $FF, opDta2T
-
                     ** ***************************************
                     ** Read first 4 bits 
                     ** need to know if 0(byte), 1(word), 2(long) - only for MOVE, MOVEA
@@ -211,20 +195,24 @@ Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and incremen
 Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
                     MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
                     BRA     Fn_MOVE_Done
-
-Fn_MOVE_Error       MOVE.B  #1, opErr                   * Set error flag - denotes that this is only data
                    
 Fn_MOVE_Done        
+                    MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
+                    
                     ** ***************************************
                     ** Increment Address - 4 bytes for instruction 
                     **                     4 or 8 bytes for data 1
                     **                     4 or 8 bytes for data 2
                     ** ***************************************
-                    ADDI.L  #4,opValAdr                 * Increment address for instruction
+                    ADDA.L  #$4,A2                       * Increment address for instruction
                     
-                    ** Return to caller
-                    **
+Fn_MOVE_Error                                            * Exit out if error - main subroutine will handle DATA
                     RTS
+
+
+
+
+
 
 
 
