@@ -15,12 +15,11 @@
 ** ********************************************************************************
 
 SR_ID3                    
-                    ** Reset everything - maybe do this in the main loop (when it gets built)
-                    CLR.B   opID
-                    CLR.B   opErr
-                    CLR.B   opDspNam
-                    CLR.B   opDspSiz
-                    CLR.L   opDspAdr
+                    ** Reset variables
+                    **
+                    MOVE.B  #$00,opID                   * Reset ID (should match subroutine ID, except for MOVE)
+                    MOVE.B  #$00,opErr                  * Reset error $00 (means no error)
+                    MOVE.B  #$FF,opValSiz                * Reset size $FF (means not set)
                     
                     MOVE.B  $00, opDstReg
                     MOVE.B  $00, opDstMod
@@ -91,17 +90,14 @@ SR_ID3
                     BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
                     BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
                     
-Fn_MOVE_Ins01       *LEA     opNam01, A3                 * instruction: MOVE
-                    *MOVE.L  A3, opDspNam                * Load into opDspNam
-                    MOVE.B  opNam01, opDspNam
-                    BRA     Fn_MOVE_Verify                 
+Fn_MOVE_Ins01       LEA     opNam01,A3                  
+                    MOVE.L  A3,opDspNam                 * Display name points to name                   
+                    BRA     Fn_MOVE_Verify            
                     
 Fn_MOVE_Ins02       CMP.B   #1, opID
                     BEQ     Fn_MOVE_Error               * MOVEA cannot have opID = 1 (byte)
-                    MOVE.B  opNam02, opDspNam
-                    *LEA     opNam02, A3                 * instruction: MOVEA
-                    *MOVE.L  A3, opDspNam                * Load into opDspNam
-                    BRA     Fn_MOVE_Verify
+                    LEA     opNam02,A3
+                    MOVE.L  A3,opDspNam                 * Display name points to name
 
                     ** ***************************************
                     ** Verify other instruction parameters are correct
@@ -138,12 +134,15 @@ Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >=
                     BEQ     Fn_MOVE_Siz01
                     CMP.B   #2, opID                    * Instruction size is Long
                     BEQ     Fn_MOVE_Siz02
-Fn_MOVE_Siz00       LEA     opSiz00, A3                 * Display size is byte
-                    MOVE.L  A3, opDspSiz
-Fn_MOVE_Siz01       LEA     opSiz01, A3                 * Display size is word
-                    MOVE.L  A3, opDspSiz
-Fn_MOVE_Siz02       LEA     opSiz02, A3                 * Display size is long
-                    MOVE.L  A3, opDspSiz
+Fn_MOVE_Siz00       *LEA     opSiz00, A3                 * Display size is byte
+                    *MOVE.L  A3, opDspSiz
+                    MOVE.B  opSiz00, opDspSiz
+Fn_MOVE_Siz01       *LEA     opSiz01, A3                 * Display size is word
+                    *MOVE.L  A3, opDspSiz
+                    MOVE.B  opSiz01, opDspSiz
+Fn_MOVE_Siz02       *LEA     opSiz02, A3                 * Display size is long
+                    *MOVE.L  A3, opDspSiz
+                    MOVE.B  opSiz02, opDspSiz
                     
                     ** ***************************************
                     ** Grab extra DATA if needed
@@ -215,7 +214,28 @@ Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and incremen
 
 Fn_MOVE_Error       MOVE.B  #1, opErr                   * Set error flag - denotes that this is only data
                    
-Fn_MOVE_Done        RTS
+Fn_MOVE_Done        
+                    ** ***************************************
+                    ** Increment Address - 4 bytes for instruction 
+                    **                     4 or 8 bytes for data 1
+                    **                     4 or 8 bytes for data 2
+                    ** ***************************************
+                    ADDI.L  #4,opValAdr                 * Increment address for instruction
+                    
+                    ** Return to caller
+                    **
+                    RTS
+
+
+
+
+
+
+
+
+
+
+
 
 
 
