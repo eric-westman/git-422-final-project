@@ -10,14 +10,22 @@
 ** Subroutine data
 **  D3 - Subroutine shifting
 **  D4 - Subroutine shifting
+**  D5 - Address increment count
 **  A3 - Temp storage space for text
 **
 ** ********************************************************************************
 
-SR_ID3                    
+SR_ID3
+
+** ********************************************************************************
+** edit below
+** ********************************************************************************
+                    
                     ** ***************************************
                     ** Read first 4 bits 
                     ** need to know if 0(byte), 1(word), 2(long) - only for MOVE, MOVEA
+                    ** Note: most instructions will be in this format 3,3,3,3 
+                    **    I think there is only one instrction that is 4,8
                     **
                     ** ***************************************
                     MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
@@ -129,6 +137,16 @@ Fn_MOVE_Siz02       *LEA     opSiz02, A3                 * Display size is long
                     MOVE.B  opSiz02, opDspSiz
                     
                     ** ***************************************
+                    ** Setup address incrememter
+                    **    Need to manually increment address location
+                    **    Store increment value in D5, then add to A2 at end
+                    **    Waiting to end because there may be an error in data
+                    **      which denotes the whole instruction as DATA
+                    ** ***************************************
+                    CLR.B   D5
+                    ADDI.B  #4,D5                       * Add 4 bytes for instruction
+                    
+                    ** ***************************************
                     ** Grab extra DATA if needed
                     **
                     **    If DstMod = 7
@@ -168,14 +186,17 @@ Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byt
                     BEQ     Fn_MOVE_DtaSrcLng           * Load next long
                     BRA     Fn_MOVE_Error               * Invalid opID (this should never happen)
                     
-Fn_MOVE_DtaSrcByt   MOVE.B  (A2)+, opDta1               * Load byte and increment address count
+Fn_MOVE_DtaSrcByt   MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
                     MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+                    ADDI.B  #1,D5                       * Increment address count 1 byte
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
                     MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+                    ADDI.B  #2,D5                       * Increment address count 2 bytes
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
                     MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+                    ADDI.B  #4,D5                       * Increment address count 4 bytes
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 
                     ** DESTINATION
@@ -195,19 +216,17 @@ Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and incremen
 Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
                     MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
                     BRA     Fn_MOVE_Done
-                   
-Fn_MOVE_Done        
-                    MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
                     
-                    ** ***************************************
-                    ** Increment Address - 4 bytes for instruction 
-                    **                     4 or 8 bytes for data 1
-                    **                     4 or 8 bytes for data 2
-                    ** ***************************************
-                    ADDA.L  #$4,A2                       * Increment address for instruction
+** ********************************************************************************
+** do not edit below
+** ********************************************************************************                   
+Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
                     
-Fn_MOVE_Error                                            * Exit out if error - main subroutine will handle DATA
-                    RTS
+Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
+                    *MOVEA D0-D7/A0-A6                  * Reset registers
+                    RTS                                 * Return to main
+
+
 
 
 

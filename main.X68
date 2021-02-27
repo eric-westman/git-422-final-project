@@ -74,13 +74,14 @@ Fn_MAIN_Start
                      
 fn_MAIN_Loop        
                     ** Set opWord (OpCode Word) and opValAdr (OpCode Address)
-                    MOVE.W  (A2),opWord             * load OpCode Word from increment pointer (by instruction size)
                     MOVE.L  A2,opValAdr             * Set output address as current - need for display
+                    MOVE.W  (A2)+,opWord            * load first 4 bit OpCode Word, increment A2 (4 bytes)
+                    MOVE.L  A2,opNxtAdr             * load next valid word address for invalid instruction
                     
                     ** Reset local variables
                     **
-                    MOVE.B  #$01,opID               * Reset opID (first 4 bits of opWord)
-                    MOVE.B  #$00,opErr              * Reset error $00 (means no error)
+                    MOVE.B  #$00,opID               * Reset opID (first 4 bits of opWord)
+                    MOVE.B  #$01,opErr              * Reset error $01 - assume error until instruction found
                     MOVE.B  #$FF,opValSiz           * Reset size $FF (means not set)
                     
                     MOVE.B  $00, opDstReg
@@ -95,26 +96,22 @@ fn_MAIN_Loop
                     
                     ** Jump table to instruction disassembler
                     **
-                    MOVE.W  opWord, D5              * opWord to D5 for multiplication
-                    MOVE.B  #12, D6               
-                    LSR.W   D6, D5                  * Shift 12 bits to the right (to get first 4 bits)
-                    MULU    #8, D5                  * offset is multiple of 8
+                    MOVE.W  opWord,D5              * opWord to D5 for multiplication
+                    MOVE.B  #12,D6               
+                    LSR.W   D6,D5                  * Shift 12 bits to the right (to get first 4 bits)
+                    MULU    #8,D5                  * offset is multiple of 8
                     JSR     0(A0,D5)                * Jump indirect with index
                  
-                    ** Increment address for DATA if opErr still set
-                    **    When instruction is error, increment 4 bytes for DATA
-                    **    When instruction is valid, the jump subroutine will handle the increment
-                    **
+                    ** Reset A2 to opNxtAdr if invalid instruction
+                    **    
                     CMP.B   #1,opErr
-                    BEQ     Fn_MAIN_IncDATA
-                    BRA     Fn_MAIN_IncSkip
-Fn_MAIN_IncDATA
-
-Fn_MAIN_IncSkip
+                    BEQ     Fn_MAIN_ErrIns          * Instruction error, reset A2
+                    BRA     Fn_MAIN_Dsp             * Instruction valid, display
+Fn_MAIN_ErrIns      ADDA.L  #4,A2                   * Resetting A2
                     
                     ** Display result
                     **
-                    JSR     SR_DSP_DISPLAY
+Fn_MAIN_Dsp         JSR     SR_DSP_DISPLAY
                    
                     ** Max lines display stop, wait for enter
                     **
@@ -358,6 +355,8 @@ opErr               DC.B     $01                     * Error byte: If set to 1 t
 
 opValAdr            DC.L     $00000000               * Instruction address - used for calculation
 opDspAdr            DC.B     '89ABCDEF',0            * String hex value display for address
+opNxtAdr            DC.L     $00000000               * Store next valid word in case instruction returns error
+
 opDspNam            DC.L     $00000000               * Pointer to full text name e.g. 'MOVE'
 opValSiz            DC.B     $FF                     * Data value size ($FF not set, 0=byte, 1=word, 2=long)
 
@@ -394,6 +393,7 @@ opSpace             DC.B     ' ',0
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 
