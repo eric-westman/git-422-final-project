@@ -68,7 +68,9 @@ Fn_MAIN_Start
                     ** ***************************************
                     ** END: TESTS
                     ** ***************************************
-                             
+                    
+                    JSR     SR_DSP_HEADER
+                    
                     LEA     Fn_MAIN_Jump, A0        * Mem space for jump table   
                     MOVE.L  adrStart, A2            * Mem space for disassembly
                      
@@ -80,7 +82,7 @@ fn_MAIN_Loop
                     
                     ** Reset local variables
                     **
-                    MOVE.B  #$00,opID               * Reset opID (first 4 bits of opWord)
+                    MOVE.B  #$00,opID               * Reset opID (first 4 bits of opcode word)
                     MOVE.B  #$01,opErr              * Reset error $01 - assume error until instruction found
                     MOVE.B  #$FF,opValSiz           * Reset size $FF (means not set)
                     
@@ -119,7 +121,7 @@ Fn_MAIN_ChkLin      ADDI.B  #1,D7                   * Increment line counter
 
                     CLR.L D6                        * Modulo on maxLines and line counter
                     MOVE.L D7,D6                    * Line counter to D6 for division
-                    DIVU #5,D6                      * Set line count max here - 5 lines per page (test)
+                    DIVU #10,D6                     * Set line count max here - 10 lines per page (test)
                     SWAP D6                         * Swap for remainder (the modulo part)
     
                     CMP.B   #0,D6
@@ -143,6 +145,11 @@ Fn_MAIN_ChkEnd      CMP.L   adrEnd, A2
                     BEQ     Fn_MAIN_ChkAgn          * Reached end of memory region
                     BRA     Fn_MAIN_Continue        * Continue to next loop iteration
 Fn_MAIN_ChkAgn      ** Logic to check for for Y or N to check another region of memory
+                    LEA     msgEndMem,A1            * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    MOVE.B  #5,D0                   * Trap task 2 does the following:
+                    TRAP    #15                     * Read single char into D1.B - repurposed for ENTER key
 
 Fn_MAIN_Continue    BRA     Fn_MAIN_Loop            * Loop around and check another Word
                     
@@ -203,6 +210,37 @@ Fn_MAIN_Jump        JSR     SR_IDX                  * No instructions @ ID=0
 SR_UI_INPUT
 
 ** -----------------------------------------------------------
+** UI: Display Header
+** ----------------------------------------------------------- 
+SR_DSP_HEADER
+
+                    ** Header line 03
+                    LEA     msgTop03,A1             * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    ** Header line 01
+                    LEA     msgTop01,A1             * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    ** Header line 02
+                    LEA     msgTop02a,A1            * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    LEA     msgNewLine,A1           * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    ** Header line 03
+                    LEA     msgTop03,A1             * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    RTS
+
+** -----------------------------------------------------------
 ** UI: Display item
 ** ----------------------------------------------------------- 
 SR_DSP_DISPLAY
@@ -249,6 +287,36 @@ Fn_Dsp_Instr                                        * Instruction is valid
                     MOVE.L  opDspNam,A1             * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
+                    
+                    ** Instruciton size
+                    **
+                    CMP.B   #00,opValSiz
+                    BEQ     Fn_Dsp_SizB
+                    CMP.B   #01,opValSiz
+                    BEQ     Fn_Dsp_SizW
+                    CMP.B   #02,opValSiz
+                    BEQ     Fn_Dsp_SizL
+Fn_Dsp_SizB
+                    LEA     opPeriod,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    LEA     opSiz00,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+Fn_Dsp_SizW
+                    LEA     opPeriod,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    LEA     opSiz01,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+Fn_Dsp_SizL
+                    LEA     opPeriod,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    LEA     opSiz02,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen                 
           
 Fn_Dsp_Done                                         * Done with instruction display
                     ** End of line
@@ -257,16 +325,6 @@ Fn_Dsp_Done                                         * Done with instruction disp
                     TRAP    #15                     * I/O Trap - write message to screen
                     
                     RTS                             * Return back to caller
-   
-** -----------------------------------------------------------
-** UI: Convert Long Hexadecimal value to a string
-** -----------------------------------------------------------              
-SR_LNG_STR
-
-** -----------------------------------------------------------
-** UI: Convert Word Hexadecimal value to a string
-** -----------------------------------------------------------
-SR_WRD_STR
 
 ** -----------------------------------------------------------
 ** Convert single hexadecimal value to a string value
@@ -360,9 +418,6 @@ opNxtAdr            DC.L     $00000000               * Store next valid word in 
 opDspNam            DC.L     $00000000               * Pointer to full text name e.g. 'MOVE'
 opValSiz            DC.B     $FF                     * Data value size ($FF not set, 0=byte, 1=word, 2=long)
 
-** XXXXXXXX
-opDspSiz            DC.L     $00000000               * Pointer to full text size e.g. 'B','W','L' - need to REMOVE THIS
-
 opDstReg            DC.B     $00                     * Destination Register Value
 opDstMod            DC.B     $00                     * Destination Mode Value
 opSrcReg            DC.B     $00                     * Source Register Value
@@ -385,6 +440,11 @@ opSiz01             DC.B     'W',0                   * String value for instruti
 opSiz02             DC.B     'L',0                   * String value for instrution size 'L'
 
 msgPage             DC.B     'Hit Enter to go to the next page',0
+msgEndMem           DC.B     'You have reached the end of the memory sequence. Would you like to continue?',0
+msgTop01            DC.B     '3 Cores disassembler',CR,LF,0
+msgTop02a           DC.B     'Memory range:',0
+msgTop02b           DC.B     ' to ',0
+msgTop03            DC.B     '**************************************************',CR,LF,0
 msgNewLine          DC.B     CR,LF,0
 opComma             DC.B     ',',0
 opPeriod            DC.B     '.',0
@@ -393,6 +453,7 @@ opSpace             DC.B     ' ',0
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 

@@ -120,21 +120,22 @@ Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >=
                     CMP.B   #7, opSrcReg                * Destination register <= 7
                     BGT     Fn_MOVE_Error
                     
+                    ** ***************************************
+                    ** Set instruction size - the .B,.W,.L part
+                    ** Note: size set by opID only for MOVE, MOVEA
+                    ** ***************************************
                     CMP.B   #1, opID                    * Instruction size is Byte
                     BEQ     Fn_MOVE_Siz00
                     CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
                     BEQ     Fn_MOVE_Siz01
                     CMP.B   #2, opID                    * Instruction size is Long
                     BEQ     Fn_MOVE_Siz02
-Fn_MOVE_Siz00       *LEA     opSiz00, A3                 * Display size is byte
-                    *MOVE.L  A3, opDspSiz
-                    MOVE.B  opSiz00, opDspSiz
-Fn_MOVE_Siz01       *LEA     opSiz01, A3                 * Display size is word
-                    *MOVE.L  A3, opDspSiz
-                    MOVE.B  opSiz01, opDspSiz
-Fn_MOVE_Siz02       *LEA     opSiz02, A3                 * Display size is long
-                    *MOVE.L  A3, opDspSiz
-                    MOVE.B  opSiz02, opDspSiz
+Fn_MOVE_Siz00       MOVE.B  #$00,opValSiz               * Set size as byte
+                    BRA     Fn_MOVE_SrcMod                
+Fn_MOVE_Siz01       MOVE.B  #$01,opValSiz               * Display size is word
+                    BRA     Fn_MOVE_SrcMod                    
+Fn_MOVE_Siz02       MOVE.B  #$02,opValSiz               * Display size is long
+                    BRA     Fn_MOVE_SrcMod
                     
                     ** ***************************************
                     ** Setup address incrememter
@@ -143,8 +144,8 @@ Fn_MOVE_Siz02       *LEA     opSiz02, A3                 * Display size is long
                     **    Waiting to end because there may be an error in data
                     **      which denotes the whole instruction as DATA
                     ** ***************************************
-                    CLR.B   D5
-                    ADDI.B  #4,D5                       * Add 4 bytes for instruction
+                    *CLR.B   D5
+                    *ADDI.B  #4,D5                       * Add 4 bytes for instruction
                     
                     ** ***************************************
                     ** Grab extra DATA if needed
@@ -188,15 +189,15 @@ Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byt
                     
 Fn_MOVE_DtaSrcByt   MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
                     MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
-                    ADDI.B  #1,D5                       * Increment address count 1 byte
+                    *ADDI.B  #1,D5                       * Increment address count 1 byte
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
                     MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
-                    ADDI.B  #2,D5                       * Increment address count 2 bytes
+                    *ADDI.B  #2,D5                       * Increment address count 2 bytes
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
                     MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
-                    ADDI.B  #4,D5                       * Increment address count 4 bytes
+                    *ADDI.B  #4,D5                       * Increment address count 4 bytes
                     BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 
                     ** DESTINATION
@@ -225,6 +226,7 @@ Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so th
 Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
                     *MOVEA D0-D7/A0-A6                  * Reset registers
                     RTS                                 * Return to main
+
 
 
 
