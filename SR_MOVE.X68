@@ -5,14 +5,18 @@
 **
 ** (This part of the code will need to be duplicated for each opcode)
 **
-** Parameters
-**  opWord - OpCode (4 bits) set in main
+** Input Parameters
+**  opWord      OpCode (4 bits) set in main
 **
 ** Subroutine registers
-**  D3 - Subroutine shifting
-**  D4 - Subroutine shifting
-**  D5 - Address increment count
-**  A3 - Temp storage space for text
+**  D3          Subroutine shifting
+**  D4          Subroutine shifting
+**  D5          Address increment count
+**  A3          Temp storage space for text
+**
+** Output Parameters
+**  opErr       Error flag set to 0 if instruction is valid
+**  opDspNam    Instruction name pointer to string name for display
 **
 ** ********************************************************************************
 
@@ -124,6 +128,7 @@ Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >=
                     ** ***************************************
                     ** Set instruction size - the .B,.W,.L part
                     ** Note: size set by opID only for MOVE, MOVEA
+                    **       other instructions use 3 bits for size
                     ** ***************************************
                     CMP.B   #1, opID                    * Instruction size is Byte
                     BEQ     Fn_MOVE_Siz00
@@ -137,16 +142,6 @@ Fn_MOVE_Siz01       MOVE.B  #$01,opValSiz               * Display size is word
                     BRA     Fn_MOVE_SrcMod                    
 Fn_MOVE_Siz02       MOVE.B  #$02,opValSiz               * Display size is long
                     BRA     Fn_MOVE_SrcMod
-                    
-                    ** ***************************************
-                    ** Setup address incrememter
-                    **    Need to manually increment address location
-                    **    Store increment value in D5, then add to A2 at end
-                    **    Waiting to end because there may be an error in data
-                    **      which denotes the whole instruction as DATA
-                    ** ***************************************
-                    *CLR.B   D5
-                    *ADDI.B  #4,D5                       * Add 4 bytes for instruction
                     
                     ** ***************************************
                     ** Grab extra DATA if needed
@@ -227,6 +222,7 @@ Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so th
 Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
                     *MOVEA D0-D7/A0-A6                  * Reset registers
                     RTS                                 * Return to main
+
 
 
 

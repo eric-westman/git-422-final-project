@@ -6,8 +6,7 @@
 ** -----------------------------------------------------------
 
                     ORG    $1000
-START:
-                    MOVEA.L #$00100000,SP           * Initialize stack pointer
+                    
 ** -----------------------------------------------------------
 ** MAIN LOGIC
 **
@@ -33,6 +32,8 @@ START:
 **   A6 - misc
 **
 ** -----------------------------------------------------------
+MAIN
+                    MOVEA.L #$00100000,SP           * Initialize stack pointer
 Fn_MAIN_Start
                     ** ***************************************
                     ** RESET: Program variables
@@ -81,12 +82,18 @@ Fn_MAIN_Start
                     ** END: TESTS
                     ** ***************************************
                     
-                    JSR     SR_DSP_HEADER
-                    
                     LEA     Fn_MAIN_Jump,A0         * Mem space for jump table   
                     MOVE.L  adrValStart,A2          * Mem space for disassembly
+                    
+                    ** Clear screen
+                    MOVE.B  #11,D0                  * Trap task 2 does the following:
+                    MOVE.W  #$FF00,D1               * Clear the screen
+                    TRAP    #15
+                    
+                    ** Display header
+                    JSR     SR_DSP_HEADER
                      
-fn_MAIN_Loop        
+fn_MAIN_Loop                                                
                     ** Prepare loop variables
                     **
                     MOVE.L  A2,opValAdr             * Set output address as current - need for display
@@ -141,32 +148,46 @@ Fn_MAIN_ChkLin      ADDI.B  #1,D7                   * Increment line counter
                     BEQ     Fn_MAIN_ChkPag          * Reached the maximum number of lines per page
                     BRA     Fn_MAIN_ChkEnd          * Continue to Check if at End of address space
                     
-Fn_MAIN_ChkPag      ** Logic to check ENTER key to show next page
-                    LEA     msgPage,A1              * Loads MESSAGE into A1
+                    ** Logic to check ENTER key to show next page
+                    **
+Fn_MAIN_ChkPag      LEA     msgPage,A1              * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
                     MOVE.B  #5,D0                   * Trap task 2 does the following:
                     TRAP    #15                     * Read single char into D1.B - repurposed for ENTER key
                     
+                    ** Clear screen
                     MOVE.B  #11,D0                  * Trap task 2 does the following:
                     MOVE.W  #$FF00,D1               * Clear the screen
                     TRAP    #15
+                    
+                    ** Display header
+                    JSR     SR_DSP_HEADER
                     
                     ** Reached end of memory @ A2 - stop main logic, ask to do it again
                     **
 Fn_MAIN_ChkEnd      CMP.L   adrValEnd, A2
                     BEQ     Fn_MAIN_ChkAgn          * Reached end of memory region
                     BRA     Fn_MAIN_Continue        * Continue to next loop iteration
-Fn_MAIN_ChkAgn      ** Logic to check for for Y or N to check another region of memory
-                    LEA     msgEndMem,A1            * Loads MESSAGE into A1
+                    
+                    ** Logic to check for for Y or N to check another region of memory
+                    **
+Fn_MAIN_ChkAgn      LEA     msgEndMem01,A1          * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
+                    LEA     msgEndMem02,A1          * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    LEA     msgEndMemAns,A1         * Loads MESSAGE into A1
                     MOVE.B  #2,D0                   * Trap task 2 does the following:
-                    TRAP    #15                     * Read string store (A1), length in D1.W
-                    CMP.L   #$594553,A1             * Checking for YES - otherwise Nope
-                    BEQ     Fn_Main_Start           * Restart program
+                    TRAP    #15                     * Read string to (A1), length in D1.W                    
+                    CMP.B   #$59,(A1)               * Checking for 'Y' - otherwise Nope
+                    BEQ     Fn_MAIN_Start           * Restart program
+                    CMP.B   #$79,(A1)               * Checking for 'y' - otherwise Nope
+                    BEQ     Fn_MAIN_Start           * Restart program
                     BRA     Fn_Main_Done            * Exit program
-
+                    
 Fn_MAIN_Continue    BRA     Fn_MAIN_Loop            * Loop around and check another Word
                     
                     BRA     Fn_MAIN_Done            * Exit the program
@@ -317,6 +338,7 @@ Fn_Dsp_Instr                                        * Instruction is valid
                     TRAP    #15                     * Display to screen
                     
                     ** Instruciton size
+                    ** Note: some instructions may not have a size (opValSiz = $FF)
                     **
                     CMP.B   #00,opValSiz
                     BEQ     Fn_Dsp_SizB
@@ -469,8 +491,11 @@ opSiz00             DC.B     'B',0                   * String value for instruti
 opSiz01             DC.B     'W',0                   * String value for instrution size 'W'
 opSiz02             DC.B     'L',0                   * String value for instrution size 'L'
 
-msgPage             DC.B     'Hit Enter to go to the next page',0
-msgEndMem           DC.B     'You have reached the end of the memory sequence. Would you like to continue?',0
+msgPage             DC.B     'Hit Enter to go to the next page',CR,LF,0
+msgEndMem01         DC.B     'You have reached the end of the memory sequence.',CR,LF,0
+msgEndMem02         DC.B     '         Y to continue or any other key to quit: ',0
+msgEndMemAns        DC.B     'Placeholder for user input',0
+msgDone             DC.B     'Thank you for using 3 Cores disassembler!',0
 msgTop01            DC.B     '3 Cores disassembler',CR,LF,0
 msgTop02a           DC.B     'Memory range:',0
 msgTop02b           DC.B     ' to ',0
@@ -481,8 +506,18 @@ opPeriod            DC.B     '.',0
 opSpace             DC.B     ' ',0
 
 
-Fn_MAIN_Done        
-                    END      START
+Fn_MAIN_Done        ** Clear screen
+                    MOVE.B  #11,D0                  * Trap task 2 does the following:
+                    MOVE.W  #$FF00,D1               * Clear the screen
+                    TRAP    #15
+
+                    ** Thank you message
+                    LEA     msgDone,A1              * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    END      $1000
+
 
 
 
