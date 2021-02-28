@@ -6,8 +6,8 @@
 ** -----------------------------------------------------------
 
                     ORG    $1000
-START:              
-
+START:
+                    MOVEA.L #$00100000,SP           * Initialize stack pointer
 ** -----------------------------------------------------------
 ** MAIN LOGIC
 **
@@ -19,13 +19,18 @@ START:
 
 **   A0 - Jump Table
 **   A1 - Reserved for Trap
-**   A2 - Instruction space (the contents being disassembled)
+**   A2 - Instruction space pointer (the contents being disassembled)
+**   A7 - Stack pointer
 **
 ** Other data (ok to overwrite)
 **   D3 - misc
 **   D4 - misc
 **   D5 - misc
 **   D6 - misc
+**   A3 - misc
+**   A4 - misc
+**   A5 - misc
+**   A6 - misc
 **
 ** -----------------------------------------------------------
 Fn_MAIN_Start
@@ -37,15 +42,22 @@ Fn_MAIN_Start
                     ** Note: Addresses will be set by user 'eventually'
                     **       testing start and end without the UI for now
                     **       In other words - this is where user interface will live
+                    ** Note: Most likely place that UI will be called as a subroutine
                     **
-                    MOVE.L  #$3000, adrStart
-                    MOVE.L  #$3050, adrEnd
+                    MOVE.L  #$3000, adrValStart     * Manually setting start address until UI exists
+                    LEA     adrValStart,A3
+                    LEA     adrDspStart,A4
+                    JSR     SR_HEX_STR              * Copy numeric start address type to string for display
+                    MOVE.L  #$3050, adrValEnd       * Manually setting end address until UI exists
+                    LEA     adrValEnd,A3
+                    LEA     adrDspEnd,A4
+                    JSR     SR_HEX_STR              * Copy numeric end address type to string for display
                     
                     ** ***************************************
                     ** BEGIN: TESTS
                     ** ***************************************
 
-                    MOVE.L  adrStart, A2            * Mem space for tests
+                    MOVE.L  adrValStart, A2         * Mem space for tests
 
                     ** TEST: MOVE - mem to mem
                     **
@@ -71,14 +83,15 @@ Fn_MAIN_Start
                     
                     JSR     SR_DSP_HEADER
                     
-                    LEA     Fn_MAIN_Jump, A0        * Mem space for jump table   
-                    MOVE.L  adrStart, A2            * Mem space for disassembly
+                    LEA     Fn_MAIN_Jump,A0         * Mem space for jump table   
+                    MOVE.L  adrValStart,A2          * Mem space for disassembly
                      
 fn_MAIN_Loop        
-                    ** Set opWord (OpCode Word) and opValAdr (OpCode Address)
+                    ** Prepare loop variables
+                    **
                     MOVE.L  A2,opValAdr             * Set output address as current - need for display
                     MOVE.W  (A2)+,opWord            * load first 4 bit OpCode Word, increment A2 (4 bytes)
-                    MOVE.L  A2,opNxtAdr             * load next valid word address for invalid instruction
+                    MOVE.L  A2,opNxtAdr             * Save next valid word address for invalid instruction
                     
                     ** Reset local variables
                     **
@@ -96,20 +109,20 @@ fn_MAIN_Loop
                     MOVE.L  $0000, opDta2
                     MOVE.B  $FF, opDta2T
                     
-                    ** Jump table to instruction disassembler
+                    ** Jump table
                     **
-                    MOVE.W  opWord,D5              * opWord to D5 for multiplication
+                    MOVE.W  opWord,D5               * opWord to D5 for multiplication
                     MOVE.B  #12,D6               
-                    LSR.W   D6,D5                  * Shift 12 bits to the right (to get first 4 bits)
-                    MULU    #8,D5                  * offset is multiple of 8
+                    LSR.W   D6,D5                   * Shift 12 bits to the right (to get first 4 bits)
+                    MULU    #8,D5                   * offset is multiple of 8
                     JSR     0(A0,D5)                * Jump indirect with index
                  
-                    ** Reset A2 to opNxtAdr if invalid instruction
+                    ** Invalid instruction
                     **    
                     CMP.B   #1,opErr
                     BEQ     Fn_MAIN_ErrIns          * Instruction error, reset A2
                     BRA     Fn_MAIN_Dsp             * Instruction valid, display
-Fn_MAIN_ErrIns      ADDA.L  #4,A2                   * Resetting A2
+Fn_MAIN_ErrIns      MOVE.L  opNxtAdr,A2             * Resetting A2 to next valid word
                     
                     ** Display result
                     **
@@ -141,15 +154,18 @@ Fn_MAIN_ChkPag      ** Logic to check ENTER key to show next page
                     
                     ** Reached end of memory @ A2 - stop main logic, ask to do it again
                     **
-Fn_MAIN_ChkEnd      CMP.L   adrEnd, A2
+Fn_MAIN_ChkEnd      CMP.L   adrValEnd, A2
                     BEQ     Fn_MAIN_ChkAgn          * Reached end of memory region
                     BRA     Fn_MAIN_Continue        * Continue to next loop iteration
 Fn_MAIN_ChkAgn      ** Logic to check for for Y or N to check another region of memory
                     LEA     msgEndMem,A1            * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
-                    MOVE.B  #5,D0                   * Trap task 2 does the following:
-                    TRAP    #15                     * Read single char into D1.B - repurposed for ENTER key
+                    MOVE.B  #2,D0                   * Trap task 2 does the following:
+                    TRAP    #15                     * Read string store (A1), length in D1.W
+                    CMP.L   #$594553,A1             * Checking for YES - otherwise Nope
+                    BEQ     Fn_Main_Start           * Restart program
+                    BRA     Fn_Main_Done            * Exit program
 
 Fn_MAIN_Continue    BRA     Fn_MAIN_Loop            * Loop around and check another Word
                     
@@ -226,6 +242,18 @@ SR_DSP_HEADER
                     
                     ** Header line 02
                     LEA     msgTop02a,A1            * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    LEA     adrDspStart,A1          * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+                    
+                    LEA     msgTop02b,A1            * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15 
+                    
+                    LEA     adrDspEnd,A1          * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
                     
@@ -403,8 +431,10 @@ Fn_Hex_Str_Done
 ** Variables and constants
 ** -----------------------------------------------------------
 
-adrStart            DC.L     $00000000               * Starting address to check - set by user
-adrEnd              DC.L     $00000000               * Ending address to check - set by user
+adrValStart         DC.L     $00000000               * Starting address to check - set by user
+adrDspStart         DC.B     '89ABCDEF',0            * String hex value display for start address
+adrValEnd           DC.L     $00000000               * Ending address to check - set by user
+adrDspEnd           DC.B     '89ABCDEF',0            * String hex value display for end address
 maxLines            DC.B     $5                      * Max lines to display (30) $1E, test (5) $5
 
 opWord              DC.W     $0000                   * 16 bit instruction Word
@@ -453,6 +483,7 @@ opSpace             DC.B     ' ',0
 
 Fn_MAIN_Done        
                     END      START
+
 
 
 

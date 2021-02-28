@@ -4,10 +4,11 @@
 **             Covers ID's 1,2,3. MOVE, MOVEA
 **
 ** (This part of the code will need to be duplicated for each opcode)
-** Deciphering
-**   This will run after the initial jump instruction
 **
-** Subroutine data
+** Parameters
+**  opWord - OpCode (4 bits) set in main
+**
+** Subroutine registers
 **  D3 - Subroutine shifting
 **  D4 - Subroutine shifting
 **  D5 - Address increment count
@@ -226,6 +227,7 @@ Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so th
 Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
                     *MOVEA D0-D7/A0-A6                  * Reset registers
                     RTS                                 * Return to main
+
 
 
 
