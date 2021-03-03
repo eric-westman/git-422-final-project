@@ -37,7 +37,7 @@ SR_TEST_ID3
                     ** TEST: MOVE - mem to mem
                     **
                     ** MOVE.L $FFFF6000,$FFFF6010
-                    **   code: $23F9 FFFF6000 FFFF6010
+                    **   code: $23F9 A0106000 A0106010
                     **
                     MOVE.W  #$23F9, (A2)+
                     MOVE.L  #$A0106000, (A2)+
@@ -46,13 +46,14 @@ SR_TEST_ID3
                     ** TEST: Immediate value to mem
                     **
                     ** MOVE.L #255,$FFFF6010
-                    **   code: $23F9 000000FF FFFF6001
+                    **   code: $23F9 000000FF A0106010
                     **
                     MOVE.W  #$23FC, (A2)+
                     MOVE.L  #$000000FF, (A2)+
                     MOVE.L  #$A0106010, (A2)+
                     
                     RTS
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~

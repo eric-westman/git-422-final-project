@@ -87,7 +87,7 @@ fn_MAIN_Loop
 
                     ** Reset local variables
                     **
-                    
+
                     MOVE.B  #$00,opID               * Reset opID (first 4 bits of opcode word)
                     MOVE.B  #$01,opErr              * Reset error $01 - assume error until instruction found
                     MOVE.b  #$FF,opValSiz
@@ -284,7 +284,7 @@ SR_DSP_DISPLAY
                     **
                     LEA     opOutBuf,A3             * Reset pointer to output buffer
                     MOVE.B  #$00,(A3)               * Insert NULL
-                    
+
                     ** Push opValAdr to opStrAdr
                     LEA     opValAdr,A4             * input hex
                     LEA     opStrAdr,A5             * output string
@@ -301,23 +301,11 @@ SR_DSP_DISPLAY
 Fn_Dsp_Data         ** Process invalid instruction (DATA)
                     **
 
-                    ** Instruction address
-                    *LEA     opStrAdr,A1             * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15                     * Display to screen
-
                     ** Space
-                    *LEA     opSpace,A1              * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
-                    *MOVE.B  opSpace,(A3)+
                     LEA     opSpace,A4
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 
                     ** Instruction name
-                    *LEA     opNam00,A1              * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15                     * Display to screen
                     LEA     opNam00,A4
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 
@@ -325,70 +313,50 @@ Fn_Dsp_Data         ** Process invalid instruction (DATA)
 
 Fn_Dsp_Instr        ** Process instruction
                     **
-                    
-                    ** Instruction address
-                    *LEA     opStrAdr,A1             * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15                     * Display to screen
 
                     ** Space
-                    *LEA     opSpace,A1              * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
                     LEA     opSpace,A4
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 
                     ** Instruction name
-                    *MOVE.L  opPtrNam,A1             * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15                     * Display to screen
                     MOVE.L  opPtrNam,A4
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 
                     ** Instruciton size
                     **
                     CMP.B   #0,opValSiz
-                    BEQ     Fn_DSP_Siz00            * Size is Byte           
+                    BEQ     Fn_DSP_Siz00            * Size is Byte
                     CMP.B   #1,opValSiz
-                    BEQ     Fn_DSP_Siz01            * Size is Word                    
+                    BEQ     Fn_DSP_Siz01            * Size is Word
                     CMP.B   #2,opValSiz
-                    BEQ     Fn_DSP_Siz02            * Size is Long                
-                    BRA     Fn_DSP_DTA1             * Size not set, go to check Data 1     
-              
-Fn_DSP_Siz00        *LEA     opSiz00,A1              * Set size - point to '.B' string
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
-                    LEA     opSiz00,A4
+                    BEQ     Fn_DSP_Siz02            * Size is Long
+                    BRA     Fn_DSP_DTA1             * Size not set, go to check Data 1
+
+Fn_DSP_Siz00        LEA     opSiz00,A4              * '.B' string
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
-                    BRA     Fn_DSP_DTA1
-                    
-Fn_DSP_Siz01        *LEA     opSiz01,A1              * Set size - point to '.W' string
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
-                    LEA     opSiz01,A4
+                    BRA     Fn_DSP_OPR1
+
+Fn_DSP_Siz01        LEA     opSiz01,A4              * '.W' string
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
-                    BRA     Fn_DSP_DTA1
-                    
-Fn_DSP_Siz02        *LEA     opSiz02,A1              * Set size - point to '.L' string
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
-                    LEA     opSiz02,A4
+                    BRA     Fn_DSP_OPR1
+
+Fn_DSP_Siz02        LEA     opSiz02,A4              * '.L' string
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
-                    BRA     Fn_DSP_DTA1                   
-                    
+                    BRA     Fn_DSP_OPR1
+
+Fn_DSP_OPR1                                         * Display First Operand
+                    LEA     opTab,A4                * Tab (or calculated spaces)
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+
 Fn_DSP_DTA1         ** Data 1 (source)
                     **
-                    
-                    ** Tab
-                    *LEA     opTab,A1              * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
-                    LEA     opTab,A4
-                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
-                    
-                    *MOVE.B  #$00,opStrDta1          * Reset Data 1 string
-                    *LEA     opStrDta1,A3            * Setup pointer to data string
-                    
+
+                    ** Check if source mode set (may not have a source)
+                    CMP.B   #$FF,opDta1
+                    BEQ     Fn_DSP_DTA2             * No source data, goto check Dta2
+
+                    ** Check source mode
+                    **
                     CMP.B   #0,opSrcMod
                     BEQ     Fn_DSP_DTA1_00          * Handle Reg Mode 0 Dn
                     CMP.B   #1,opSrcMod
@@ -401,22 +369,20 @@ Fn_DSP_DTA1         ** Data 1 (source)
                     BEQ     Fn_DSP_DTA1_04          * Handle Reg Mode 4 -(An)
                     CMP.B   #7,opSrcMod
                     BEQ     Fn_DSP_DTA1_07          * Handle Reg Mode 7 (xxx).W, (xxx).L, #<data>
-                    
-                    BRA     Fn_DSP_DTA2             * Check data 2 (destination)
+                    BRA     Fn_DSP_OPR2             * Check data 2 (destination)
+
 Fn_DSP_DTA1_00
                     MOVE.B  #$44,(A3)+              * Insert 'D' character
                     MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
-                    *BRA     Fn_DSP_DTA1_PT          * Print data string
-                    BRA     Fn_DSP_DTA2             * Display data 2           
+                    BRA     Fn_DSP_OPR2             * Display data 2
 Fn_DSP_DTA1_01
                     MOVE.B  #$41,(A3)+              * Insert 'A' character
                     MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
-                    *BRA     Fn_DSP_DTA1_PT          * Print data string
-                    BRA     Fn_DSP_DTA2             * Display data 2
+                    BRA     Fn_DSP_OPR2             * Display data 2
 Fn_DSP_DTA1_02
                     MOVE.B  #$28,(A3)+              * Insert '(' character
                     MOVE.B  #$41,(A3)+              * Insert 'A' character
@@ -424,8 +390,7 @@ Fn_DSP_DTA1_02
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
                     MOVE.B  #$29,(A3)+              * Insert ')' character
-                    *BRA     Fn_DSP_DTA1_PT          * Print data string
-                    BRA     Fn_DSP_DTA2             * Display data 2
+                    BRA     Fn_DSP_OPR2             * Display data 2
 Fn_DSP_DTA1_03
                     MOVE.B  #$28,(A3)+              * Insert '(' character
                     MOVE.B  #$41,(A3)+              * Insert 'A' character
@@ -434,7 +399,7 @@ Fn_DSP_DTA1_03
                     MOVE.B  D3,(A3)+                * Insert Register value
                     MOVE.B  #$29,(A3)+              * Insert ')' character
                     MOVE.B  #$2B,(A3)+              * Insert '+' character
-                    BRA     Fn_DSP_DTA2             * Display data 2
+                    BRA     Fn_DSP_OPR2             * Display data 2
 Fn_DSP_DTA1_04
                     MOVE.B  #$2D,(A3)+              * Insert '-' character
                     MOVE.B  #$28,(A3)+              * Insert '(' character
@@ -443,28 +408,52 @@ Fn_DSP_DTA1_04
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
                     MOVE.B  #$29,(A3)+              * Insert ')' character
-                    BRA     Fn_DSP_DTA2             * Display data 2
+                    BRA     Fn_DSP_OPR2             * Display data 2
 Fn_DSP_DTA1_07
-            
-*Fn_DSP_DTA1_PT      ** Print Data 1 to screen
-*                    **
-*                    LEA     opStrDta1,A1            * Loads MESSAGE into A1
-*                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
-*                    TRAP    #15
-       
+                    CMP.B   #0,opDta1T
+                    BEQ     Fn_DSP_DTA1_BYT         * Display data as byte
+                    CMP.B   #1,opDta1T
+                    BEQ     Fn_DSP_DTA1_WRD         * Display data as word
+                    CMP.B   #2,opDta1T
+                    BEQ     Fn_DSP_DTA1_LNG         * Display data as long
+                    BRA     Fn_DSP_DTA1_ERR
+Fn_DSP_DTA1_BYT
+                    LEA     opDta1,A4               * input hex
+                    LEA     opStrDtaWrd,A5          * output string
+                    JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+                    LEA     opStrDtaWrd,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_OPR2             * Display data 2
+Fn_DSP_DTA1_WRD
+                    LEA     opDta1,A4               * input hex
+                    LEA     opStrDtaWrd,A5          * output string
+                    JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+                    LEA     opStrDtaWrd,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_OPR2             * Display data 2
+Fn_DSP_DTA1_LNG
+                    LEA     opDta1,A4               * input hex
+                    LEA     opStrDtaLng,A5          * output string
+                    JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+                    LEA     opStrDtaLng,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_OPR2             * Display data 2
+Fn_DSP_DTA1_ERR
+                    LEA     msgErr,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_OPR2             * Display data 2
+
+Fn_DSP_OPR2                                         * Display Second Operand
+                    LEA     opComma,A4              * Comma
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+
 Fn_DSP_DTA2         ** Data 2 (destination)
                     **
-                    
-                    ** Comma
-                    *LEA     opComma,A1              * Loads MESSAGE into A1
-                    *MOVE.B  #14,D0                  * Use (A1) no CR/LF
-                    *TRAP    #15
-                    LEA     opComma,A4
-                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
-                    
-                    *MOVE.B  #$00,opStrDta2          * Reset Data 2 string
-                    *LEA     opStrDta2,A3            * Setup pointer to data string
-                    
+
+                    ** Check if destination mode set (may not have a destination)
+                    CMP.B   #$FF,opDstMod
+                    BEQ     Fn_DSP_DONE             * No source data, goto check Dta2
+
                     CMP.B   #0,opDstMod
                     BEQ     Fn_DSP_DTA2_00          * Handle Reg mode 0 (Dn)
                     CMP.B   #1,opDstMod
@@ -477,22 +466,19 @@ Fn_DSP_DTA2         ** Data 2 (destination)
                     BEQ     Fn_DSP_DTA2_04          * Handle Reg Mode 4 -(An)
                     CMP.B   #7,opDstMod
                     BEQ     Fn_DSP_DTA2_07          * Handle Reg Mode 7 (xxx).W, (xxx).L, #<data>
-                    
+
                     BRA     Fn_DSP_Done             * Done with data
 Fn_DSP_DTA2_00
                     MOVE.B  #$44,(A3)+              * Insert 'D' character
                     MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
-                    *BRA     Fn_DSP_DTA2_PT          * Print data string
                     BRA     Fn_DSP_DONE             * Done with display
 Fn_DSP_DTA2_01
                     MOVE.B  #$41,(A3)+              * Insert 'A' character
                     MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
-
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
-                    *BRA     Fn_DSP_DTA2_PT          * Print data string
                     BRA     Fn_DSP_DONE             * Done with display
 Fn_DSP_DTA2_02
                     MOVE.B  #$28,(A3)+              * Insert '(' character
@@ -501,7 +487,6 @@ Fn_DSP_DTA2_02
                     ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
                     MOVE.B  D3,(A3)+                * Insert Register value
                     MOVE.B  #$29,(A3)+              * Insert ')' character
-                    *BRA     Fn_DSP_DTA2_PT          * Print data string
                     BRA     Fn_DSP_DONE             * Done with display
 Fn_DSP_DTA2_03
                     MOVE.B  #$28,(A3)+              * Insert '(' character
@@ -522,20 +507,41 @@ Fn_DSP_DTA2_04
                     MOVE.B  #$29,(A3)+              * Insert ')' character
                     BRA     Fn_DSP_DONE             * Done with display
 Fn_DSP_DTA2_07
-                    
-*Fn_DSP_DTA2_PT      ** Print Data 2 to screen
-*                    **                    
-*                    LEA     opStrDta2,A1            * Loads MESSAGE into A1
-*                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
-*                    TRAP    #15 
+                    CMP.B   #0,opDta2T
+                    BEQ     Fn_DSP_DTA2_BYT         * Display data as byte
+                    CMP.B   #1,opDta2T
+                    BEQ     Fn_DSP_DTA2_WRD         * Display data as word
+                    CMP.B   #2,opDta2T
+                    BEQ     Fn_DSP_DTA2_LNG         * Display data as long
+                    BRA     Fn_DSP_DTA2_ERR
+Fn_DSP_DTA2_BYT
+                    LEA     opDta2,A4               * input hex
+                    LEA     opStrDtaWrd,A5          * output string
+                    JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+                    LEA     opStrDtaWrd,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_DONE             * Display data 2
+Fn_DSP_DTA2_WRD
+                    LEA     opDta2,A4               * input hex
+                    LEA     opStrDtaWrd,A5          * output string
+                    JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+                    LEA     opStrDtaWrd,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_DONE             * Display data 2
+Fn_DSP_DTA2_LNG
+                    LEA     opDta2,A4               * input hex
+                    LEA     opStrDtaLng,A5          * output string
+                    JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+                    LEA     opStrDtaLng,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_DONE             * Display data 2
+Fn_DSP_DTA2_ERR
+                    LEA     msgErr,A4
+                    JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+                    BRA     Fn_DSP_DONE             * Display data 2
 
 Fn_Dsp_Done                                         * Done with instruction display
-                    ** End of line
-                    *LEA     msgNewLine,A1           * Load result message "CR,LF"
-                    *MOVE.B  #14,D0                  * Trap task 14 - use (A1)
-                    *TRAP    #15                     * I/O Trap - write message to screen
-
-                    MOVE.B  #$00,(A3)                 * Insert NULL to end string
+                    MOVE.B  #$00,(A3)               * Insert NULL to end string
                     LEA     opOutBuf,A1             * Loads MESSAGE into A1
                     MOVE.B  #13,D0                  * Use (A1) with CR/LF
                     TRAP    #15
@@ -614,15 +620,15 @@ Fn_CPY_STR_Loop     MOVE.B  (A4),D5
 
                     MOVE.B  (A4)+,(A3)+
                     BRA     Fn_CPY_STR_Loop
-                    
+
 Fn_CPY_STR_Done     RTS
- 
+
 ** -----------------------------------------------------------
 ** Length of string output buffer
-** -----------------------------------------------------------                 
+** -----------------------------------------------------------
 SR_CNT_STR_BUF
 
-                    RTS 
+                    RTS
 
 ** -----------------------------------------------------------
 ** Includes: Subroutines etc.
@@ -672,10 +678,10 @@ opSrcMod            DC.B     $FF                     * Source Register Mode
 
 opDta1              DC.L     $00000000               * Data value one (most likely source)
 opDta1T             DC.B     $FF                     * Data value one type ($FF not set, 0=byte, 1=word, 2=long)
-opStrDta1           DC.B     'Placeholder',0         * Data value one string placeholder - dynamically built
 opDta2              DC.L     $00000000               * Data value two (most likely destination)
 opDta2T             DC.B     $FF                     * Data value two type ($FF not set, 0=byte, 1=word, 2=long)
-opStrDta2           DC.B     'Placeholder',0         * Data value two string placeholder - dynamically built
+opStrDtaWrd         DC.B     '0000',0                * Data value string placeholder - dynamically built
+opStrDtaLng         DC.B     '00000000',0            * Data value string placeholder - dynamically built
 
 CR                  EQU      $0D                     * ASCII code for Carriage Return
 LF                  EQU      $0A                     * ASCII code for Line Feed
@@ -687,6 +693,8 @@ opNam02             DC.B     'MOVEA',0               * String value for instruti
 opSiz00             DC.B     '.B',0                  * String value for instrution size 'B'
 opSiz01             DC.B     '.W',0                  * String value for instrution size 'W'
 opSiz02             DC.B     '.L',0                  * String value for instrution size 'L'
+
+msgErr              DC.B     'Error',0               * Debug message
 
 msgPage             DC.B     'Hit Enter to go to the next page',CR,LF,0
 msgEndMem01         DC.B     'You have reached the end of the memory sequence.',CR,LF,0
@@ -716,9 +724,6 @@ Fn_MAIN_Done        ** Clear screen
                     TRAP    #15                     * Display to screen
 
                     END      $1000
-
-
-
 
 *~Font name~Courier New~
 *~Font size~10~

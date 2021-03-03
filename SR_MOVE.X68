@@ -14,8 +14,27 @@
 **  A3          Temp storage space for text
 **
 ** Output Parameters
-**  opErr       Error flag set to 0 if instruction is valid
-**  opPtrNam    Instruction name pointer to string name for display
+**  opErr       error flag set to 0 if instruction is valid
+**              note: opErr set to 1 (error) in main to display as DATA
+**                    if instruction is valid, resetting it allow display
+**                    of valid instruction information
+**
+**  opPtrNam - instruction name pointer to string name for display
+**
+**  opValSiz - size of instruction: $ff default = not set, 0=Byte, 1=Word, 2=Long
+**
+**  opSrcMod - source mode (if it has one)
+**  opSrcReg - source register (if it has one)
+**  opDstMod - destination mode (if it has one)
+**  opDstReg - destination register (if it has one)
+**
+**  opDta1   - source; extra data after instruction
+**  opDta1T  - source; extra data type: $FF=not set, 0=Byte, 1=Word, 2=Long
+**  opDta2   - destination; extra data after instruction
+**  opDta2T  - destination; extra data type: $FF=not set, 0=Byte, 1=Word, 2=Long
+**
+**  opMask   - mask bits for MOVEM
+**  perhaps more local vars - trying to keep it compact
 **
 ** ********************************************************************************
 
