@@ -165,7 +165,7 @@ Fn_MAIN_ChkAgn      LEA     msgEndMem01,A1          * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
-                    LEA     msgEndMemAns,A1         * Loads MESSAGE into A1
+                    LEA     msgInTemp,A1            * Load placeholder so input doesn't overwrite previous message
                     MOVE.B  #2,D0                   * Trap task 2 does the following:
                     TRAP    #15                     * Read string to (A1), length in D1.W
                     CMP.B   #$59,(A1)               * Checking for 'Y' - otherwise Nope
@@ -242,13 +242,31 @@ SR_JUMP             JSR     SR_IDX                  * No instructions @ ID=0
 ** -----------------------------------------------------------
 SR_UI_INPUT
 
+Fn_UI_In_Start      LEA     msgEndMem02,A1          * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgInTemp,A1            * Load placeholder so input doesn't overwrite previous message
+                    MOVE.B  #2,D0                   * Trap task 2 does the following:
+                    TRAP    #15                     * Read string to (A1), length in D1.W
+
+Fn_UI_In_End        LEA     msgEndMem02,A1          * Loads MESSAGE into A1
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgInTemp,A1            * Load placeholder so input doesn't overwrite previous message
+                    MOVE.B  #2,D0                   * Trap task 2 does the following:
+                    TRAP    #15                     * Read string to (A1), length in D1.W
+
+Fn_UI_ChkAdr
+
 ** -----------------------------------------------------------
 ** UI: Display Header
 ** -----------------------------------------------------------
 SR_DSP_HEADER
 
                     ** Header line 03
-                    LEA     msgTop03,A1             * Loads MESSAGE into A1
+                    LEA     msgLine,A1              * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
@@ -279,7 +297,7 @@ SR_DSP_HEADER
                     TRAP    #15                     * Display to screen
 
                     ** Header line 03
-                    LEA     msgTop03,A1             * Loads MESSAGE into A1
+                    LEA     msgLine,A1              * Loads MESSAGE into A1
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
@@ -732,17 +750,17 @@ opSiz02             DC.B     '.L',0                  * String value for instruti
 
 msgErr              DC.B     'Error',0               * Debug message
 
+msgInTemp           DC.B     'Placeholder for user input',0
 msgPage             DC.B     'Hit Enter to go to the next page',CR,LF,0
 msgEndMem01         DC.B     'You have reached the end of the memory sequence.',CR,LF,0
 msgEndMem02         DC.B     '         Y to continue or any other key to quit: ',0
-msgEndMemAns        DC.B     'Placeholder for user input',0
 msgDone             DC.B     'Thank you for using 3 Cores disassembler!',0
 msgTop01            DC.B     '3 Cores disassembler',CR,LF,0
 msgTop02a           DC.B     'Memory range:',0
 msgTop02b           DC.B     ' to ',0
-msgTop03            DC.B     '**************************************************',CR,LF,0
 msgNewLine          DC.B     CR,LF,0
 
+msgLine             DC.B     '**************************************************',CR,LF,0
 opComma             DC.B     ',',0
 opPeriod            DC.B     '.',0
 opSpace             DC.B     ' ',0
