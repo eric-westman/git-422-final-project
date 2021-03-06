@@ -102,6 +102,7 @@ SR_ID4              * This is to grab the first four that are already set, ID4
                     BEQ     Fn_ID4_CheckD3
                     CMP.B   #7, DstMod
                     BEQ     Fn_ID4_LEA
+                    BRA     Fn_ID4_Error
                     
 Fn_ID4_CheckD1
 ** ***************************************
@@ -153,19 +154,132 @@ Fn_ID4_CheckD3
 ** ***************************************
 ** JSR
 ** ***************************************
-Fn_ID4_JSR
+Fn_ID4_JSR          LEA     opNam03,A3
+                    MOVE.L  A3, opPtrName
+                    
+Fn_ID4_VERIFY_JSR   CMP.B   #7, opDestReg
+                    BNE     Fn_ID4_Error
+                    CMP.B   #2, opDestMod
+                    BNE     Fn_ID4_Error
+                    
+                    * Make sure dst reg is only 2,5,6,7 (not 0,1,3,4)
+                    CMP.B   #0, opDstReg
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #1, opDstReg
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #3, opDstReg
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #4, opDstReg
+                    BEQ     Fn_ID4_Error
+                    
+                    * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
+                    CMP.B   #0, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #1, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #3, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #4, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    
+                    * Make sure src reg is between 0-7
+                    CMP.B   #0, opSrcReg                * Destination register >= 0
+                    BLT     Fn_ID4_Error
+                    CMP.B   #7, opSrcReg                * Destination register <= 7
+                    BGT     Fn_ID4_Error
+                    
+Fn_ID4_JSR_Src      CMP.B   #7, opSrcMod
+                    BEQ     Fn_ID4_Data
+                    BRA     Fn_ID4_Done
 
 ** ***************************************
 ** LEA
 ** ***************************************
-Fn_ID4_LEA
+Fn_ID4_LEA          LEA     opNam04,A3
+                    MOVE.L  A3, opPtrName
+                    
+Fn_ID4_VERIFY_LEA   CMP.B   #7, opDestMod
+                    BNE     Fn_ID4_Error
+                    
+                    * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
+                    CMP.B   #0, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #1, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #3, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #4, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    
+                    * Make sure src reg is between 0-7
+                    CMP.B   #0, opSrcReg                * Destination register >= 0
+                    BLT     Fn_ID4VE_Error
+                    CMP.B   #7, opSrcReg                * Destination register <= 7
+                    BGT     Fn_ID4_Error
+                    
+Fn_ID4_LEA_Src      CMP.B   #7, opSrcMod
+                    BEQ     Fn_ID4_Data
+                    BRA     Fn_ID4_Done
 
 ** ***************************************
 ** MOVEM
 ** ***************************************
-Fn_ID4_MOVEMRtoM
+Fn_ID4_MOVEMRtoM    LEA     opNam05,A3
+                    MOVE.L  A3, opPtrName
+                    
+Fn_ID4_VERIFY_MRM   CMP.B   #4, opDestReg
+                    BNE     Fn_ID4_Error
+                    
+                    * Make sure dest mode is only 2 or 3
+                    CMP.B   #3, opSrcReg                * Destination register > 2
+                    BLT     Fn_ID4VE_Error
+                    CMP.B   #3, opSrcReg                * Destination register < 3
+                    BGT     Fn_ID4_Error
+                    
+                    * Make sure src mode is only 2,4,5,6,7 (not 0,1,3)
+                    CMP.B   #0, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #1, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #3, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    
+                    * Make sure src reg is between 0-7
+                    CMP.B   #0, opSrcReg                * Destination register >= 0
+                    BLT     Fn_ID4VE_Error
+                    CMP.B   #7, opSrcReg                * Destination register <= 7
+                    BGT     Fn_ID4_Error
+                    BRA Fn_ID4_MOVEM_Src
 
-FN_ID4_MOVEMMtoR
+FN_ID4_MOVEMMtoR    LEA     opNam05,A3
+                    MOVE.L  A3, opPtrName
+                    
+Fn_ID4_VERIFY_MRM   CMP.B   #6, opDestReg
+                    BNE     Fn_ID4_Error
+                    
+                    * Make sure dest mode is only 2 or 3
+                    CMP.B   #3, opSrcReg                * Destination register > 2
+                    BLT     Fn_ID4VE_Error
+                    CMP.B   #3, opSrcReg                * Destination register < 3
+                    BGT     Fn_ID4_Error
+                    
+                    * Make sure src mode is only 2,4,5,6,7 (not 0,1,3)
+                    CMP.B   #0, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #1, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    CMP.B   #3, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    
+                    * Make sure src reg is between 0-7
+                    CMP.B   #0, opSrcReg                * Destination register >= 0
+                    BLT     Fn_ID4VE_Error
+                    CMP.B   #7, opSrcReg                * Destination register <= 7
+                    BGT     Fn_ID4_Error
+                    
+Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
+                    BEQ     Fn_ID4_Data
+                    BRA     Fn_ID4_Done
 
 ** ***************************************
 ** NOP
@@ -187,7 +301,26 @@ Fn_ID4_VERIFY_NOP   CMP.B   #7,DestReg
 ** ***************************************
 ** NOT
 ** ***************************************
-Fn_ID4_NOT
+Fn_ID4_NOT          LEA     opNam07,A3
+                    MOVE.L  A3, opPtrName
+                    
+Fn_ID4_VERIFY_NOT   CMP.B   #3, opDestReg
+                    BNE     Fn_ID4_Error
+                    
+                    * Make sure src mode is not 1
+                    CMP.B   #1, opSrcMod
+                    BEQ     Fn_ID4_Error
+                    
+                    * Make sure src reg is between 0-7
+                    CMP.B   #0, opSrcReg                * Destination register >= 0
+                    BLT     Fn_ID4_Error
+                    CMP.B   #7, opSrcReg                * Destination register <= 7
+                    BGT     Fn_ID4_Error
+                    
+Fn_ID4_NOT_Src      MOVE.W  opDestMod,opID              * Dest mod holds the size (move it)
+                    CMP.B   #7, opSrcMod
+                    BEQ     Fn_ID4_Data
+                    BRA     Fn_ID4_Done
 
 ** ***************************************
 ** RTS
@@ -203,6 +336,35 @@ Fn_ID4_VERIFY_RTS   CMP.B   #7,DestReg
                     BNE     Fn_ID4_Error
                     CMP.B   #5, SrcReg
                     BNE     Fn_ID4_Error
+                    BRA     Fn_ID4_Done
+
+** ***************************************
+** Global Addressing
+** ***************************************
+Fn_ID4_Data         CMP.B   #0, opSrcReg                * Check is source register is 0
+                    BEQ     Fn_ID4_DtaWrd               * Load next word
+                    CMP.B   #1, opSrcReg                * Check if source register is 1
+                    BEQ     Fn_ID4_DtaLng               * Load next long
+                    CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
+                    BEQ     Fn_ID4_DtaImd               * Load first word into word one
+                    BRA     FN_ID4_Error                * Invalid register value
+                    
+Fn_ID4_DtaImd       CMP.B   #1, opID                    * opID = 0 - size is byte
+                    BEQ     Fn_ID4_DtaByt               * Load next byte
+                    CMP.B   #3, opID                    * opID = 3 - size is word
+                    BEQ     Fn_ID4_DtaWrd               * Load next word
+                    CMP.B   #2, opID                    * opID = 0 - size is long
+                    BEQ          Fn_ID4_DtaLng               * Load next
+                    BRA     Fn_ID4_Error                * Invalid opID (this should never happen) long
+
+Fn_ID4_DtaByt       MOVE.W  (A2)+, opDta2               * Load byte and increment address count (note .W for byte)
+                    MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+                    BRA     Fn_ID4_Done
+Fn_ID4_DtaWrd       MOVE.W  (A2)+, opDta2               * Load word and increment address count
+                    MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+                    BRA     Fn_ID4_Done
+Fn_ID4_DtaLng       MOVE.L  (A2)+, opDta2               * Load long and increment address count
+                    MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
                     BRA     Fn_ID4_Done
 
 ** ***************************************
