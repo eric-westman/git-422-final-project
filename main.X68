@@ -35,39 +35,44 @@
 MAIN
                     MOVEA.L #$00100000,SP           * Initialize stack pointer
 Fn_MAIN_Start
-                    ** Note: Addresses will be set by user 'eventually'
-                    **       testing start and end without the UI for now
-                    **       In other words - this is where user interface will live
-                    ** Note: Most likely place that UI will be called as a subroutine
+
+                    ** Test addresses if SR_UI_INPUT is turned off
                     **
-                    MOVE.L  #$a0003000, adrValStart * Manually setting start address until UI exists
+                    MOVE.L  #$00003000, adrValStart
+                    MOVE.L  #$00003050, adrValEnd
+
+                    ** Address input interface
+                    ** Note: comment out to run tests
+                    **
+                    JSR     SR_UI_INPUT             * Initiate user input for addresses
+
+                    ** Load address strings for display
+                    **
                     LEA     adrValStart,A4
                     LEA     adrStrStart,A5
                     JSR     SR_HEX_STR              * Copy address value to string for display
-                    MOVE.L  #$00003050, adrValEnd   * Manually setting end address until UI exists
                     LEA     adrValEnd,A4
                     LEA     adrStrEnd,A5
                     JSR     SR_HEX_STR              * Copy address value to string for display
 
-                    JSR     SR_UI_INPUT             * Initiate user input for addresses
+                    ** Main program variable setup
+                    ** Note: Don't change this!
+                    **
+                    CLR.B   D7                      * Reset line counter to zero
+                    LEA     SR_JUMP,A0              * Mem space for jump table
+                    MOVE.L  adrValStart,A2          * Mem space for disassembly
 
                     ** ***************************************
                     ** BEGIN: TESTS
                     ** Remove this and the includes when turned in!
                     ** ***************************************
 
-                    MOVE.L  adrValStart, A2         * Mem space for tests
-
                     JSR     SR_TEST_ID3             * Tests MOVE, MOVEA
+                    MOVE.L  adrValStart,A2          * Reset mem space to starting address
 
                     ** ***************************************
                     ** END: TESTS
                     ** ***************************************
-
-                    CLR.B   D7                      * Reset line counter to zero
-
-                    LEA     SR_JUMP,A0              * Mem space for jump table
-                    MOVE.L  adrValStart,A2          * Mem space for disassembly
 
                     ** Clear screen
                     MOVE.B  #11,D0                  * Trap task 2 does the following:
@@ -123,13 +128,10 @@ Fn_MAIN_Dsp         JSR     SR_DSP_DISPLAY
                     **
 Fn_MAIN_ChkLin      ADDI.B  #1,D7                   * Increment line counter
 
-                    CLR.L D6                        * Modulo on maxLines and line counter
-                    MOVE.L D7,D6                    * Line counter to D6 for division
-                    MOVE.B  #maxLines,D5
-                    DIVU D5,D6                      * Set line count max here - 10 lines per page (test)
-                    SWAP D6                         * Swap for remainder (the modulo part)
-
-                    CMP.B   #0,D6
+                    MOVE.L  D7,D6                   * Line counter to D6 for division
+                    DIVU.W  #maxLines,D6            * Divide unsigned -> [remainder|quotient]
+                    SWAP    D6                      * Swap for remainder (modulo)
+                    CMP.B   #0,D6                   * Check remainder for zero
                     BEQ     Fn_MAIN_ChkPag          * Reached the maximum number of lines per page
                     BRA     Fn_MAIN_ChkEnd          * Continue to Check if at End of address space
 
@@ -152,7 +154,7 @@ Fn_MAIN_ChkPag      LEA     msgPage,A1              * Loads MESSAGE into A1
                     ** Reached end of memory @ A2 - stop main logic, ask to do it again
                     **
 Fn_MAIN_ChkEnd      CMP.L   adrValEnd, A2
-                    BEQ     Fn_MAIN_ChkAgn          * Reached end of memory region
+                    BGE     Fn_MAIN_ChkAgn          * Reached end of memory region
                     BRA     Fn_MAIN_Continue        * Continue to next loop iteration
 
                     ** Logic to check for for Y or N to check another region of memory
@@ -268,7 +270,7 @@ Fn_UI_DspStart      LEA     msgStrAdr1Scc,A1        * 'Starting address: '
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
-                    LEA     adrStrStart,A1        * '89ABCDEF' (string address)
+                    LEA     adrStrStart,A1          * '89ABCDEF' (string address)
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
@@ -280,7 +282,31 @@ Fn_UI_HdrNext       LEA     msgLine,A1              * '********************'
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
-                    LEA     msgStrIntro,A1          'All addresses must be 32 bit hexadecimal'
+                    LEA     msgStrIntro,A1          * ' - All addresses must be 32 bit hexadecimal.'
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgStrRange,A1          * ' - Valid address range is 00000000 to 00FFFFFF.'
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgStrSize,A1           * ' - Starting address should start on a word boundry'
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgStrSizeExmpl,A1      * '   @ XXXXXXX(0,2,4,8,A,C,E).'
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgStrNote,A1           * ' - Addresses will be adjusted if out of order or out of range.'
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgStrNoteMore,A1       * '   (automagically)'
+                    MOVE.B  #14,D0                  * Use (A1) no CR/LF
+                    TRAP    #15                     * Display to screen
+
+                    LEA     msgNewLine,A1           * CR,LF
                     MOVE.B  #14,D0                  * Use (A1) no CR/LF
                     TRAP    #15                     * Display to screen
 
@@ -293,7 +319,8 @@ Fn_UI_HdrNext       LEA     msgLine,A1              * '********************'
                     CMP.B #0,adrStsEnd              * Check status of address 0 = success
                     BNE   Fn_UI_End                 * Input ending address
 
-                    BRA   Fn_UI_Done                * Both addresses set, bail out of UI
+                    *BRA   Fn_UI_Done                * Both addresses set, bail out of UI
+                    BRA   Fn_UI_ChkVal              * Check address values (range, order)
 
 Fn_UI_Start         ** Input Start Address
                     ** ***************************************
@@ -422,39 +449,91 @@ Fn_UI_ChkHexASL     ASL.L   #4,D6                   * Left shift 4 to make room 
 Fn_UI_ChkHexRdr     ** Check counter and redirect accordingly
                     CMP.B   #8,D3                   * Loop 8 times
                     BNE     Fn_UI_ChkHexLoop        * Back to Hex Loop
-                    BRA     Fn_UI_SetVHex           * Set address as valid
+                    BRA     Fn_UI_SetVHex           * Set address as valid (done checking hex)
 
 Fn_UI_SetVHex       ** Valid: hex values
                     CMP.B   #0,adrStsStart          * Value of 0 means it is a valid address
                     BNE     Fn_UI_SetVHexI1         * Error must be with first input
                     BRA     Fn_UI_SetVHexI2         * Error must be with second input
+
 Fn_UI_SetVHexI1     ** Set valid on input 1
                     MOVE.B  #0,adrStsStart          * Set valid code 0 (address is valid)
                     MOVE.L  D6,adrValStart          * Copy input address to adrValEnd
                     LEA     adrValStart,A4
                     LEA     adrStrStart,A5
                     JSR     SR_HEX_STR              * Copy address value to string for display
-                    BRA     Fn_UI_Loop
+                    BRA     Fn_UI_Loop              * Loop back to make sure both addresses set
+
 Fn_UI_SetVHexI2     ** Set valid on input 2
                     MOVE.B  #0,adrStsEnd            * Set valid code 0 (address is valid)
                     MOVE.L  D6,adrValEnd            * Copy input address to adrValEnd
                     LEA     adrValEnd,A4
                     LEA     adrStrEnd,A5
                     JSR     SR_HEX_STR              * Copy address value to string for display
-                    BRA     Fn_UI_Loop
+                    BRA     Fn_UI_Loop              * Loop back to make sure both addresses set
 
 Fn_UI_SetEHex       ** Error: hex values
                     CMP.B   #0,adrStsStart
                     BNE     Fn_UI_SetEHexI1         * Error must be with first input
                     BRA     Fn_UI_SetEHexI2         * Error must be with second input
+
 Fn_UI_SetEHexI1     ** Set error on input 1
                     MOVE.B  #2,adrStsStart          * Set error code 2 (invalid hex values)
-                    BRA     Fn_UI_Loop
-Fn_UI_SetEHexI2     ** Set error on input 2         * Set error code 2 (invalid hex values)
-                    MOVE.B  #2,adrStsEnd
-                    BRA     Fn_UI_Loop
+                    BRA     Fn_UI_Loop              * Loop around to see if we are done
 
-Fn_UI_Done          ** Clear screen
+Fn_UI_SetEHexI2     ** Set error on input 2
+                    MOVE.B  #2,adrStsEnd            * Set error code 2 (invalid hex values)
+                    BRA     Fn_UI_Loop              * Loop around to see if we are done
+
+Fn_UI_ChkVal        ** Check address range, order
+                    **   Address automagic - will fix addresses if invalid input
+                    ** Note: addresses are unsigned; should not be less than zero
+                    ** Note: use BHI instead of BGT to compare unsigned addresses
+                    ** Note: subtracting one from Start address if not even
+                    **       doesn't really matter if end address is even or odd
+                    ** ***************************************
+
+                    MOVE.L  adrValStart,D5
+                    MOVE.L  adrValEnd,D6
+
+Fn_UI_ChkValSMax    CMP.L   #$00FFFFEC,D5            * Start should be <= (max - 1)
+                    BHI     Fn_UI_ChkValSBig         * Start is > (max - 1); Set start to (max - 1)
+                    BRA     Fn_UI_ChkValEMax         * Start is <= (max - 1); Check if End < 0
+
+Fn_UI_ChkValSBig    MOVE.L  #$00FFFFEC,D5            * Set Start to (max - 1)
+
+Fn_UI_ChkValEMax    CMP.L   #$00FFFFED,D6            * End should be <= max
+                    BHI     Fn_UI_ChkValEBig         * End is > max; Set End to max
+                    BRA     Fn_UI_ChkValCmp          * End is <= max; Check if Start > End
+
+Fn_UI_ChkValEBig    MOVE.L  #$00FFFFED,D6            * Set End to max
+
+Fn_UI_ChkValCmp     CMP.L   D6,D5                    * Start should be <= End
+                    BHI     Fn_UI_ChkValSwp          * Start < End; Swap start and end
+                    BRA     FN_UI_ChkValSWrd         * Start >= End; Check Start word boundry
+
+Fn_UI_ChkValSwp     MOVE.L  D5,D4
+                    MOVE.L  D6,D5
+                    MOVE.L  D4,D6
+
+FN_UI_ChkValSWrd    ** Check start for word boundry
+                    MOVE.B  D5,D3                    * Move low order byte to D3 for division
+                    MOVE.B  #2,D4                    * Setup even/odd comparison
+                    DIVU.W  D4,D3                    * Divide unsigned D3/D4
+                    SWAP    D3                       * Swap for remainder (the modulo part)
+                    CMP.B   #0,D3                    * If zero, then even
+                    BNE     Fn_UI_ChkValSOne         * Start is not even; Subtract one from address
+                    BRA     Fn_UI_Done               * Start is even; finally, we're done
+
+Fn_UI_ChkValSOne    SUBI.L  #1,D5
+
+Fn_UI_Done          ** All done with input, time to go
+                    ** ***************************************
+
+                    MOVE.L  D5,adrValStart          * Move final address to Start
+                    MOVE.L  D6,adrValEnd            * Move final address to End
+
+                    ** Clear screen
                     MOVE.B  #11,D0                  * Trap task 2 does the following:
                     MOVE.W  #$FF00,D1               * Clear the screen
                     TRAP    #15
@@ -997,7 +1076,12 @@ msgHdr01            DC.B     '3 Cores disassembler',CR,LF,0
 msgHdr02a           DC.B     'Memory range:',0
 msgHdr02b           DC.B     ' to ',0
 
-msgStrIntro         DC.B     'All addresses must be 32 bit hexadecimal',CR,LF,0
+msgStrIntro         DC.B     ' - All addresses must be 32 bit hexadecimal.',CR,LF,0
+msgStrRange         DC.B     ' - Valid address range is 00000000 to 00FFFFED.',CR,LF,0
+msgStrSize          DC.B     ' - Starting address should start on a word boundry',CR,LF,0
+msgStrSizeExmpl     DC.B     '   @ XXXXXXX(0,2,4,8,A,C,E).',CR,LF,0
+msgStrNote          DC.B     ' - Addresses will be adjusted if out of order or out of range.',CR,LF,0
+msgStrNoteMore      DC.B     '   (automagically)',CR,LF,0
 msgStrAdr1          DC.B     'Please enter a starting address: ',0
 msgStrAdr1Err1      DC.B     'Invalid starting address length',CR,LF,0
 msgStrAdr1Err2      DC.B     'Invalid starting address hexadecimal value',CR,LF,0
@@ -1022,8 +1106,3 @@ CR                  EQU      $0D                     * ASCII code for Carriage R
 LF                  EQU      $0A                     * ASCII code for Line Feed
 
                     END      $1000
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
