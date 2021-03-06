@@ -38,8 +38,8 @@ Fn_MAIN_Start
 
                     ** Test addresses if SR_UI_INPUT is turned off
                     **
-                    MOVE.L  #$00003000, adrValStart
-                    MOVE.L  #$00003050, adrValEnd
+                    MOVE.L  #$00009000, adrValStart
+                    MOVE.L  #$000093D0, adrValEnd
 
                     ** Address input interface
                     ** Note: comment out to run tests
@@ -61,18 +61,6 @@ Fn_MAIN_Start
                     CLR.B   D7                      * Reset line counter to zero
                     LEA     SR_JUMP,A0              * Mem space for jump table
                     MOVE.L  adrValStart,A2          * Mem space for disassembly
-
-                    ** ***************************************
-                    ** BEGIN: TESTS
-                    ** Remove this and the includes when turned in!
-                    ** ***************************************
-
-                    JSR     SR_TEST_ID3             * Tests MOVE, MOVEA
-                    MOVE.L  adrValStart,A2          * Reset mem space to starting address
-
-                    ** ***************************************
-                    ** END: TESTS
-                    ** ***************************************
 
                     ** Clear screen
                     MOVE.B  #11,D0                  * Trap task 2 does the following:
@@ -1019,13 +1007,12 @@ SR_CNT_STR_BUF
                     INCLUDE 'SR_IDC.X68'
                     INCLUDE 'SR_IDD.X68'
                     INCLUDE 'SR_IDE.X68'
-                    INCLUDE 'SR_TEST_ID3.X68'
 
 ** -----------------------------------------------------------
 ** Variables and constants
 ** -----------------------------------------------------------
 
-maxLines            EQU      10                      * Max lines to display
+maxLines            EQU      26                      * Max lines to display
 
 adrValStart         DC.L     $00000000               * Value of starting address - set by user
 adrStrStart         DC.B     '89ABCDEF',0            * String hex value display for start address
