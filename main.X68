@@ -44,7 +44,7 @@ Fn_MAIN_Start
                     ** Address input interface
                     ** Note: comment out to run tests
                     **
-                    JSR     SR_UI_INPUT             * Initiate user input for addresses
+                    *JSR     SR_UI_INPUT             * Initiate user input for addresses
 
                     ** Load address strings for display
                     **
@@ -614,7 +614,7 @@ Fn_Dsp_Data         ** Process invalid instruction (DATA)
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 
                     ** Instruction name
-                    LEA     opNam00,A4
+                    LEA     opNam_DATA,A4
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 
                     BRA     Fn_Dsp_Done
@@ -633,22 +633,22 @@ Fn_Dsp_Instr        ** Process instruction
                     ** Instruciton size
                     **
                     CMP.B   #0,opValSiz
-                    BEQ     Fn_DSP_Siz00            * Size is Byte
+                    BEQ     Fn_DSP_SizB             * Size is Byte
                     CMP.B   #1,opValSiz
-                    BEQ     Fn_DSP_Siz01            * Size is Word
+                    BEQ     Fn_DSP_SizW             * Size is Word
                     CMP.B   #2,opValSiz
-                    BEQ     Fn_DSP_Siz02            * Size is Long
+                    BEQ     Fn_DSP_SizL             * Size is Long
                     BRA     Fn_DSP_DTA1             * Size not set, go to check Data 1
 
-Fn_DSP_Siz00        LEA     opSiz00,A4              * '.B' string
+Fn_DSP_SizB         LEA     opSizB,A4               * '.B' string
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
                     BRA     Fn_DSP_OPR1
 
-Fn_DSP_Siz01        LEA     opSiz01,A4              * '.W' string
+Fn_DSP_SizW         LEA     opSizW,A4               * '.W' string
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
                     BRA     Fn_DSP_OPR1
 
-Fn_DSP_Siz02        LEA     opSiz02,A4              * '.L' string
+Fn_DSP_SizL         LEA     opSizL,A4              * '.L' string
                     JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
                     BRA     Fn_DSP_OPR1
 
@@ -1061,13 +1061,36 @@ opDta2T             DC.B     $FF                     * Data value two type ($FF 
 opStrDtaWrd         DC.B     '0000',0                * Data value string placeholder - dynamically built
 opStrDtaLng         DC.B     '00000000',0            * Data value string placeholder - dynamically built
 
-opNam00             DC.B     'DATA',0
-opNam01             DC.B     'MOVE',0                * String value for instrution 'MOVE'
-opNam02             DC.B     'MOVEA',0               * String value for instrution 'MOVEA'
+opNam_DATA          DC.B     'DATA',0
+opNam_MOVE          DC.B     'MOVE',0                * String value for instruction
+opNam_MOVEA         DC.B     'MOVEA',0               * String value for instruction
+opNam_LEA           DC.B     'LEA',0                 * String value for instruction
+opNam_NOT           DC.B     'NOT',0                 * String value for instruction
+opNam_MOVEM         DC.B     'MOVEM',0               * String value for instruction
+opNam_NOP           DC.B     'NOP',0                 * String value for instruction
+opNam_RTS           DC.B     'RTS',0                 * String value for instruction
+opNam_JSR           DC.B     'JSR',0                 * String value for instruction
+opNam_ADDQ          DC.B     'ADDQ',0                * String value for instruction
+opNam_BRA           DC.B     'BRA',0                 * String value for instruction
+opNam_BEQ           DC.B     'BEQ',0                 * String value for instruction
+opNam_BGT           DC.B     'BGT',0                 * String value for instruction
+opNam_BLE           DC.B     'BLE',0                 * String value for instruction
+opNam_MOVEQ         DC.B     'MOVEQ',0               * String value for instruction
+opNam_OR            DC.B     'OR',0                  * String value for instruction
+opNam_SUB           DC.B     'SUB',0                 * String value for instruction
+opNam_AND           DC.B     'AND',0                 * String value for instruction
+opNam_ADD           DC.B     'ADD',0                 * String value for instruction
+opNam_ADDA          DC.B     'ADDA',0                * String value for instruction
+opNam_ASL           DC.B     'ASL',0                 * String value for instruction
+opNam_ASR           DC.B     'ASR',0                 * String value for instruction
+opNam_LSL           DC.B     'LSL',0                 * String value for instruction
+opNam_LSR           DC.B     'LSR',0                 * String value for instruction
+opNam_ROL           DC.B     'ROL',0                 * String value for instruction
+opNam_ROR           DC.B     'ROR',0                 * String value for instruction
 
-opSiz00             DC.B     '.B',0                  * String value for instrution size 'B'
-opSiz01             DC.B     '.W',0                  * String value for instrution size 'W'
-opSiz02             DC.B     '.L',0                  * String value for instrution size 'L'
+opSizB              DC.B     '.B',0                  * String value for instruction size 'B'
+opSizW              DC.B     '.W',0                  * String value for instruction size 'W'
+opSizL              DC.B     '.L',0                  * String value for instruction size 'L'
 
 msgInTemp           DC.B     'Placeholder for user input. 80 characters long is the max input limit...........',0
 msgErr              DC.B     'Error',0               * Debug message
