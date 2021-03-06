@@ -107,13 +107,13 @@ SR_ID3
                     BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
                     BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
 
-Fn_MOVE_Ins01       LEA     opNam01,A3
+Fn_MOVE_Ins01       LEA     opNam_MOVE,A3
                     MOVE.L  A3,opPtrNam                 * Display name points to name
                     BRA     Fn_MOVE_Verify
 
 Fn_MOVE_Ins02       CMP.B   #1, opID
                     BEQ     Fn_MOVE_Error               * MOVEA cannot have opID = 1 (byte)
-                    LEA     opNam02,A3
+                    LEA     opNam_MOVEA,A3
                     MOVE.L  A3,opPtrNam                 * Display name points to name
 
                     ** ***************************************
@@ -149,16 +149,16 @@ Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >=
                     **       other instructions use 3 bits for size
                     ** ***************************************
                     CMP.B   #1, opID                    * Instruction size is Byte
-                    BEQ     Fn_MOVE_Siz00
+                    BEQ     Fn_MOVE_SizB
                     CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
-                    BEQ     Fn_MOVE_Siz01
+                    BEQ     Fn_MOVE_SizW
                     CMP.B   #2, opID                    * Instruction size is Long
-                    BEQ     Fn_MOVE_Siz02
-Fn_MOVE_Siz00       MOVE.B  #0,opValSiz                 * Set size to 0=Byte
+                    BEQ     Fn_MOVE_SizL
+Fn_MOVE_SizB        MOVE.B  #0,opValSiz                 * Set size to 0=Byte
                     BRA     Fn_MOVE_SrcMod
-Fn_MOVE_Siz01       MOVE.B  #1,opValSiz                 * Set size to 1=Word
+Fn_MOVE_SizW        MOVE.B  #1,opValSiz                 * Set size to 1=Word
                     BRA     Fn_MOVE_SrcMod
-Fn_MOVE_Siz02       MOVE.B  #2,opValSiz                 * Set size to 2=Long
+Fn_MOVE_SizL        MOVE.B  #2,opValSiz                 * Set size to 2=Long
                     BRA     Fn_MOVE_SrcMod
 
                     ** ***************************************
@@ -237,8 +237,3 @@ Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so th
 Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
                     *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
                     RTS                                 * Return to main
-
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
