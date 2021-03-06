@@ -154,7 +154,7 @@ Fn_ID4_CheckD3
 ** ***************************************
 ** JSR
 ** ***************************************
-Fn_ID4_JSR          LEA     opNam03,A3
+Fn_ID4_JSR          LEA     opNam_JSR,A3
                     MOVE.L  A3, opPtrName
                     
 Fn_ID4_VERIFY_JSR   CMP.B   #7, opDestReg
@@ -195,7 +195,7 @@ Fn_ID4_JSR_Src      CMP.B   #7, opSrcMod
 ** ***************************************
 ** LEA
 ** ***************************************
-Fn_ID4_LEA          LEA     opNam04,A3
+Fn_ID4_LEA          LEA     opNam_LEA,A3
                     MOVE.L  A3, opPtrName
                     
 Fn_ID4_VERIFY_LEA   CMP.B   #7, opDestMod
@@ -224,7 +224,7 @@ Fn_ID4_LEA_Src      CMP.B   #7, opSrcMod
 ** ***************************************
 ** MOVEM
 ** ***************************************
-Fn_ID4_MOVEMRtoM    LEA     opNam05,A3
+Fn_ID4_MOVEMRtoM    LEA     opNam_MOVEM,A3
                     MOVE.L  A3, opPtrName
                     
 Fn_ID4_VERIFY_MRM   CMP.B   #4, opDestReg
@@ -251,7 +251,7 @@ Fn_ID4_VERIFY_MRM   CMP.B   #4, opDestReg
                     BGT     Fn_ID4_Error
                     BRA Fn_ID4_MOVEM_Src
 
-FN_ID4_MOVEMMtoR    LEA     opNam05,A3
+FN_ID4_MOVEMMtoR    LEA     opNam_MOVEM,A3
                     MOVE.L  A3, opPtrName
                     
 Fn_ID4_VERIFY_MRM   CMP.B   #6, opDestReg
@@ -284,7 +284,7 @@ Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
 ** ***************************************
 ** NOP
 ** ***************************************
-Fn_ID4_NOP          LEA     opNam06,A3
+Fn_ID4_NOP          LEA     opNam_NOP,A3
                     MOVE.L  A3, opPtrName
 
 Fn_ID4_VERIFY_NOP   CMP.B   #7,DestReg
@@ -301,7 +301,7 @@ Fn_ID4_VERIFY_NOP   CMP.B   #7,DestReg
 ** ***************************************
 ** NOT
 ** ***************************************
-Fn_ID4_NOT          LEA     opNam07,A3
+Fn_ID4_NOT          LEA     opNam_NOT,A3
                     MOVE.L  A3, opPtrName
                     
 Fn_ID4_VERIFY_NOT   CMP.B   #3, opDestReg
@@ -325,7 +325,7 @@ Fn_ID4_NOT_Src      MOVE.W  opDestMod,opID              * Dest mod holds the siz
 ** ***************************************
 ** RTS
 ** ***************************************
-Fn_ID4_RTS          LEA    opNam08,A3
+Fn_ID4_RTS          LEA    opNam_RTS,A3
                     MOVE.L A3, opPtrName
                     
 Fn_ID4_VERIFY_RTS   CMP.B   #7,DestReg

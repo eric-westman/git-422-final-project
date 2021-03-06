@@ -1,7 +1,7 @@
 
 ** -----------------------------------------------------------
 ** Subroutine: ID5
-**             INVALID OPCODE ID
+**             Covers ADDQ
 **
 **   This will run after the initial jump instruction
 **
