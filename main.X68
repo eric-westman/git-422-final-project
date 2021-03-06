@@ -743,10 +743,33 @@ LF                  EQU      $0A                     * ASCII code for Line Feed
 opNam00             DC.B     'DATA',0
 opNam01             DC.B     'MOVE',0                * String value for instrution 'MOVE'
 opNam02             DC.B     'MOVEA',0               * String value for instrution 'MOVEA'
+opNam03				DC.B	 'JSR',0                 * String value for instrution 'JSR'
+opNam04				DC.B	 'LEA',0                 * String value for instrution 'LEA'
+opNam05				DC.B	 'MOVEM',0               * String value for instrution 'MOVEM'
+opNam06				DC.B	 'NOP',0                 * String value for instrution 'NOP'
+opNam07				DC.B	 'NOT',0                 * String value for instrution 'NOT'
+opNam08				DC.B	 'RTS',0                 * String value for instrution 'RTS'
+opNam09				DC.B	 'ADDQ',0                * String value for instrution 'ADDQ'
+opNam10				DC.B	 'BGT',0                 * String value for instrution 'BGT'
+opNam11				DC.B	 'BLE',0                 * String value for instrution 'BLE'
+opNam12				DC.B	 'BEQ',0                 * String value for instrution 'BEQ'
+opNam13				DC.B	 'BRA',0                 * String value for instrution 'BRA'
+opNam14				DC.B	 'MOVEQ',0               * String value for instrution 'MOVEQ'
+opNam15				DC.B	 'OR',0                  * String value for instrution 'OR'
+opNam16				DC.B	 'SUB',0                 * String value for instrution 'SUB'
+opNam17				DC.B	 'AND',0                 * String value for instrution 'AND'
+opNam18				DC.B	 'ADD',0                 * String value for instrution 'ADD'
+opNam19				DC.B	 'ADDA',0                * String value for instrution 'ADDA'
+opNam20				DC.B	 'AS',0                  * String value for instrution 'AS'
+opNam21				DC.B	 'LS',0                  * String value for instrution 'LS'
+opNam22				DC.B	 'RO',0                  * String value for instrution 'RO'
 
 opSiz00             DC.B     '.B',0                  * String value for instrution size 'B'
 opSiz01             DC.B     '.W',0                  * String value for instrution size 'W'
 opSiz02             DC.B     '.L',0                  * String value for instrution size 'L'
+
+opDir00				DC.B	 'L',0					 * String value for instruction direction 'L'
+opDir01				DC.B	 'R',0					 * String value for instruction direction 'R'
 
 msgErr              DC.B     'Error',0               * Debug message
 
