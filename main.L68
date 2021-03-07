@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 3/6/2021 5:54:48 PM
+Created On: 3/6/2021 6:45:35 PM
 
 00000000                             1  ** -----------------------------------------------------------
 00000000                             2  * Title      : Disassembler
@@ -42,8 +42,8 @@ Created On: 3/6/2021 5:54:48 PM
 00001006                            38  
 00001006                            39                      ** Test addresses if SR_UI_INPUT is turned off
 00001006                            40                      **
-00001006  23FC 00009000 00002334    41                      MOVE.L  #$00009000, adrValStart
-00001010  23FC 000093D0 00002342    42                      MOVE.L  #$000093D0, adrValEnd
+00001006  23FC 00009000 0000232E    41                      MOVE.L  #$00009000, adrValStart
+00001010  23FC 000093D0 0000233C    42                      MOVE.L  #$000093D0, adrValEnd
 0000101A                            43  
 0000101A                            44                      ** Address input interface
 0000101A                            45                      ** Note: comment out to run tests
@@ -52,11 +52,11 @@ Created On: 3/6/2021 5:54:48 PM
 0000101A                            48  
 0000101A                            49                      ** Load address strings for display
 0000101A                            50                      **
-0000101A  49F9 00002334             51                      LEA     adrValStart,A4
-00001020  4BF9 00002338             52                      LEA     adrStrStart,A5
+0000101A  49F9 0000232E             51                      LEA     adrValStart,A4
+00001020  4BF9 00002332             52                      LEA     adrStrStart,A5
 00001026  4EB9 000019B2             53                      JSR     SR_HEX_STR              * Copy address value to string for display
-0000102C  49F9 00002342             54                      LEA     adrValEnd,A4
-00001032  4BF9 00002346             55                      LEA     adrStrEnd,A5
+0000102C  49F9 0000233C             54                      LEA     adrValEnd,A4
+00001032  4BF9 00002340             55                      LEA     adrStrEnd,A5
 00001038  4EB9 000019B2             56                      JSR     SR_HEX_STR              * Copy address value to string for display
 0000103E                            57  
 0000103E                            58                      ** Main program variable setup
@@ -64,7 +64,7 @@ Created On: 3/6/2021 5:54:48 PM
 0000103E                            60                      **
 0000103E  4207                      61                      CLR.B   D7                      * Reset line counter to zero
 00001040  41F9 00001196             62                      LEA     SR_JUMP,A0              * Mem space for jump table
-00001046  2479 00002334             63                      MOVE.L  adrValStart,A2          * Mem space for disassembly
+00001046  2479 0000232E             63                      MOVE.L  adrValStart,A2          * Mem space for disassembly
 0000104C                            64  
 0000104C                            65                      ** Clear screen
 0000104C  103C 000B                 66                      MOVE.B  #11,D0                  * Trap task 2 does the following:
@@ -76,30 +76,30 @@ Created On: 3/6/2021 5:54:48 PM
 0000105C                            72  fn_MAIN_Loop
 0000105C                            73                      ** Prepare loop variables
 0000105C                            74                      **
-0000105C  23CA 00002354             75                      MOVE.L  A2,opValAdr             * Set output address as current - need for display
-00001062  33DA 00002350             76                      MOVE.W  (A2)+,opWord            * load first 4 bit OpCode Word, increment A2 (4 bytes)
-00001068  23CA 00002362             77                      MOVE.L  A2,opNxtAdr             * Save next valid word address for invalid instruction
+0000105C  23CA 0000234E             75                      MOVE.L  A2,opValAdr             * Set output address as current - need for display
+00001062  33DA 0000234A             76                      MOVE.W  (A2)+,opWord            * load first 4 bit OpCode Word, increment A2 (4 bytes)
+00001068  23CA 0000235C             77                      MOVE.L  A2,opNxtAdr             * Save next valid word address for invalid instruction
 0000106E                            78  
 0000106E                            79                      ** Reset local variables
 0000106E                            80                      **
 0000106E                            81  
-0000106E  13FC 0000 00002352        82                      MOVE.B  #$00,opID               * Reset opID (first 4 bits of opcode word)
-00001076  13FC 0001 00002353        83                      MOVE.B  #$01,opErr              * Reset error $01 - assume error until instruction found
-0000107E  13FC 00FF 000023BA        84                      MOVE.b  #$FF,opValSiz
+0000106E  13FC 0000 0000234C        82                      MOVE.B  #$00,opID               * Reset opID (first 4 bits of opcode word)
+00001076  13FC 0001 0000234D        83                      MOVE.B  #$01,opErr              * Reset error $01 - assume error until instruction found
+0000107E  13FC 00FF 000023B4        84                      MOVE.b  #$FF,opValSiz
 00001086                            85  
-00001086  13FC 00FF 000023BB        86                      MOVE.B  #$FF, opDstReg
-0000108E  13FC 00FF 000023BC        87                      MOVE.B  #$FF, opDstMod
-00001096  13FC 00FF 000023BD        88                      MOVE.B  #$FF, opSrcReg
-0000109E  13FC 00FF 000023BE        89                      MOVE.B  #$FF, opSrcMod
+00001086  13FC 00FF 000023B5        86                      MOVE.B  #$FF, opDstReg
+0000108E  13FC 00FF 000023B6        87                      MOVE.B  #$FF, opDstMod
+00001096  13FC 00FF 000023B7        88                      MOVE.B  #$FF, opSrcReg
+0000109E  13FC 00FF 000023B8        89                      MOVE.B  #$FF, opSrcMod
 000010A6                            90  
-000010A6  23FC 00000000 000023C0    91                      MOVE.L  #$0000, opDta1
-000010B0  13FC 00FF 000023C4        92                      MOVE.B  #$FF, opDta1T
-000010B8  23FC 00000000 000023C6    93                      MOVE.L  #$0000, opDta2
-000010C2  13FC 00FF 000023CA        94                      MOVE.B  #$FF, opDta2T
+000010A6  23FC 00000000 000023BA    91                      MOVE.L  #$0000, opDta1
+000010B0  13FC 00FF 000023BE        92                      MOVE.B  #$FF, opDta1T
+000010B8  23FC 00000000 000023C0    93                      MOVE.L  #$0000, opDta2
+000010C2  13FC 00FF 000023C4        94                      MOVE.B  #$FF, opDta2T
 000010CA                            95  
 000010CA                            96                      ** Jump table
 000010CA                            97                      **
-000010CA  3A39 00002350             98                      MOVE.W  opWord,D5               * opWord to D5 for multiplication
+000010CA  3A39 0000234A             98                      MOVE.W  opWord,D5               * opWord to D5 for multiplication
 000010D0  1C3C 000C                 99                      MOVE.B  #12,D6
 000010D4  EC6D                     100                      LSR.W   D6,D5                   * Shift 12 bits to the right (to get first 4 bits)
 000010D6  CAFC 0008                101                      MULU    #8,D5                   * offset is multiple of 8
@@ -107,10 +107,10 @@ Created On: 3/6/2021 5:54:48 PM
 000010DE                           103  
 000010DE                           104                      ** Invalid instruction
 000010DE                           105                      **
-000010DE  0C39 0001 00002353       106                      CMP.B   #1,opErr
+000010DE  0C39 0001 0000234D       106                      CMP.B   #1,opErr
 000010E6  6700 0006                107                      BEQ     Fn_MAIN_ErrIns          * Instruction error, reset A2
 000010EA  6000 0008                108                      BRA     Fn_MAIN_Dsp             * Instruction valid, display
-000010EE  2479 00002362            109  Fn_MAIN_ErrIns      MOVE.L  opNxtAdr,A2             * Resetting A2 to next valid word
+000010EE  2479 0000235C            109  Fn_MAIN_ErrIns      MOVE.L  opNxtAdr,A2             * Resetting A2 to next valid word
 000010F4                           110  
 000010F4                           111                      ** Display result
 000010F4                           112                      **
@@ -129,7 +129,7 @@ Created On: 3/6/2021 5:54:48 PM
 00001110                           125  
 00001110                           126                      ** Logic to check ENTER key to show next page
 00001110                           127                      **
-00001110  43F9 000026CF            128  Fn_MAIN_ChkPag      LEA     msgPage,A1              * Loads MESSAGE into A1
+00001110  43F9 000026C9            128  Fn_MAIN_ChkPag      LEA     msgPage,A1              * Loads MESSAGE into A1
 00001116  103C 000E                129                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000111A  4E4F                     130                      TRAP    #15                     * Display to screen
 0000111C  103C 0005                131                      MOVE.B  #5,D0                   * Trap task 2 does the following:
@@ -145,20 +145,20 @@ Created On: 3/6/2021 5:54:48 PM
 00001132                           141  
 00001132                           142                      ** Reached end of memory @ A2 - stop main logic, ask to do it again
 00001132                           143                      **
-00001132  B5F9 00002342            144  Fn_MAIN_ChkEnd      CMP.L   adrValEnd, A2
+00001132  B5F9 0000233C            144  Fn_MAIN_ChkEnd      CMP.L   adrValEnd, A2
 00001138  6C00 0006                145                      BGE     Fn_MAIN_ChkAgn          * Reached end of memory region
 0000113C  6000 003A                146                      BRA     Fn_MAIN_Continue        * Continue to next loop iteration
 00001140                           147  
 00001140                           148                      ** Logic to check for for Y or N to check another region of memory
 00001140                           149                      **
-00001140  43F9 000026F2            150  Fn_MAIN_ChkAgn      LEA     msgEndMem01,A1          * Loads MESSAGE into A1
+00001140  43F9 000026EC            150  Fn_MAIN_ChkAgn      LEA     msgEndMem01,A1          * Loads MESSAGE into A1
 00001146  103C 000E                151                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000114A  4E4F                     152                      TRAP    #15                     * Display to screen
-0000114C  43F9 00002725            153                      LEA     msgEndMem02,A1          * Loads MESSAGE into A1
+0000114C  43F9 0000271F            153                      LEA     msgEndMem02,A1          * Loads MESSAGE into A1
 00001152  103C 000E                154                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001156  4E4F                     155                      TRAP    #15                     * Display to screen
 00001158                           156  
-00001158  43F9 00002453            157                      LEA     msgInTemp,A1            * Load placeholder for input string
+00001158  43F9 0000244D            157                      LEA     msgInTemp,A1            * Load placeholder for input string
 0000115E  103C 0002                158                      MOVE.B  #2,D0                   * Trap task 2 does the following:
 00001162  4E4F                     159                      TRAP    #15                     * Read string to (A1), length in D1.W
 00001164  0C11 0059                160                      CMP.B   #$59,(A1)               * Checking for 'Y' - otherwise Nope
@@ -175,7 +175,7 @@ Created On: 3/6/2021 5:54:48 PM
 00001184  4E4F                     171                      TRAP    #15
 00001186                           172  
 00001186                           173                      ** Thank you message
-00001186  43F9 00002757            174                      LEA     msgDone,A1              * Loads MESSAGE into A1
+00001186  43F9 00002751            174                      LEA     msgDone,A1              * Loads MESSAGE into A1
 0000118C  103C 000E                175                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001190  4E4F                     176                      TRAP    #15                     * Display to screen
 00001192                           177  
@@ -212,21 +212,21 @@ Created On: 3/6/2021 5:54:48 PM
 000011C4  4E75                     208                      RTS
 000011C6  4EB9 0000222E            209                      JSR     SR_ID6
 000011CC  4E75                     210                      RTS
-000011CE  4EB9 00002324            211                      JSR     SR_ID7
+000011CE  4EB9 0000231E            211                      JSR     SR_ID7
 000011D4  4E75                     212                      RTS
-000011D6  4EB9 00002326            213                      JSR     SR_ID8
+000011D6  4EB9 00002320            213                      JSR     SR_ID8
 000011DC  4E75                     214                      RTS
-000011DE  4EB9 00002328            215                      JSR     SR_ID9
+000011DE  4EB9 00002322            215                      JSR     SR_ID9
 000011E4  4E75                     216                      RTS
-000011E6  4EB9 0000232A            217                      JSR     SR_IDA
+000011E6  4EB9 00002324            217                      JSR     SR_IDA
 000011EC  4E75                     218                      RTS
-000011EE  4EB9 0000232C            219                      JSR     SR_IDB
+000011EE  4EB9 00002326            219                      JSR     SR_IDB
 000011F4  4E75                     220                      RTS
-000011F6  4EB9 0000232E            221                      JSR     SR_IDC
+000011F6  4EB9 00002328            221                      JSR     SR_IDC
 000011FC  4E75                     222                      RTS
-000011FE  4EB9 00002330            223                      JSR     SR_IDD
+000011FE  4EB9 0000232A            223                      JSR     SR_IDD
 00001204  4E75                     224                      RTS
-00001206  4EB9 00002332            225                      JSR     SR_IDE
+00001206  4EB9 0000232C            225                      JSR     SR_IDE
 0000120C  4E75                     226                      RTS
 0000120E  4EB9 000019F6            227                      JSR     SR_IDX                   * No instructions @ ID=15
 00001214  4E75                     228                      RTS
@@ -235,8 +235,8 @@ Created On: 3/6/2021 5:54:48 PM
 00001216                           231  ** UI: User mem input
 00001216                           232  ** -----------------------------------------------------------
 00001216                           233  SR_UI_INPUT
-00001216  13F8 00FF 00002341       234                      MOVE.B  $FF,adrStsStart         * Reset starting address status
-0000121E  13F8 00FF 0000234F       235                      MOVE.B  $FF,adrStsEnd           * Reset ending address status
+00001216  13F8 00FF 0000233B       234                      MOVE.B  $FF,adrStsStart         * Reset starting address status
+0000121E  13F8 00FF 00002349       235                      MOVE.B  $FF,adrStsEnd           * Reset ending address status
 00001226                           236  
 00001226                           237  Fn_UI_Loop          ** Clear screen
 00001226  103C 000B                238                      MOVE.B  #11,D0                  * Trap task 2 does the following:
@@ -246,69 +246,69 @@ Created On: 3/6/2021 5:54:48 PM
 00001230                           242                      ** Header
 00001230                           243                      ** ***************************************
 00001230                           244  
-00001230  43F9 00002781            245                      LEA     msgLine,A1              * '********************'
+00001230  43F9 0000277B            245                      LEA     msgLine,A1              * '********************'
 00001236  103C 000E                246                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000123A  4E4F                     247                      TRAP    #15                     * Display to screen
 0000123C                           248  
-0000123C  43F9 000024AA            249                      LEA     msgHdr01,A1             * '3 Cores disassembler'
+0000123C  43F9 000024A4            249                      LEA     msgHdr01,A1             * '3 Cores disassembler'
 00001242  103C 000E                250                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001246  4E4F                     251                      TRAP    #15                     * Display to screen
 00001248                           252  
-00001248  0C39 0000 00002341       253                      CMP.B   #0,adrStsStart          * Starting address is set
+00001248  0C39 0000 0000233B       253                      CMP.B   #0,adrStsStart          * Starting address is set
 00001250  6700 0006                254                      BEQ     Fn_UI_DspStart          * Display starting address
 00001254  6000 0026                255                      BRA     Fn_UI_HdrNext           * Display the rest of the header
 00001258                           256  
-00001258  43F9 00002650            257  Fn_UI_DspStart      LEA     msgStrAdr1Scc,A1        * 'Starting address: '
+00001258  43F9 0000264A            257  Fn_UI_DspStart      LEA     msgStrAdr1Scc,A1        * 'Starting address: '
 0000125E  103C 000E                258                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001262  4E4F                     259                      TRAP    #15                     * Display to screen
 00001264                           260  
-00001264  43F9 00002338            261                      LEA     adrStrStart,A1          * '89ABCDEF' (string address)
+00001264  43F9 00002332            261                      LEA     adrStrStart,A1          * '89ABCDEF' (string address)
 0000126A  103C 000E                262                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000126E  4E4F                     263                      TRAP    #15                     * Display to screen
 00001270                           264  
-00001270  43F9 000027B6            265                      LEA     msgNewLine,A1           * CR,LF
+00001270  43F9 000027B0            265                      LEA     msgNewLine,A1           * CR,LF
 00001276  103C 000E                266                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000127A  4E4F                     267                      TRAP    #15                     * Display to screen
 0000127C                           268  
-0000127C  43F9 00002781            269  Fn_UI_HdrNext       LEA     msgLine,A1              * '********************'
+0000127C  43F9 0000277B            269  Fn_UI_HdrNext       LEA     msgLine,A1              * '********************'
 00001282  103C 000E                270                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001286  4E4F                     271                      TRAP    #15                     * Display to screen
 00001288                           272  
-00001288  43F9 000024D4            273                      LEA     msgStrIntro,A1          * ' - All addresses must be 32 bit hexadecimal.'
+00001288  43F9 000024CE            273                      LEA     msgStrIntro,A1          * ' - All addresses must be 32 bit hexadecimal.'
 0000128E  103C 000E                274                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001292  4E4F                     275                      TRAP    #15                     * Display to screen
 00001294                           276  
-00001294  43F9 00002503            277                      LEA     msgStrRange,A1          * ' - Valid address range is 00000000 to 00FFFFFF.'
+00001294  43F9 000024FD            277                      LEA     msgStrRange,A1          * ' - Valid address range is 00000000 to 00FFFFFF.'
 0000129A  103C 000E                278                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000129E  4E4F                     279                      TRAP    #15                     * Display to screen
 000012A0                           280  
-000012A0  43F9 00002535            281                      LEA     msgStrSize,A1           * ' - Starting address should start on a word boundry'
+000012A0  43F9 0000252F            281                      LEA     msgStrSize,A1           * ' - Starting address should start on a word boundry'
 000012A6  103C 000E                282                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 000012AA  4E4F                     283                      TRAP    #15                     * Display to screen
 000012AC                           284  
-000012AC  43F9 0000256A            285                      LEA     msgStrSizeExmpl,A1      * '   @ XXXXXXX(0,2,4,8,A,C,E).'
+000012AC  43F9 00002564            285                      LEA     msgStrSizeExmpl,A1      * '   @ XXXXXXX(0,2,4,8,A,C,E).'
 000012B2  103C 000E                286                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 000012B6  4E4F                     287                      TRAP    #15                     * Display to screen
 000012B8                           288  
-000012B8  43F9 00002589            289                      LEA     msgStrNote,A1           * ' - Addresses will be adjusted if out of order or out of range.'
+000012B8  43F9 00002583            289                      LEA     msgStrNote,A1           * ' - Addresses will be adjusted if out of order or out of range.'
 000012BE  103C 000E                290                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 000012C2  4E4F                     291                      TRAP    #15                     * Display to screen
 000012C4                           292  
-000012C4  43F9 000025CA            293                      LEA     msgStrNoteMore,A1       * '   (automagically)'
+000012C4  43F9 000025C4            293                      LEA     msgStrNoteMore,A1       * '   (automagically)'
 000012CA  103C 000E                294                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 000012CE  4E4F                     295                      TRAP    #15                     * Display to screen
 000012D0                           296  
-000012D0  43F9 000027B6            297                      LEA     msgNewLine,A1           * CR,LF
+000012D0  43F9 000027B0            297                      LEA     msgNewLine,A1           * CR,LF
 000012D6  103C 000E                298                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 000012DA  4E4F                     299                      TRAP    #15                     * Display to screen
 000012DC                           300  
 000012DC                           301                      ** Input check
 000012DC                           302                      ** ***************************************
 000012DC                           303  
-000012DC  0C39 0000 00002341       304                      CMP.B #0,adrStsStart            * Check status of address 0 = success
+000012DC  0C39 0000 0000233B       304                      CMP.B #0,adrStsStart            * Check status of address 0 = success
 000012E4  6600 0012                305                      BNE   Fn_UI_Start               * Input starting address
 000012E8                           306  
-000012E8  0C39 0000 0000234F       307                      CMP.B #0,adrStsEnd              * Check status of address 0 = success
+000012E8  0C39 0000 00002349       307                      CMP.B #0,adrStsEnd              * Check status of address 0 = success
 000012F0  6600 005E                308                      BNE   Fn_UI_End                 * Input ending address
 000012F4                           309  
 000012F4                           310                      *BRA   Fn_UI_Done                * Both addresses set, bail out of UI
@@ -318,27 +318,27 @@ Created On: 3/6/2021 5:54:48 PM
 000012F8                           314                      ** ***************************************
 000012F8                           315  
 000012F8                           316                      ** Check errors
-000012F8  0C39 0001 00002341       317                      CMP.B   #1,adrStsStart
+000012F8  0C39 0001 0000233B       317                      CMP.B   #1,adrStsStart
 00001300  6700 0012                318                      BEQ     Fn_UI_StartE1           * Error: length
-00001304  0C39 0002 00002341       319                      CMP.B   #2,adrStsStart
+00001304  0C39 0002 0000233B       319                      CMP.B   #2,adrStsStart
 0000130C  6700 0016                320                      BEQ     Fn_UI_StartE2           * Error: hex value
 00001310  6000 0022                321                      BRA     Fn_UI_Start_In          * No error: ask for input
 00001314                           322  
-00001314  43F9 00002601            323  Fn_UI_StartE1       LEA     msgStrAdr1Err1,A1       * 'Invalid starting address length'
+00001314  43F9 000025FB            323  Fn_UI_StartE1       LEA     msgStrAdr1Err1,A1       * 'Invalid starting address length'
 0000131A  103C 000E                324                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000131E  4E4F                     325                      TRAP    #15
 00001320  6000 0012                326                      BRA     Fn_UI_Start_In          * User input
 00001324                           327  
-00001324  43F9 00002623            328  Fn_UI_StartE2       LEA     msgStrAdr1Err2,A1       * 'Invalid starting address hexadecimal value'
+00001324  43F9 0000261D            328  Fn_UI_StartE2       LEA     msgStrAdr1Err2,A1       * 'Invalid starting address hexadecimal value'
 0000132A  103C 000E                329                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000132E  4E4F                     330                      TRAP    #15
 00001330  6000 0002                331                      BRA     Fn_UI_Start_In          * User input
 00001334                           332  
-00001334  43F9 000025DF            333  Fn_UI_Start_In      LEA     msgStrAdr1,A1           * 'Please enter a starting address'
+00001334  43F9 000025D9            333  Fn_UI_Start_In      LEA     msgStrAdr1,A1           * 'Please enter a starting address'
 0000133A  103C 000E                334                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000133E  4E4F                     335                      TRAP    #15                     * Display to screen
 00001340                           336  
-00001340  43F9 00002453            337                      LEA     msgInTemp,A1            * Load placeholder for input string
+00001340  43F9 0000244D            337                      LEA     msgInTemp,A1            * Load placeholder for input string
 00001346  103C 0002                338                      MOVE.B  #2,D0                   * Trap task 2 does the following:
 0000134A  4E4F                     339                      TRAP    #15                     * Read string to (A1), length in D1.W
 0000134C                           340  
@@ -348,27 +348,27 @@ Created On: 3/6/2021 5:54:48 PM
 00001350                           344                      ** ***************************************
 00001350                           345  
 00001350                           346                      ** Check errors
-00001350  0C39 0001 0000234F       347                      CMP.B   #1,adrStsEnd
+00001350  0C39 0001 00002349       347                      CMP.B   #1,adrStsEnd
 00001358  6700 0012                348                      BEQ     Fn_UI_EndE1             * Error: length
-0000135C  0C39 0002 0000234F       349                      CMP.B   #2,adrStsEnd
+0000135C  0C39 0002 00002349       349                      CMP.B   #2,adrStsEnd
 00001364  6700 0016                350                      BEQ     Fn_UI_EndE2             * Error: hex value
 00001368  6000 0022                351                      BRA     Fn_UI_End_In            * No error: ask for input
 0000136C                           352  
-0000136C  43F9 00002684            353  Fn_UI_EndE1         LEA     msgStrAdr2Err1,A1       * 'Invalid ending address length'
+0000136C  43F9 0000267E            353  Fn_UI_EndE1         LEA     msgStrAdr2Err1,A1       * 'Invalid ending address length'
 00001372  103C 000E                354                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001376  4E4F                     355                      TRAP    #15
 00001378  6000 0012                356                      BRA     Fn_UI_End_In            * User input
 0000137C                           357  
-0000137C  43F9 000026A4            358  Fn_UI_EndE2         LEA     msgStrAdr2Err2,A1       * 'Invalid ending address hexadecimal value'
+0000137C  43F9 0000269E            358  Fn_UI_EndE2         LEA     msgStrAdr2Err2,A1       * 'Invalid ending address hexadecimal value'
 00001382  103C 000E                359                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001386  4E4F                     360                      TRAP    #15
 00001388  6000 0002                361                      BRA     Fn_UI_End_In            * User input
 0000138C                           362  
-0000138C  43F9 00002663            363  Fn_UI_End_In        LEA     msgStrAdr2,A1           * 'Please enter a ending address'
+0000138C  43F9 0000265D            363  Fn_UI_End_In        LEA     msgStrAdr2,A1           * 'Please enter a ending address'
 00001392  103C 000E                364                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001396  4E4F                     365                      TRAP    #15                     * Display to screen
 00001398                           366  
-00001398  43F9 00002453            367                      LEA     msgInTemp,A1            * Load placeholder for input string
+00001398  43F9 0000244D            367                      LEA     msgInTemp,A1            * Load placeholder for input string
 0000139E  103C 0002                368                      MOVE.B  #2,D0                   * Trap task 2 does the following:
 000013A2  4E4F                     369                      TRAP    #15                     * Read string to (A1), length in D1.W
 000013A4                           370  
@@ -384,14 +384,14 @@ Created On: 3/6/2021 5:54:48 PM
 000013B0  6000 002A                380                      BRA     Fn_UI_ChkHex            * Length ok, now check hex values
 000013B4                           381  
 000013B4                           382  Fn_UI_SetELen       ** Error: length
-000013B4  0C39 0000 00002341       383                      CMP.B #0,adrStsStart
+000013B4  0C39 0000 0000233B       383                      CMP.B #0,adrStsStart
 000013BC  6600 0006                384                      BNE     Fn_UI_SetELenI1         * Error must be with first input
 000013C0  6000 000E                385                      BRA     Fn_UI_SetELenI2         * Error must be with second input
 000013C4                           386  Fn_UI_SetELenI1     ** Set error on input 1
-000013C4  13FC 0001 00002341       387                      MOVE.B  #1,adrStsStart          * Set error code 1 (invalid length)
+000013C4  13FC 0001 0000233B       387                      MOVE.B  #1,adrStsStart          * Set error code 1 (invalid length)
 000013CC  6000 FE58                388                      BRA     Fn_UI_Loop
 000013D0                           389  Fn_UI_SetELenI2     ** Set error on input 2         * Set error code 1 (invalid length)
-000013D0  13FC 0001 0000234F       390                      MOVE.B  #1,adrStsEnd
+000013D0  13FC 0001 00002349       390                      MOVE.B  #1,adrStsEnd
 000013D8  6000 FE4C                391                      BRA     Fn_UI_Loop
 000013DC                           392  
 000013DC                           393  Fn_UI_ChkHex        ** Check hex values
@@ -444,37 +444,37 @@ Created On: 3/6/2021 5:54:48 PM
 00001438  6000 0002                440                      BRA     Fn_UI_SetVHex           * Set address as valid (done checking hex)
 0000143C                           441  
 0000143C                           442  Fn_UI_SetVHex       ** Valid: hex values
-0000143C  0C39 0000 00002341       443                      CMP.B   #0,adrStsStart          * Value of 0 means it is a valid address
+0000143C  0C39 0000 0000233B       443                      CMP.B   #0,adrStsStart          * Value of 0 means it is a valid address
 00001444  6600 0006                444                      BNE     Fn_UI_SetVHexI1         * Error must be with first input
 00001448  6000 0026                445                      BRA     Fn_UI_SetVHexI2         * Error must be with second input
 0000144C                           446  
 0000144C                           447  Fn_UI_SetVHexI1     ** Set valid on input 1
-0000144C  13FC 0000 00002341       448                      MOVE.B  #0,adrStsStart          * Set valid code 0 (address is valid)
-00001454  23C6 00002334            449                      MOVE.L  D6,adrValStart          * Copy input address to adrValEnd
-0000145A  49F9 00002334            450                      LEA     adrValStart,A4
-00001460  4BF9 00002338            451                      LEA     adrStrStart,A5
+0000144C  13FC 0000 0000233B       448                      MOVE.B  #0,adrStsStart          * Set valid code 0 (address is valid)
+00001454  23C6 0000232E            449                      MOVE.L  D6,adrValStart          * Copy input address to adrValEnd
+0000145A  49F9 0000232E            450                      LEA     adrValStart,A4
+00001460  4BF9 00002332            451                      LEA     adrStrStart,A5
 00001466  4EB9 000019B2            452                      JSR     SR_HEX_STR              * Copy address value to string for display
 0000146C  6000 FDB8                453                      BRA     Fn_UI_Loop              * Loop back to make sure both addresses set
 00001470                           454  
 00001470                           455  Fn_UI_SetVHexI2     ** Set valid on input 2
-00001470  13FC 0000 0000234F       456                      MOVE.B  #0,adrStsEnd            * Set valid code 0 (address is valid)
-00001478  23C6 00002342            457                      MOVE.L  D6,adrValEnd            * Copy input address to adrValEnd
-0000147E  49F9 00002342            458                      LEA     adrValEnd,A4
-00001484  4BF9 00002346            459                      LEA     adrStrEnd,A5
+00001470  13FC 0000 00002349       456                      MOVE.B  #0,adrStsEnd            * Set valid code 0 (address is valid)
+00001478  23C6 0000233C            457                      MOVE.L  D6,adrValEnd            * Copy input address to adrValEnd
+0000147E  49F9 0000233C            458                      LEA     adrValEnd,A4
+00001484  4BF9 00002340            459                      LEA     adrStrEnd,A5
 0000148A  4EB9 000019B2            460                      JSR     SR_HEX_STR              * Copy address value to string for display
 00001490  6000 FD94                461                      BRA     Fn_UI_Loop              * Loop back to make sure both addresses set
 00001494                           462  
 00001494                           463  Fn_UI_SetEHex       ** Error: hex values
-00001494  0C39 0000 00002341       464                      CMP.B   #0,adrStsStart
+00001494  0C39 0000 0000233B       464                      CMP.B   #0,adrStsStart
 0000149C  6600 0006                465                      BNE     Fn_UI_SetEHexI1         * Error must be with first input
 000014A0  6000 000E                466                      BRA     Fn_UI_SetEHexI2         * Error must be with second input
 000014A4                           467  
 000014A4                           468  Fn_UI_SetEHexI1     ** Set error on input 1
-000014A4  13FC 0002 00002341       469                      MOVE.B  #2,adrStsStart          * Set error code 2 (invalid hex values)
+000014A4  13FC 0002 0000233B       469                      MOVE.B  #2,adrStsStart          * Set error code 2 (invalid hex values)
 000014AC  6000 FD78                470                      BRA     Fn_UI_Loop              * Loop around to see if we are done
 000014B0                           471  
 000014B0                           472  Fn_UI_SetEHexI2     ** Set error on input 2
-000014B0  13FC 0002 0000234F       473                      MOVE.B  #2,adrStsEnd            * Set error code 2 (invalid hex values)
+000014B0  13FC 0002 00002349       473                      MOVE.B  #2,adrStsEnd            * Set error code 2 (invalid hex values)
 000014B8  6000 FD6C                474                      BRA     Fn_UI_Loop              * Loop around to see if we are done
 000014BC                           475  
 000014BC                           476  Fn_UI_ChkVal        ** Check address range, order
@@ -485,8 +485,8 @@ Created On: 3/6/2021 5:54:48 PM
 000014BC                           481                      **       doesn't really matter if end address is even or odd
 000014BC                           482                      ** ***************************************
 000014BC                           483  
-000014BC  2A39 00002334            484                      MOVE.L  adrValStart,D5
-000014C2  2C39 00002342            485                      MOVE.L  adrValEnd,D6
+000014BC  2A39 0000232E            484                      MOVE.L  adrValStart,D5
+000014C2  2C39 0000233C            485                      MOVE.L  adrValEnd,D6
 000014C8                           486  
 000014C8  BABC 00FFFFEC            487  Fn_UI_ChkValSMax    CMP.L   #$00FFFFEC,D5            * Start should be <= (max - 1)
 000014CE  6200 0006                488                      BHI     Fn_UI_ChkValSBig         * Start is > (max - 1); Set start to (max - 1)
@@ -522,8 +522,8 @@ Created On: 3/6/2021 5:54:48 PM
 00001518                           518  Fn_UI_Done          ** All done with input, time to go
 00001518                           519                      ** ***************************************
 00001518                           520  
-00001518  23C5 00002334            521                      MOVE.L  D5,adrValStart          * Move final address to Start
-0000151E  23C6 00002342            522                      MOVE.L  D6,adrValEnd            * Move final address to End
+00001518  23C5 0000232E            521                      MOVE.L  D5,adrValStart          * Move final address to Start
+0000151E  23C6 0000233C            522                      MOVE.L  D6,adrValEnd            * Move final address to End
 00001524                           523  
 00001524                           524                      ** Clear screen
 00001524  103C 000B                525                      MOVE.B  #11,D0                  * Trap task 2 does the following:
@@ -538,38 +538,38 @@ Created On: 3/6/2021 5:54:48 PM
 00001530                           534  SR_DSP_HEADER
 00001530                           535  
 00001530                           536                      ** Header line 03
-00001530  43F9 00002781            537                      LEA     msgLine,A1              * Loads MESSAGE into A1
+00001530  43F9 0000277B            537                      LEA     msgLine,A1              * Loads MESSAGE into A1
 00001536  103C 000E                538                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000153A  4E4F                     539                      TRAP    #15                     * Display to screen
 0000153C                           540  
 0000153C                           541                      ** Header line 01
-0000153C  43F9 000024AA            542                      LEA     msgHdr01,A1             * Loads MESSAGE into A1
+0000153C  43F9 000024A4            542                      LEA     msgHdr01,A1             * Loads MESSAGE into A1
 00001542  103C 000E                543                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001546  4E4F                     544                      TRAP    #15                     * Display to screen
 00001548                           545  
 00001548                           546                      ** Header line 02
-00001548  43F9 000024C1            547                      LEA     msgHdr02a,A1            * Loads MESSAGE into A1
+00001548  43F9 000024BB            547                      LEA     msgHdr02a,A1            * Loads MESSAGE into A1
 0000154E  103C 000E                548                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001552  4E4F                     549                      TRAP    #15                     * Display to screen
 00001554                           550  
-00001554  43F9 00002338            551                      LEA     adrStrStart,A1          * Loads MESSAGE into A1
+00001554  43F9 00002332            551                      LEA     adrStrStart,A1          * Loads MESSAGE into A1
 0000155A  103C 000E                552                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000155E  4E4F                     553                      TRAP    #15                     * Display to screen
 00001560                           554  
-00001560  43F9 000024CF            555                      LEA     msgHdr02b,A1            * Loads MESSAGE into A1
+00001560  43F9 000024C9            555                      LEA     msgHdr02b,A1            * Loads MESSAGE into A1
 00001566  103C 000E                556                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000156A  4E4F                     557                      TRAP    #15
 0000156C                           558  
-0000156C  43F9 00002346            559                      LEA     adrStrEnd,A1          * Loads MESSAGE into A1
+0000156C  43F9 00002340            559                      LEA     adrStrEnd,A1          * Loads MESSAGE into A1
 00001572  103C 000E                560                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001576  4E4F                     561                      TRAP    #15                     * Display to screen
 00001578                           562  
-00001578  43F9 000027B6            563                      LEA     msgNewLine,A1           * Loads MESSAGE into A1
+00001578  43F9 000027B0            563                      LEA     msgNewLine,A1           * Loads MESSAGE into A1
 0000157E  103C 000E                564                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 00001582  4E4F                     565                      TRAP    #15                     * Display to screen
 00001584                           566  
 00001584                           567                      ** Header line 03
-00001584  43F9 00002781            568                      LEA     msgLine,A1              * Loads MESSAGE into A1
+00001584  43F9 0000277B            568                      LEA     msgLine,A1              * Loads MESSAGE into A1
 0000158A  103C 000E                569                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
 0000158E  4E4F                     570                      TRAP    #15                     * Display to screen
 00001590                           571  
@@ -582,19 +582,19 @@ Created On: 3/6/2021 5:54:48 PM
 00001592                           578                      ** Output buffer
 00001592                           579                      **   Need buffer for spacing issues
 00001592                           580                      **
-00001592  47F9 00002366            581                      LEA     opOutBuf,A3             * Reset pointer to output buffer
+00001592  47F9 00002360            581                      LEA     opOutBuf,A3             * Reset pointer to output buffer
 00001598  16BC 0000                582                      MOVE.B  #$00,(A3)               * Insert NULL
 0000159C                           583  
 0000159C                           584                      ** Push opValAdr to opStrAdr
-0000159C  49F9 00002354            585                      LEA     opValAdr,A4             * input hex
-000015A2  4BF9 00002358            586                      LEA     opStrAdr,A5             * output string
+0000159C  49F9 0000234E            585                      LEA     opValAdr,A4             * input hex
+000015A2  4BF9 00002352            586                      LEA     opStrAdr,A5             * output string
 000015A8  4EB9 000019B2            587                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-000015AE  49F9 00002358            588                      LEA     opStrAdr,A4
+000015AE  49F9 00002352            588                      LEA     opStrAdr,A4
 000015B4  4EB9 000019E4            589                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000015BA                           590  
 000015BA                           591                      ** Instruction or DATA redirector
 000015BA                           592                      **
-000015BA  0C39 0001 00002353       593                      CMP.B   #1, opErr               * Check instruction type
+000015BA  0C39 0001 0000234D       593                      CMP.B   #1, opErr               * Check instruction type
 000015C2  6700 0006                594                      BEQ     Fn_Dsp_Data             * Error flag - must be data
 000015C6  6000 001E                595                      BRA     Fn_Dsp_Instr            * No error flag - must be instruction
 000015CA                           596  
@@ -602,11 +602,11 @@ Created On: 3/6/2021 5:54:48 PM
 000015CA                           598                      **
 000015CA                           599  
 000015CA                           600                      ** Space
-000015CA  49F9 000027BD            601                      LEA     opSpace,A4
+000015CA  49F9 000027B7            601                      LEA     opSpace,A4
 000015D0  4EB9 000019E4            602                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000015D6                           603  
 000015D6                           604                      ** Instruction name
-000015D6  49F9 000023D9            605                      LEA     opNam_DATA,A4
+000015D6  49F9 000023D3            605                      LEA     opNam_DATA,A4
 000015DC  4EB9 000019E4            606                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000015E2                           607  
 000015E2  6000 037E                608                      BRA     Fn_Dsp_Done
@@ -615,37 +615,37 @@ Created On: 3/6/2021 5:54:48 PM
 000015E6                           611                      **
 000015E6                           612  
 000015E6                           613                      ** Space
-000015E6  49F9 000027BD            614                      LEA     opSpace,A4
+000015E6  49F9 000027B7            614                      LEA     opSpace,A4
 000015EC  4EB9 000019E4            615                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000015F2                           616  
 000015F2                           617                      ** Instruction name
-000015F2  2879 000023B6            618                      MOVE.L  opPtrNam,A4
+000015F2  2879 000023B0            618                      MOVE.L  opPtrNam,A4
 000015F8  4EB9 000019E4            619                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000015FE                           620  
 000015FE                           621                      ** Instruciton size
 000015FE                           622                      **
-000015FE  0C39 0000 000023BA       623                      CMP.B   #0,opValSiz
+000015FE  0C39 0000 000023B4       623                      CMP.B   #0,opValSiz
 00001606  6700 001E                624                      BEQ     Fn_DSP_SizB             * Size is Byte
-0000160A  0C39 0001 000023BA       625                      CMP.B   #1,opValSiz
+0000160A  0C39 0001 000023B4       625                      CMP.B   #1,opValSiz
 00001612  6700 0022                626                      BEQ     Fn_DSP_SizW             * Size is Word
-00001616  0C39 0002 000023BA       627                      CMP.B   #2,opValSiz
+00001616  0C39 0002 000023B4       627                      CMP.B   #2,opValSiz
 0000161E  6700 0026                628                      BEQ     Fn_DSP_SizL             * Size is Long
 00001622  6000 003E                629                      BRA     Fn_DSP_DTA1             * Size not set, go to check Data 1
 00001626                           630  
-00001626  49F9 0000244A            631  Fn_DSP_SizB         LEA     opSizB,A4               * '.B' string
+00001626  49F9 00002444            631  Fn_DSP_SizB         LEA     opSizB,A4               * '.B' string
 0000162C  4EB9 000019E4            632                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 00001632  6000 0022                633                      BRA     Fn_DSP_OPR1
 00001636                           634  
-00001636  49F9 0000244D            635  Fn_DSP_SizW         LEA     opSizW,A4               * '.W' string
+00001636  49F9 00002447            635  Fn_DSP_SizW         LEA     opSizW,A4               * '.W' string
 0000163C  4EB9 000019E4            636                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 00001642  6000 0012                637                      BRA     Fn_DSP_OPR1
 00001646                           638  
-00001646  49F9 00002450            639  Fn_DSP_SizL         LEA     opSizL,A4              * '.L' string
+00001646  49F9 0000244A            639  Fn_DSP_SizL         LEA     opSizL,A4              * '.L' string
 0000164C  4EB9 000019E4            640                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 00001652  6000 0002                641                      BRA     Fn_DSP_OPR1
 00001656                           642  
 00001656                           643  Fn_DSP_OPR1         ** Display First Operand
-00001656  49F9 000027C0            644                      LEA     opTab,A4                * Tab (or calculated spaces)
+00001656  49F9 000027BA            644                      LEA     opTab,A4                * Tab (or calculated spaces)
 0000165C  4EB9 000019E4            645                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 00001662                           646  
 00001662                           647  Fn_DSP_DTA1         ** Data 1 (source)
@@ -653,36 +653,36 @@ Created On: 3/6/2021 5:54:48 PM
 00001662                           649                      **
 00001662                           650  
 00001662                           651                      ** Check if source mode set (may not have a source)
-00001662  0C39 00FF 000023C0       652                      CMP.B   #$FF,opDta1
+00001662  0C39 00FF 000023BA       652                      CMP.B   #$FF,opDta1
 0000166A  6700 017C                653                      BEQ     Fn_DSP_DTA2             * No source data, goto check Dta2
 0000166E                           654  
 0000166E                           655                      ** Check source mode
 0000166E                           656                      **
-0000166E  0C39 0000 000023BE       657                      CMP.B   #0,opSrcMod
+0000166E  0C39 0000 000023B8       657                      CMP.B   #0,opSrcMod
 00001676  6700 0042                658                      BEQ     Fn_DSP_DTA1_00          * Handle Reg Mode 0 Dn
-0000167A  0C39 0001 000023BE       659                      CMP.B   #1,opSrcMod
+0000167A  0C39 0001 000023B8       659                      CMP.B   #1,opSrcMod
 00001682  6700 004A                660                      BEQ     Fn_DSP_DTA1_01          * Handle Reg Mode 1 An
-00001686  0C39 0002 000023BE       661                      CMP.B   #2,opSrcMod
+00001686  0C39 0002 000023B8       661                      CMP.B   #2,opSrcMod
 0000168E  6700 0052                662                      BEQ     Fn_DSP_DTA1_02          * Handle Reg Mode 2 (An)
-00001692  0C39 0003 000023BE       663                      CMP.B   #3,opSrcMod
+00001692  0C39 0003 000023B8       663                      CMP.B   #3,opSrcMod
 0000169A  6700 0062                664                      BEQ     Fn_DSP_DTA1_03          * Handle Reg Mode 3 (An)+
-0000169E  0C39 0004 000023BE       665                      CMP.B   #4,opSrcMod
+0000169E  0C39 0004 000023B8       665                      CMP.B   #4,opSrcMod
 000016A6  6700 0076                666                      BEQ     Fn_DSP_DTA1_04          * Handle Reg Mode 4 -(An)
-000016AA  0C39 0007 000023BE       667                      CMP.B   #7,opSrcMod
+000016AA  0C39 0007 000023B8       667                      CMP.B   #7,opSrcMod
 000016B2  6700 008A                668                      BEQ     Fn_DSP_DTA1_07          * Handle Reg Mode 7 (xxx).W, (xxx).L, #<data>
 000016B6                           669  
 000016B6  6000 0114                670                      BRA     Fn_DSP_DTA1_ERR         * Mode not 1 to 7 - display error
 000016BA                           671  
 000016BA                           672  Fn_DSP_DTA1_00      ** Handling data mode 0
 000016BA  16FC 0044                673                      MOVE.B  #$44,(A3)+              * Insert 'D' character
-000016BE  1639 000023BD            674                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000016BE  1639 000023B7            674                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
 000016C4  0603 0030                675                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 000016C8  16C3                     676                      MOVE.B  D3,(A3)+                * Insert Register value
 000016CA  6000 0110                677                      BRA     Fn_DSP_OPR2             * Display data 2
 000016CE                           678  
 000016CE                           679  Fn_DSP_DTA1_01      ** Handling data mode 1
 000016CE  16FC 0041                680                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-000016D2  1639 000023BD            681                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000016D2  1639 000023B7            681                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
 000016D8  0603 0030                682                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 000016DC  16C3                     683                      MOVE.B  D3,(A3)+                * Insert Register value
 000016DE  6000 00FC                684                      BRA     Fn_DSP_OPR2             * Display data 2
@@ -690,7 +690,7 @@ Created On: 3/6/2021 5:54:48 PM
 000016E2                           686  Fn_DSP_DTA1_02      ** Handling data mode 2
 000016E2  16FC 0028                687                      MOVE.B  #$28,(A3)+              * Insert '(' character
 000016E6  16FC 0041                688                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-000016EA  1639 000023BD            689                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000016EA  1639 000023B7            689                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
 000016F0  0603 0030                690                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 000016F4  16C3                     691                      MOVE.B  D3,(A3)+                * Insert Register value
 000016F6  16FC 0029                692                      MOVE.B  #$29,(A3)+              * Insert ')' character
@@ -699,7 +699,7 @@ Created On: 3/6/2021 5:54:48 PM
 000016FE                           695  Fn_DSP_DTA1_03      ** Handling data mode 3
 000016FE  16FC 0028                696                      MOVE.B  #$28,(A3)+              * Insert '(' character
 00001702  16FC 0041                697                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-00001706  1639 000023BD            698                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+00001706  1639 000023B7            698                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
 0000170C  0603 0030                699                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 00001710  16C3                     700                      MOVE.B  D3,(A3)+                * Insert Register value
 00001712  16FC 0029                701                      MOVE.B  #$29,(A3)+              * Insert ')' character
@@ -710,53 +710,53 @@ Created On: 3/6/2021 5:54:48 PM
 0000171E  16FC 002D                706                      MOVE.B  #$2D,(A3)+              * Insert '-' character
 00001722  16FC 0028                707                      MOVE.B  #$28,(A3)+              * Insert '(' character
 00001726  16FC 0041                708                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-0000172A  1639 000023BD            709                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+0000172A  1639 000023B7            709                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
 00001730  0603 0030                710                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 00001734  16C3                     711                      MOVE.B  D3,(A3)+                * Insert Register value
 00001736  16FC 0029                712                      MOVE.B  #$29,(A3)+              * Insert ')' character
 0000173A  6000 00A0                713                      BRA     Fn_DSP_OPR2             * Display data 2
 0000173E                           714  
 0000173E                           715  Fn_DSP_DTA1_07      ** Handling data mode 7
-0000173E  0C39 0000 000023C4       716                      CMP.B   #0,opDta1T
+0000173E  0C39 0000 000023BE       716                      CMP.B   #0,opDta1T
 00001746  6700 001E                717                      BEQ     Fn_DSP_DTA1_BYT         * Display data as byte
-0000174A  0C39 0001 000023C4       718                      CMP.B   #1,opDta1T
+0000174A  0C39 0001 000023BE       718                      CMP.B   #1,opDta1T
 00001752  6700 0034                719                      BEQ     Fn_DSP_DTA1_WRD         * Display data as word
-00001756  0C39 0002 000023C4       720                      CMP.B   #2,opDta1T
+00001756  0C39 0002 000023BE       720                      CMP.B   #2,opDta1T
 0000175E  6700 004A                721                      BEQ     Fn_DSP_DTA1_LNG         * Display data as long
 00001762                           722  
 00001762  6000 0068                723                      BRA     Fn_DSP_DTA1_ERR         * Data type not 0 to 2 - display error
 00001766                           724  
 00001766                           725  Fn_DSP_DTA1_BYT     ** Display data Byte (it's really a word with 00 tacked on)
-00001766  49F9 000023C0            726                      LEA     opDta1,A4               * input hex
-0000176C  4BF9 000023CB            727                      LEA     opStrDtaWrd,A5          * output string
+00001766  49F9 000023BA            726                      LEA     opDta1,A4               * input hex
+0000176C  4BF9 000023C5            727                      LEA     opStrDtaWrd,A5          * output string
 00001772  4EB9 000019B2            728                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-00001778  49F9 000023CB            729                      LEA     opStrDtaWrd,A4
+00001778  49F9 000023C5            729                      LEA     opStrDtaWrd,A4
 0000177E  4EB9 000019E4            730                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 00001784  6000 0056                731                      BRA     Fn_DSP_OPR2             * Display data 2
 00001788                           732  
 00001788                           733  Fn_DSP_DTA1_WRD     ** Display data Word
-00001788  49F9 000023C0            734                      LEA     opDta1,A4               * input hex
-0000178E  4BF9 000023CB            735                      LEA     opStrDtaWrd,A5          * output string
+00001788  49F9 000023BA            734                      LEA     opDta1,A4               * input hex
+0000178E  4BF9 000023C5            735                      LEA     opStrDtaWrd,A5          * output string
 00001794  4EB9 000019B2            736                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-0000179A  49F9 000023CB            737                      LEA     opStrDtaWrd,A4
+0000179A  49F9 000023C5            737                      LEA     opStrDtaWrd,A4
 000017A0  4EB9 000019E4            738                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000017A6  6000 0034                739                      BRA     Fn_DSP_OPR2             * Display data 2
 000017AA                           740  
 000017AA                           741  Fn_DSP_DTA1_LNG     ** Display data Long
-000017AA  49F9 000023C0            742                      LEA     opDta1,A4               * input hex
-000017B0  4BF9 000023D0            743                      LEA     opStrDtaLng,A5          * output string
+000017AA  49F9 000023BA            742                      LEA     opDta1,A4               * input hex
+000017B0  4BF9 000023CA            743                      LEA     opStrDtaLng,A5          * output string
 000017B6  4EB9 000019B2            744                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-000017BC  49F9 000023D0            745                      LEA     opStrDtaLng,A4
+000017BC  49F9 000023CA            745                      LEA     opStrDtaLng,A4
 000017C2  4EB9 000019E4            746                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000017C8  6000 0012                747                      BRA     Fn_DSP_OPR2             * Display data 2
 000017CC                           748  
 000017CC                           749  Fn_DSP_DTA1_ERR     ** Something is messed up
-000017CC  49F9 000024A4            750                      LEA     msgErr,A4
+000017CC  49F9 0000249E            750                      LEA     msgErr,A4
 000017D2  4EB9 000019E4            751                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000017D8  6000 0002                752                      BRA     Fn_DSP_OPR2             * Display data 2
 000017DC                           753  
 000017DC                           754  Fn_DSP_OPR2         ** Display Second Operand
-000017DC  49F9 000027B9            755                      LEA     opComma,A4              * Comma
+000017DC  49F9 000027B3            755                      LEA     opComma,A4              * Comma
 000017E2  4EB9 000019E4            756                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 000017E8                           757  
 000017E8                           758  Fn_DSP_DTA2         ** Data 2 (destination)
@@ -764,34 +764,34 @@ Created On: 3/6/2021 5:54:48 PM
 000017E8                           760                      **
 000017E8                           761  
 000017E8                           762                      ** Check if destination mode set (may not have a destination)
-000017E8  0C39 00FF 000023BC       763                      CMP.B   #$FF,opDstMod
+000017E8  0C39 00FF 000023B6       763                      CMP.B   #$FF,opDstMod
 000017F0  6700 0170                764                      BEQ     Fn_DSP_DONE             * No source data, goto check Dta2
 000017F4                           765  
-000017F4  0C39 0000 000023BC       766                      CMP.B   #0,opDstMod
+000017F4  0C39 0000 000023B6       766                      CMP.B   #0,opDstMod
 000017FC  6700 0042                767                      BEQ     Fn_DSP_DTA2_00          * Handle Reg mode 0 (Dn)
-00001800  0C39 0001 000023BC       768                      CMP.B   #1,opDstMod
+00001800  0C39 0001 000023B6       768                      CMP.B   #1,opDstMod
 00001808  6700 004A                769                      BEQ     Fn_DSP_DTA2_01          * Handle Reg Mode 1 An
-0000180C  0C39 0002 000023BC       770                      CMP.B   #2,opDstMod
+0000180C  0C39 0002 000023B6       770                      CMP.B   #2,opDstMod
 00001814  6700 0052                771                      BEQ     Fn_DSP_DTA2_02          * Handle Reg Mode 2 (An)
-00001818  0C39 0003 000023BC       772                      CMP.B   #3,opDstMod
+00001818  0C39 0003 000023B6       772                      CMP.B   #3,opDstMod
 00001820  6700 0062                773                      BEQ     Fn_DSP_DTA2_03          * Handle Reg Mode 3 (An)+
-00001824  0C39 0004 000023BC       774                      CMP.B   #4,opDstMod
+00001824  0C39 0004 000023B6       774                      CMP.B   #4,opDstMod
 0000182C  6700 0076                775                      BEQ     Fn_DSP_DTA2_04          * Handle Reg Mode 4 -(An)
-00001830  0C39 0007 000023BC       776                      CMP.B   #7,opDstMod
+00001830  0C39 0007 000023B6       776                      CMP.B   #7,opDstMod
 00001838  6700 008A                777                      BEQ     Fn_DSP_DTA2_07          * Handle Reg Mode 7 (xxx).W, (xxx).L, #<data>
 0000183C                           778  
 0000183C  6000 0114                779                      BRA     Fn_DSP_DTA2_ERR         * Mode not 1 to 7 - display error
 00001840                           780  
 00001840                           781  Fn_DSP_DTA2_00      ** Handling mode 0
 00001840  16FC 0044                782                      MOVE.B  #$44,(A3)+              * Insert 'D' character
-00001844  1639 000023BB            783                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
+00001844  1639 000023B5            783                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
 0000184A  0603 0030                784                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 0000184E  16C3                     785                      MOVE.B  D3,(A3)+                * Insert Register value
 00001850  6000 0110                786                      BRA     Fn_DSP_DONE             * Done with display
 00001854                           787  
 00001854                           788  Fn_DSP_DTA2_01      ** Handling mode 1
 00001854  16FC 0041                789                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-00001858  1639 000023BB            790                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
+00001858  1639 000023B5            790                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
 0000185E  0603 0030                791                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 00001862  16C3                     792                      MOVE.B  D3,(A3)+                * Insert Register value
 00001864  6000 00FC                793                      BRA     Fn_DSP_DONE             * Done with display
@@ -799,7 +799,7 @@ Created On: 3/6/2021 5:54:48 PM
 00001868                           795  Fn_DSP_DTA2_02      ** Handling mode 2
 00001868  16FC 0028                796                      MOVE.B  #$28,(A3)+              * Insert '(' character
 0000186C  16FC 0041                797                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-00001870  1639 000023BB            798                      MOVE.B  opDSTReg,D3             * Move Register value to D3 for ASCII conversion
+00001870  1639 000023B5            798                      MOVE.B  opDSTReg,D3             * Move Register value to D3 for ASCII conversion
 00001876  0603 0030                799                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 0000187A  16C3                     800                      MOVE.B  D3,(A3)+                * Insert Register value
 0000187C  16FC 0029                801                      MOVE.B  #$29,(A3)+              * Insert ')' character
@@ -808,7 +808,7 @@ Created On: 3/6/2021 5:54:48 PM
 00001884                           804  Fn_DSP_DTA2_03      ** Handling mode 3
 00001884  16FC 0028                805                      MOVE.B  #$28,(A3)+              * Insert '(' character
 00001888  16FC 0041                806                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-0000188C  1639 000023BB            807                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
+0000188C  1639 000023B5            807                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
 00001892  0603 0030                808                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 00001896  16C3                     809                      MOVE.B  D3,(A3)+                * Insert Register value
 00001898  16FC 0029                810                      MOVE.B  #$29,(A3)+              * Insert ')' character
@@ -819,54 +819,54 @@ Created On: 3/6/2021 5:54:48 PM
 000018A4  16FC 002D                815                      MOVE.B  #$2D,(A3)+              * Insert '-' character
 000018A8  16FC 0028                816                      MOVE.B  #$28,(A3)+              * Insert '(' character
 000018AC  16FC 0041                817                      MOVE.B  #$41,(A3)+              * Insert 'A' character
-000018B0  1639 000023BD            818                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000018B0  1639 000023B7            818                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
 000018B6  0603 0030                819                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
 000018BA  16C3                     820                      MOVE.B  D3,(A3)+                * Insert Register value
 000018BC  16FC 0029                821                      MOVE.B  #$29,(A3)+              * Insert ')' character
 000018C0  6000 00A0                822                      BRA     Fn_DSP_DONE             * Done with display
 000018C4                           823  
 000018C4                           824  Fn_DSP_DTA2_07      ** Handling mode 8
-000018C4  0C39 0000 000023CA       825                      CMP.B   #0,opDta2T
+000018C4  0C39 0000 000023C4       825                      CMP.B   #0,opDta2T
 000018CC  6700 001E                826                      BEQ     Fn_DSP_DTA2_BYT         * Display data as byte
-000018D0  0C39 0001 000023CA       827                      CMP.B   #1,opDta2T
+000018D0  0C39 0001 000023C4       827                      CMP.B   #1,opDta2T
 000018D8  6700 0034                828                      BEQ     Fn_DSP_DTA2_WRD         * Display data as word
-000018DC  0C39 0002 000023CA       829                      CMP.B   #2,opDta2T
+000018DC  0C39 0002 000023C4       829                      CMP.B   #2,opDta2T
 000018E4  6700 004A                830                      BEQ     Fn_DSP_DTA2_LNG         * Display data as long
 000018E8                           831  
 000018E8  6000 0068                832                      BRA     Fn_DSP_DTA2_ERR         * Data type not 0 to 2 - display error
 000018EC                           833  
 000018EC                           834  Fn_DSP_DTA2_BYT     ** Display data Byte (it's really a word with 00 tacked on)
-000018EC  49F9 000023C6            835                      LEA     opDta2,A4               * input hex
-000018F2  4BF9 000023CB            836                      LEA     opStrDtaWrd,A5          * output string
+000018EC  49F9 000023C0            835                      LEA     opDta2,A4               * input hex
+000018F2  4BF9 000023C5            836                      LEA     opStrDtaWrd,A5          * output string
 000018F8  4EB9 000019B2            837                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-000018FE  49F9 000023CB            838                      LEA     opStrDtaWrd,A4
+000018FE  49F9 000023C5            838                      LEA     opStrDtaWrd,A4
 00001904  4EB9 000019E4            839                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 0000190A  6000 0056                840                      BRA     Fn_DSP_DONE             * Display data 2
 0000190E                           841  
 0000190E                           842  Fn_DSP_DTA2_WRD     ** Display data Word
-0000190E  49F9 000023C6            843                      LEA     opDta2,A4               * input hex
-00001914  4BF9 000023CB            844                      LEA     opStrDtaWrd,A5          * output string
+0000190E  49F9 000023C0            843                      LEA     opDta2,A4               * input hex
+00001914  4BF9 000023C5            844                      LEA     opStrDtaWrd,A5          * output string
 0000191A  4EB9 000019B2            845                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-00001920  49F9 000023CB            846                      LEA     opStrDtaWrd,A4
+00001920  49F9 000023C5            846                      LEA     opStrDtaWrd,A4
 00001926  4EB9 000019E4            847                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 0000192C  6000 0034                848                      BRA     Fn_DSP_DONE             * Display data 2
 00001930                           849  
 00001930                           850  Fn_DSP_DTA2_LNG     ** Display data Long
-00001930  49F9 000023C6            851                      LEA     opDta2,A4               * input hex
-00001936  4BF9 000023D0            852                      LEA     opStrDtaLng,A5          * output string
+00001930  49F9 000023C0            851                      LEA     opDta2,A4               * input hex
+00001936  4BF9 000023CA            852                      LEA     opStrDtaLng,A5          * output string
 0000193C  4EB9 000019B2            853                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
-00001942  49F9 000023D0            854                      LEA     opStrDtaLng,A4
+00001942  49F9 000023CA            854                      LEA     opStrDtaLng,A4
 00001948  4EB9 000019E4            855                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 0000194E  6000 0012                856                      BRA     Fn_DSP_DONE             * Display data 2
 00001952                           857  
 00001952                           858  Fn_DSP_DTA2_ERR     ** Something is messed up
-00001952  49F9 000024A4            859                      LEA     msgErr,A4
+00001952  49F9 0000249E            859                      LEA     msgErr,A4
 00001958  4EB9 000019E4            860                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
 0000195E  6000 0002                861                      BRA     Fn_DSP_DONE             * Display data 2
 00001962                           862  
 00001962                           863  Fn_Dsp_Done         ** Done with instruction display
 00001962  16BC 0000                864                      MOVE.B  #$00,(A3)               * Insert NULL to end string
-00001966  43F9 00002366            865                      LEA     opOutBuf,A1             * Loads MESSAGE into A1
+00001966  43F9 00002360            865                      LEA     opOutBuf,A1             * Loads MESSAGE into A1
 0000196C  103C 000D                866                      MOVE.B  #13,D0                  * Use (A1) with CR/LF
 00001970  4E4F                     867                      TRAP    #15
 00001972                           868  
@@ -1022,46 +1022,46 @@ Created On: 3/6/2021 5:54:48 PM
 000019FC                          1018                      **    I think there is only one instrction that is 4,8
 000019FC                          1019                      **
 000019FC                          1020                      ** ***************************************
-000019FC  3639 00002350           1021                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+000019FC  3639 0000234A           1021                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001A02  183C 000C               1022                      MOVE.B  #12,D4
 00001A06  E86B                    1023                      LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
-00001A08  13C3 00002352           1024                      MOVE.B  D3, opID
+00001A08  13C3 0000234C           1024                      MOVE.B  D3, opID
 00001A0E                          1025  
 00001A0E                          1026                      ** Read next 3 bits
 00001A0E                          1027                      **
-00001A0E  3639 00002350           1028                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A0E  3639 0000234A           1028                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001A14  183C 0004               1029                      MOVE.B  #4, D4
 00001A18  E96B                    1030                      LSL.W   D4, D3                      * Shift left 4 to get rid of first 4 bits
 00001A1A  183C 000D               1031                      MOVE.B  #13,D4
 00001A1E  E86B                    1032                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001A20  13C3 000023BB           1033                      MOVE.B  D3, opDstReg
+00001A20  13C3 000023B5           1033                      MOVE.B  D3, opDstReg
 00001A26                          1034  
 00001A26                          1035                      ** Read next 3 bits
 00001A26                          1036                      **
-00001A26  3639 00002350           1037                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A26  3639 0000234A           1037                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001A2C  183C 0007               1038                      MOVE.B  #7, D4
 00001A30  E96B                    1039                      LSL.W   D4, D3                      * Shift left 7 to get rid of first 7 bits
 00001A32  183C 000D               1040                      MOVE.B  #13,D4
 00001A36  E86B                    1041                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001A38  13C3 000023BC           1042                      MOVE.B  D3, opDstMod
+00001A38  13C3 000023B6           1042                      MOVE.B  D3, opDstMod
 00001A3E                          1043  
 00001A3E                          1044                      ** Read next 3 bits
 00001A3E                          1045                      **
-00001A3E  3639 00002350           1046                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A3E  3639 0000234A           1046                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001A44  183C 000A               1047                      MOVE.B  #10, D4
 00001A48  E96B                    1048                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
 00001A4A  183C 000D               1049                      MOVE.B  #13,D4
 00001A4E  E86B                    1050                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001A50  13C3 000023BE           1051                      MOVE.B  D3, opSrcMod
+00001A50  13C3 000023B8           1051                      MOVE.B  D3, opSrcMod
 00001A56                          1052  
 00001A56                          1053                      ** Read next 3 bits
 00001A56                          1054                      **
-00001A56  3639 00002350           1055                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A56  3639 0000234A           1055                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001A5C  183C 000D               1056                      MOVE.B  #13, D4
 00001A60  E96B                    1057                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
 00001A62  183C 000D               1058                      MOVE.B  #13,D4
 00001A66  E86B                    1059                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001A68  13C3 000023BD           1060                      MOVE.B  D3, opSrcReg
+00001A68  13C3 000023B7           1060                      MOVE.B  D3, opSrcReg
 00001A6E                          1061  
 00001A6E                          1062                      ** ***************************************
 00001A6E                          1063                      ** Verify this is MOVE or MOVEA
@@ -1072,18 +1072,18 @@ Created On: 3/6/2021 5:54:48 PM
 00001A6E                          1068                      ** Size: opID = 1: Byte; opID = 2: Long; opID = 3: Word
 00001A6E                          1069                      **
 00001A6E                          1070                      ** ***************************************
-00001A6E  0C39 0001 000023BC      1071                      CMP.B   #1, opDstMod                * Destination mode is 1 - must be MOVEA
+00001A6E  0C39 0001 000023B6      1071                      CMP.B   #1, opDstMod                * Destination mode is 1 - must be MOVEA
 00001A76  6700 0016               1072                      BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
 00001A7A  6000 0002               1073                      BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
 00001A7E                          1074  
-00001A7E  47F9 000023DE           1075  Fn_MOVE_Ins01       LEA     opNam_MOVE,A3
-00001A84  23CB 000023B6           1076                      MOVE.L  A3,opPtrNam                 * Display name points to name
+00001A7E  47F9 000023D8           1075  Fn_MOVE_Ins01       LEA     opNam_MOVE,A3
+00001A84  23CB 000023B0           1076                      MOVE.L  A3,opPtrNam                 * Display name points to name
 00001A8A  6000 001A               1077                      BRA     Fn_MOVE_Verify
 00001A8E                          1078  
-00001A8E  0C39 0001 00002352      1079  Fn_MOVE_Ins02       CMP.B   #1, opID
+00001A8E  0C39 0001 0000234C      1079  Fn_MOVE_Ins02       CMP.B   #1, opID
 00001A96  6700 01A4               1080                      BEQ     Fn_MOVE_Error               * MOVEA cannot have opID = 1 (byte)
-00001A9A  47F9 000023E3           1081                      LEA     opNam_MOVEA,A3
-00001AA0  23CB 000023B6           1082                      MOVE.L  A3,opPtrNam                 * Display name points to name
+00001A9A  47F9 000023DD           1081                      LEA     opNam_MOVEA,A3
+00001AA0  23CB 000023B0           1082                      MOVE.L  A3,opPtrNam                 * Display name points to name
 00001AA6                          1083  
 00001AA6                          1084                      ** ***************************************
 00001AA6                          1085                      ** Verify other instruction parameters are correct
@@ -1094,22 +1094,22 @@ Created On: 3/6/2021 5:54:48 PM
 00001AA6                          1090                      **    SrcReg = 0 to 7
 00001AA6                          1091                      **
 00001AA6                          1092                      ** ***************************************
-00001AA6  0C39 0000 000023BC      1093  Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >= 0
+00001AA6  0C39 0000 000023B6      1093  Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >= 0
 00001AAE  6D00 018C               1094                      BLT     Fn_MOVE_Error
-00001AB2  0C39 0007 000023BC      1095                      CMP.B   #7, opDstMod                * Destination mode is <= 7
+00001AB2  0C39 0007 000023B6      1095                      CMP.B   #7, opDstMod                * Destination mode is <= 7
 00001ABA  6E00 0180               1096                      BGT     Fn_MOVE_Error
-00001ABE  0C39 0000 000023BB      1097                      CMP.B   #0, opDstReg                * Destination register >= 0
+00001ABE  0C39 0000 000023B5      1097                      CMP.B   #0, opDstReg                * Destination register >= 0
 00001AC6  6D00 0174               1098                      BLT     Fn_MOVE_Error
-00001ACA  0C39 0007 000023BB      1099                      CMP.B   #7, opDstReg                * Destination register <= 7
+00001ACA  0C39 0007 000023B5      1099                      CMP.B   #7, opDstReg                * Destination register <= 7
 00001AD2  6E00 0168               1100                      BGT     Fn_MOVE_Error
 00001AD6                          1101  
-00001AD6  0C39 0000 000023BE      1102                      CMP.B   #0, opSrcMod                * Destination mode is 0
+00001AD6  0C39 0000 000023B8      1102                      CMP.B   #0, opSrcMod                * Destination mode is 0
 00001ADE  6D00 015C               1103                      BLT     Fn_MOVE_Error
-00001AE2  0C39 0007 000023BE      1104                      CMP.B   #7, opSrcMod                * Destination mode is <= 7
+00001AE2  0C39 0007 000023B8      1104                      CMP.B   #7, opSrcMod                * Destination mode is <= 7
 00001AEA  6E00 0150               1105                      BGT     Fn_MOVE_Error
-00001AEE  0C39 0000 000023BD      1106                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001AEE  0C39 0000 000023B7      1106                      CMP.B   #0, opSrcReg                * Destination register >= 0
 00001AF6  6D00 0144               1107                      BLT     Fn_MOVE_Error
-00001AFA  0C39 0007 000023BD      1108                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001AFA  0C39 0007 000023B7      1108                      CMP.B   #7, opSrcReg                * Destination register <= 7
 00001B02  6E00 0138               1109                      BGT     Fn_MOVE_Error
 00001B06                          1110  
 00001B06                          1111                      ** ***************************************
@@ -1117,17 +1117,17 @@ Created On: 3/6/2021 5:54:48 PM
 00001B06                          1113                      ** Note: size set by opID only for MOVE, MOVEA
 00001B06                          1114                      **       other instructions use 3 bits for size
 00001B06                          1115                      ** ***************************************
-00001B06  0C39 0001 00002352      1116                      CMP.B   #1, opID                    * Instruction size is Byte
+00001B06  0C39 0001 0000234C      1116                      CMP.B   #1, opID                    * Instruction size is Byte
 00001B0E  6700 001A               1117                      BEQ     Fn_MOVE_SizB
-00001B12  0C39 0003 00002352      1118                      CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
+00001B12  0C39 0003 0000234C      1118                      CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
 00001B1A  6700 001A               1119                      BEQ     Fn_MOVE_SizW
-00001B1E  0C39 0002 00002352      1120                      CMP.B   #2, opID                    * Instruction size is Long
+00001B1E  0C39 0002 0000234C      1120                      CMP.B   #2, opID                    * Instruction size is Long
 00001B26  6700 001A               1121                      BEQ     Fn_MOVE_SizL
-00001B2A  13FC 0000 000023BA      1122  Fn_MOVE_SizB        MOVE.B  #0,opValSiz                 * Set size to 0=Byte
+00001B2A  13FC 0000 000023B4      1122  Fn_MOVE_SizB        MOVE.B  #0,opValSiz                 * Set size to 0=Byte
 00001B32  6000 001A               1123                      BRA     Fn_MOVE_SrcMod
-00001B36  13FC 0001 000023BA      1124  Fn_MOVE_SizW        MOVE.B  #1,opValSiz                 * Set size to 1=Word
+00001B36  13FC 0001 000023B4      1124  Fn_MOVE_SizW        MOVE.B  #1,opValSiz                 * Set size to 1=Word
 00001B3E  6000 000E               1125                      BRA     Fn_MOVE_SrcMod
-00001B42  13FC 0002 000023BA      1126  Fn_MOVE_SizL        MOVE.B  #2,opValSiz                 * Set size to 2=Long
+00001B42  13FC 0002 000023B4      1126  Fn_MOVE_SizL        MOVE.B  #2,opValSiz                 * Set size to 2=Long
 00001B4A  6000 0002               1127                      BRA     Fn_MOVE_SrcMod
 00001B4E                          1128  
 00001B4E                          1129                      ** ***************************************
@@ -1147,14 +1147,14 @@ Created On: 3/6/2021 5:54:48 PM
 00001B4E                          1143                      ** SOURCE
 00001B4E                          1144                      **
 00001B4E                          1145                      ** ***************************************
-00001B4E  0C39 0007 000023BE      1146  Fn_MOVE_SrcMod      CMP.B   #7, opSrcMod                * Check if source mode is 7
+00001B4E  0C39 0007 000023B8      1146  Fn_MOVE_SrcMod      CMP.B   #7, opSrcMod                * Check if source mode is 7
 00001B56  6700 0006               1147                      BEQ     Fn_MOVE_ChkSrcReg           * Check source register
 00001B5A  6000 0088               1148                      BRA     Fn_MOVE_ChkDstMod           * Source not 7, now check destination Mod
-00001B5E  0C39 0000 000023BD      1149  Fn_MOVE_ChkSrcReg   CMP.B   #0, opSrcReg                * Check is source register is 0
+00001B5E  0C39 0000 000023B7      1149  Fn_MOVE_ChkSrcReg   CMP.B   #0, opSrcReg                * Check is source register is 0
 00001B66  6700 0058               1150                      BEQ     Fn_MOVE_DtaSrcWrd           * Load next word
-00001B6A  0C39 0001 000023BD      1151                      CMP.B   #1, opSrcReg                * Check if source register is 1
+00001B6A  0C39 0001 000023B7      1151                      CMP.B   #1, opSrcReg                * Check if source register is 1
 00001B72  6700 005E               1152                      BEQ     Fn_MOVE_DtaSrcLng           * Load next long
-00001B76  0C39 0004 000023BD      1153                      CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
+00001B76  0C39 0004 000023B7      1153                      CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
 00001B7E  6700 0006               1154                      BEQ     Fn_MOVE_DtaSrcImd           * Load first word into word one
 00001B82  6000 00B8               1155                      BRA     FN_MOVE_Error               * Invalid register value
 00001B86                          1156  
@@ -1162,43 +1162,43 @@ Created On: 3/6/2021 5:54:48 PM
 00001B86                          1158                      **       opID as size is specific to MOVE, MOVEA
 00001B86                          1159                      **       other instructions will use 3 bits to set size, not part of ID
 00001B86                          1160                      **
-00001B86  0C39 0001 00002352      1161  Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byte
+00001B86  0C39 0001 0000234C      1161  Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byte
 00001B8E  6700 001E               1162                      BEQ     Fn_MOVE_DtaSrcByt           * Load next byte
-00001B92  0C39 0003 00002352      1163                      CMP.B   #3, opID                    * opID = 3 - size is word
+00001B92  0C39 0003 0000234C      1163                      CMP.B   #3, opID                    * opID = 3 - size is word
 00001B9A  6700 0024               1164                      BEQ     Fn_MOVE_DtaSrcWrd           * Load next word
-00001B9E  0C39 0002 00002352      1165                      CMP.B   #2, opID                    * opID = 0 - size is long
+00001B9E  0C39 0002 0000234C      1165                      CMP.B   #2, opID                    * opID = 0 - size is long
 00001BA6  6700 002A               1166                      BEQ     Fn_MOVE_DtaSrcLng           * Load next long
 00001BAA  6000 0090               1167                      BRA     Fn_MOVE_Error               * Invalid opID (this should never happen)
 00001BAE                          1168  
-00001BAE  33DA 000023C0           1169  Fn_MOVE_DtaSrcByt   MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
-00001BB4  13FC 0000 000023C4      1170                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+00001BAE  33DA 000023BA           1169  Fn_MOVE_DtaSrcByt   MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
+00001BB4  13FC 0000 000023BE      1170                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
 00001BBC  6000 0026               1171                      BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-00001BC0  33DA 000023C0           1172  Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
-00001BC6  13FC 0001 000023C4      1173                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+00001BC0  33DA 000023BA           1172  Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
+00001BC6  13FC 0001 000023BE      1173                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
 00001BCE  6000 0014               1174                      BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-00001BD2  23DA 000023C0           1175  Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
-00001BD8  13FC 0002 000023C4      1176                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+00001BD2  23DA 000023BA           1175  Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
+00001BD8  13FC 0002 000023BE      1176                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
 00001BE0  6000 0002               1177                      BRA     Fn_MOVE_ChkDstMod           * Check destination mode
 00001BE4                          1178  
 00001BE4                          1179                      ** DESTINATION
 00001BE4                          1180                      **
-00001BE4  0C39 0007 000023BC      1181  Fn_MOVE_ChkDstMod   CMP.B   #7, opDstMod                * Check if destination mode is 7
+00001BE4  0C39 0007 000023B6      1181  Fn_MOVE_ChkDstMod   CMP.B   #7, opDstMod                * Check if destination mode is 7
 00001BEC  6700 0006               1182                      BEQ     Fn_MOVE_ChkDstReg           * Check destination register
 00001BF0  6000 0042               1183                      BRA     Fn_MOVE_Done                * Destination not 7, done with data
-00001BF4  0C39 0000 000023BB      1184  Fn_MOVE_ChkDstReg   CMP.B   #0, opDstReg                * Check if destination register is 0
+00001BF4  0C39 0000 000023B5      1184  Fn_MOVE_ChkDstReg   CMP.B   #0, opDstReg                * Check if destination register is 0
 00001BFC  6700 0012               1185                      BEQ     Fn_MOVE_DtaDstWrd           * Load next word
-00001C00  0C39 0001 000023BB      1186                      CMP.B   #1, opDstReg                * Check if destination register is 1
+00001C00  0C39 0001 000023B5      1186                      CMP.B   #1, opDstReg                * Check if destination register is 1
 00001C08  6700 0018               1187                      BEQ     Fn_MOVE_DtaDstLng           * Load next long
 00001C0C  6000 002E               1188                      BRA     fn_MOVE_Error               * Invalid registration Mode
 00001C10                          1189  
-00001C10  33DA 000023C6           1190  Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and increment address count
-00001C16  13FC 0001 000023CA      1191                      MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
+00001C10  33DA 000023C0           1190  Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and increment address count
+00001C16  13FC 0001 000023C4      1191                      MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
 00001C1E  6000 0014               1192                      BRA     Fn_MOVE_Done
-00001C22  23DA 000023C6           1193  Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
-00001C28  13FC 0002 000023CA      1194                      MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
+00001C22  23DA 000023C0           1193  Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
+00001C28  13FC 0002 000023C4      1194                      MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
 00001C30  6000 0002               1195                      BRA     Fn_MOVE_Done
 00001C34                          1196  
-00001C34  13FC 0000 00002353      1197  Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
+00001C34  13FC 0000 0000234D      1197  Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
 00001C3C                          1198  
 00001C3C                          1199  Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
 00001C3C                          1200                      *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
@@ -1207,44 +1207,44 @@ Created On: 3/6/2021 5:54:48 PM
 00001C3E                          1203                      INCLUDE 'SR_ID4.X68'
 00001C3E                          1204  
 00001C3E                          1205  SR_ID4              * This is to grab the first four that are already set, ID4
-00001C3E  3639 00002350           1206                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C3E  3639 0000234A           1206                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001C44  183C 000C               1207                      MOVE.B  #12,D4
 00001C48  E86B                    1208                      LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
-00001C4A  13C3 00002352           1209                      MOVE.B  D3, opID        
+00001C4A  13C3 0000234C           1209                      MOVE.B  D3, opID        
 00001C50                          1210                      
 00001C50                          1211                      * Read next 3 bits into D3
-00001C50  3639 00002350           1212                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C50  3639 0000234A           1212                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001C56  183C 0004               1213                      MOVE.B  #4, D4
 00001C5A  E96B                    1214                      LSL.W   D4,D3                       * Shift left 4 to get rid of first 4 bits
 00001C5C  183C 000D               1215                      MOVE.B  #13,D4
 00001C60  E86B                    1216                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001C62  13C3 000023BB           1217                      MOVE.B  D3, opDstReg
+00001C62  13C3 000023B5           1217                      MOVE.B  D3, opDstReg
 00001C68                          1218                      
 00001C68                          1219                      * Read next 3 bits into D3
-00001C68  3639 00002350           1220                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C68  3639 0000234A           1220                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001C6E  183C 0007               1221                      MOVE.B  #7, D4
 00001C72  E96B                    1222                      LSL.W   D4,D3                       * Shift left 7 to get rid of first 7 bits
 00001C74  183C 000D               1223                      MOVE.B  #13,D4
 00001C78  E86B                    1224                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001C7A  13C3 000023BC           1225                      MOVE.B  D3, opDstMod
+00001C7A  13C3 000023B6           1225                      MOVE.B  D3, opDstMod
 00001C80                          1226  
 00001C80                          1227                      ** Read next 3 bits
 00001C80                          1228                      **
-00001C80  3639 00002350           1229                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C80  3639 0000234A           1229                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001C86  183C 000A               1230                      MOVE.B  #10, D4
 00001C8A  E96B                    1231                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
 00001C8C  183C 000D               1232                      MOVE.B  #13,D4
 00001C90  E86B                    1233                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001C92  13C3 000023BE           1234                      MOVE.B  D3, opSrcMod
+00001C92  13C3 000023B8           1234                      MOVE.B  D3, opSrcMod
 00001C98                          1235  
 00001C98                          1236                      ** Read next 3 bits
 00001C98                          1237                      **
-00001C98  3639 00002350           1238                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C98  3639 0000234A           1238                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00001C9E  183C 000D               1239                      MOVE.B  #13, D4
 00001CA2  E96B                    1240                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
 00001CA4  183C 000D               1241                      MOVE.B  #13,D4
 00001CA8  E86B                    1242                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00001CAA  13C3 000023BD           1243                      MOVE.B  D3, opSrcReg
+00001CAA  13C3 000023B7           1243                      MOVE.B  D3, opSrcReg
 00001CB0                          1244                      
 00001CB0                          1245                      ** ***************************************
 00001CB0                          1246                      ** Verify instruction
@@ -1259,234 +1259,234 @@ Created On: 3/6/2021 5:54:48 PM
 00001CB0                          1255                      ** RTS: If DstReg=7, DstMod=1, SrcMod=6, SrcReg=5
 00001CB0                          1256                      **
 00001CB0                          1257                      ** ***************************************
-00001CB0  0C39 0000 000023BC      1258                      CMP.B   #0, opDstMod
+00001CB0  0C39 0000 000023B6      1258                      CMP.B   #0, opDstMod
 00001CB8  6700 02EA               1259                      BEQ     Fn_ID4_NOT
-00001CBC  0C39 0001 000023BC      1260                      CMP.B   #1, opDstMod
+00001CBC  0C39 0001 000023B6      1260                      CMP.B   #1, opDstMod
 00001CC4  6700 002A               1261                      BEQ     Fn_ID4_CheckD1
-00001CC8  0C39 0002 000023BC      1262                      CMP.B   #2, opDstMod
+00001CC8  0C39 0002 000023B6      1262                      CMP.B   #2, opDstMod
 00001CD0  6700 0042               1263                      BEQ     Fn_ID4_CheckD2
-00001CD4  0C39 0003 000023BC      1264                      CMP.B   #3, opDstMod
+00001CD4  0C39 0003 000023B6      1264                      CMP.B   #3, opDstMod
 00001CDC  6700 0066               1265                      BEQ     Fn_ID4_CheckD3
-00001CE0  0C39 0007 000023BC      1266                      CMP.B   #7, opDstMod
+00001CE0  0C39 0007 000023B6      1266                      CMP.B   #7, opDstMod
 00001CE8  6700 011E               1267                      BEQ     Fn_ID4_LEA
 00001CEC  6000 03D2               1268                      BRA     Fn_ID4_Error
 00001CF0                          1269                      
 00001CF0                          1270  Fn_ID4_CheckD1
-00001CF0  0C39 0003 000023BB      1271                      CMP.B   #3, opDstReg
+00001CF0  0C39 0003 000023B5      1271                      CMP.B   #3, opDstReg
 00001CF8  6700 02AA               1272                      BEQ     Fn_ID4_NOT
-00001CFC  0C39 0001 000023BD      1273                      CMP.B   #1, opSrcReg
+00001CFC  0C39 0001 000023B7      1273                      CMP.B   #1, opSrcReg
 00001D04  6700 025E               1274                      BEQ     Fn_ID4_NOP
-00001D08  0C39 0005 000023BD      1275                      CMP.B   #5, opSrcReg
+00001D08  0C39 0005 000023B7      1275                      CMP.B   #5, opSrcReg
 00001D10  6700 02E8               1276                      BEQ     Fn_ID4_RTS
 00001D14                          1277                      
 00001D14                          1278  Fn_ID4_CheckD2
-00001D14  0C39 0003 000023BB      1279                      CMP.B   #3, opDstReg
+00001D14  0C39 0003 000023B5      1279                      CMP.B   #3, opDstReg
 00001D1C  6700 0286               1280                      BEQ     Fn_ID4_NOT
-00001D20  0C39 0004 000023BB      1281                      CMP.B   #4, opDstReg
+00001D20  0C39 0004 000023B5      1281                      CMP.B   #4, opDstReg
 00001D28  6700 014E               1282                      BEQ     Fn_ID4_MOVEMRTOM
-00001D2C  0C39 0006 000023BB      1283                      CMP.B   #6, opDstReg
+00001D2C  0C39 0006 000023B5      1283                      CMP.B   #6, opDstReg
 00001D34  6700 01B2               1284                      BEQ     Fn_ID4_MOVEMMTOR
-00001D38  0C39 0007 000023BB      1285                      CMP.B   #7, opDstReg
+00001D38  0C39 0007 000023B5      1285                      CMP.B   #7, opDstReg
 00001D40  6700 001A               1286                      BEQ     Fn_ID4_JSR
 00001D44                          1287  Fn_ID4_CheckD3
-00001D44  0C39 0004 000023BB      1288                      CMP.B   #4, opDstReg
+00001D44  0C39 0004 000023B5      1288                      CMP.B   #4, opDstReg
 00001D4C  6700 012A               1289                      BEQ     Fn_ID4_MOVEMRTOM
-00001D50  0C39 0006 000023BB      1290                      CMP.B   #6, opDstReg
+00001D50  0C39 0006 000023B5      1290                      CMP.B   #6, opDstReg
 00001D58  6700 018E               1291                      BEQ     Fn_ID4_MOVEMMTOR
 00001D5C                          1292  
-00001D5C  47F9 000023FF           1293  Fn_ID4_JSR          LEA     opNam_JSR,A3
-00001D62  23CB 000023B6           1294                      MOVE.L  A3, opPtrNam
+00001D5C  47F9 000023F9           1293  Fn_ID4_JSR          LEA     opNam_JSR,A3
+00001D62  23CB 000023B0           1294                      MOVE.L  A3, opPtrNam
 00001D68                          1295                      
-00001D68  0C39 0007 000023BB      1296  Fn_ID4_VERIFY_JSR   CMP.B   #7, opDstReg
+00001D68  0C39 0007 000023B5      1296  Fn_ID4_VERIFY_JSR   CMP.B   #7, opDstReg
 00001D70  6600 034E               1297                      BNE     Fn_ID4_Error
-00001D74  0C39 0002 000023BC      1298                      CMP.B   #2, opDstMod
+00001D74  0C39 0002 000023B6      1298                      CMP.B   #2, opDstMod
 00001D7C  6600 0342               1299                      BNE     Fn_ID4_Error
 00001D80                          1300                      
 00001D80                          1301                      * Make sure dst reg is only 2,5,6,7 (not 0,1,3,4)
-00001D80  0C39 0000 000023BB      1302                      CMP.B   #0, opDstReg
+00001D80  0C39 0000 000023B5      1302                      CMP.B   #0, opDstReg
 00001D88  6700 0336               1303                      BEQ     Fn_ID4_Error
-00001D8C  0C39 0001 000023BB      1304                      CMP.B   #1, opDstReg
+00001D8C  0C39 0001 000023B5      1304                      CMP.B   #1, opDstReg
 00001D94  6700 032A               1305                      BEQ     Fn_ID4_Error
-00001D98  0C39 0003 000023BB      1306                      CMP.B   #3, opDstReg
+00001D98  0C39 0003 000023B5      1306                      CMP.B   #3, opDstReg
 00001DA0  6700 031E               1307                      BEQ     Fn_ID4_Error
-00001DA4  0C39 0004 000023BB      1308                      CMP.B   #4, opDstReg
+00001DA4  0C39 0004 000023B5      1308                      CMP.B   #4, opDstReg
 00001DAC  6700 0312               1309                      BEQ     Fn_ID4_Error
 00001DB0                          1310                      
 00001DB0                          1311                      * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
-00001DB0  0C39 0000 000023BE      1312                      CMP.B   #0, opSrcMod
+00001DB0  0C39 0000 000023B8      1312                      CMP.B   #0, opSrcMod
 00001DB8  6700 0306               1313                      BEQ     Fn_ID4_Error
-00001DBC  0C39 0001 000023BE      1314                      CMP.B   #1, opSrcMod
+00001DBC  0C39 0001 000023B8      1314                      CMP.B   #1, opSrcMod
 00001DC4  6700 02FA               1315                      BEQ     Fn_ID4_Error
-00001DC8  0C39 0003 000023BE      1316                      CMP.B   #3, opSrcMod
+00001DC8  0C39 0003 000023B8      1316                      CMP.B   #3, opSrcMod
 00001DD0  6700 02EE               1317                      BEQ     Fn_ID4_Error
-00001DD4  0C39 0004 000023BE      1318                      CMP.B   #4, opSrcMod
+00001DD4  0C39 0004 000023B8      1318                      CMP.B   #4, opSrcMod
 00001DDC  6700 02E2               1319                      BEQ     Fn_ID4_Error
 00001DE0                          1320                      
 00001DE0                          1321                      * Make sure src reg is between 0-7
-00001DE0  0C39 0000 000023BD      1322                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001DE0  0C39 0000 000023B7      1322                      CMP.B   #0, opSrcReg                * Destination register >= 0
 00001DE8  6D00 02D6               1323                      BLT     Fn_ID4_Error
-00001DEC  0C39 0007 000023BD      1324                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001DEC  0C39 0007 000023B7      1324                      CMP.B   #7, opSrcReg                * Destination register <= 7
 00001DF4  6E00 02CA               1325                      BGT     Fn_ID4_Error
 00001DF8                          1326                      
-00001DF8  0C39 0007 000023BE      1327  Fn_ID4_JSR_Src      CMP.B   #7, opSrcMod
+00001DF8  0C39 0007 000023B8      1327  Fn_ID4_JSR_Src      CMP.B   #7, opSrcMod
 00001E00  6700 0238               1328                      BEQ     Fn_ID4_Data
 00001E04  6000 02BC               1329                      BRA     Fn_ID4_Done
 00001E08                          1330  
-00001E08  47F9 000023E9           1331  Fn_ID4_LEA          LEA     opNam_LEA,A3
-00001E0E  23CB 000023B6           1332                      MOVE.L  A3, opPtrNam
+00001E08  47F9 000023E3           1331  Fn_ID4_LEA          LEA     opNam_LEA,A3
+00001E0E  23CB 000023B0           1332                      MOVE.L  A3, opPtrNam
 00001E14                          1333                      
-00001E14  0C39 0007 000023BC      1334  Fn_ID4_VERIFY_LEA   CMP.B   #7, opDstMod
+00001E14  0C39 0007 000023B6      1334  Fn_ID4_VERIFY_LEA   CMP.B   #7, opDstMod
 00001E1C  6600 02A2               1335                      BNE     Fn_ID4_Error
 00001E20                          1336                      
 00001E20                          1337                      * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
-00001E20  0C39 0000 000023BE      1338                      CMP.B   #0, opSrcMod
+00001E20  0C39 0000 000023B8      1338                      CMP.B   #0, opSrcMod
 00001E28  6700 0296               1339                      BEQ     Fn_ID4_Error
-00001E2C  0C39 0001 000023BE      1340                      CMP.B   #1, opSrcMod
+00001E2C  0C39 0001 000023B8      1340                      CMP.B   #1, opSrcMod
 00001E34  6700 028A               1341                      BEQ     Fn_ID4_Error
-00001E38  0C39 0003 000023BE      1342                      CMP.B   #3, opSrcMod
+00001E38  0C39 0003 000023B8      1342                      CMP.B   #3, opSrcMod
 00001E40  6700 027E               1343                      BEQ     Fn_ID4_Error
-00001E44  0C39 0004 000023BE      1344                      CMP.B   #4, opSrcMod
+00001E44  0C39 0004 000023B8      1344                      CMP.B   #4, opSrcMod
 00001E4C  6700 0272               1345                      BEQ     Fn_ID4_Error
 00001E50                          1346                      
 00001E50                          1347                      * Make sure src reg is between 0-7
-00001E50  0C39 0000 000023BD      1348                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001E50  0C39 0000 000023B7      1348                      CMP.B   #0, opSrcReg                * Destination register >= 0
 00001E58  6D00 0266               1349                      BLT     Fn_ID4_Error
-00001E5C  0C39 0007 000023BD      1350                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001E5C  0C39 0007 000023B7      1350                      CMP.B   #7, opSrcReg                * Destination register <= 7
 00001E64  6E00 025A               1351                      BGT     Fn_ID4_Error
 00001E68                          1352                      
-00001E68  0C39 0007 000023BE      1353  Fn_ID4_LEA_Src      CMP.B   #7, opSrcMod
+00001E68  0C39 0007 000023B8      1353  Fn_ID4_LEA_Src      CMP.B   #7, opSrcMod
 00001E70  6700 01C8               1354                      BEQ     Fn_ID4_Data
 00001E74  6000 024C               1355                      BRA     Fn_ID4_Done
 00001E78                          1356  
-00001E78  47F9 000023F1           1357  Fn_ID4_MOVEMRtoM    LEA     opNam_MOVEM,A3
-00001E7E  23CB 000023B6           1358                      MOVE.L  A3, opPtrNam
+00001E78  47F9 000023EB           1357  Fn_ID4_MOVEMRtoM    LEA     opNam_MOVEM,A3
+00001E7E  23CB 000023B0           1358                      MOVE.L  A3, opPtrNam
 00001E84                          1359                      
-00001E84  0C39 0004 000023BB      1360  Fn_ID4_VERIFY_MRM   CMP.B   #4, opDstReg
+00001E84  0C39 0004 000023B5      1360  Fn_ID4_VERIFY_MRM   CMP.B   #4, opDstReg
 00001E8C  6600 0232               1361                      BNE     Fn_ID4_Error
 00001E90                          1362                      
 00001E90                          1363                      * Make sure dest mode is only 2 or 3
-00001E90  0C39 0003 000023BD      1364                      CMP.B   #3, opSrcReg                * Destination register > 2
+00001E90  0C39 0003 000023B7      1364                      CMP.B   #3, opSrcReg                * Destination register > 2
 00001E98  6D00 0226               1365                      BLT     Fn_ID4_Error
-00001E9C  0C39 0003 000023BD      1366                      CMP.B   #3, opSrcReg                * Destination register < 3
+00001E9C  0C39 0003 000023B7      1366                      CMP.B   #3, opSrcReg                * Destination register < 3
 00001EA4  6E00 021A               1367                      BGT     Fn_ID4_Error
 00001EA8                          1368                      
 00001EA8                          1369                      * Make sure src mode is only 2,4,5,6,7 (not 0,1,3)
-00001EA8  0C39 0000 000023BE      1370                      CMP.B   #0, opSrcMod
+00001EA8  0C39 0000 000023B8      1370                      CMP.B   #0, opSrcMod
 00001EB0  6700 020E               1371                      BEQ     Fn_ID4_Error
-00001EB4  0C39 0001 000023BE      1372                      CMP.B   #1, opSrcMod
+00001EB4  0C39 0001 000023B8      1372                      CMP.B   #1, opSrcMod
 00001EBC  6700 0202               1373                      BEQ     Fn_ID4_Error
-00001EC0  0C39 0003 000023BE      1374                      CMP.B   #3, opSrcMod
+00001EC0  0C39 0003 000023B8      1374                      CMP.B   #3, opSrcMod
 00001EC8  6700 01F6               1375                      BEQ     Fn_ID4_Error
 00001ECC                          1376                      
 00001ECC                          1377                      * Make sure src reg is between 0-7
-00001ECC  0C39 0000 000023BD      1378                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001ECC  0C39 0000 000023B7      1378                      CMP.B   #0, opSrcReg                * Destination register >= 0
 00001ED4  6D00 01EA               1379                      BLT     Fn_ID4_Error
-00001ED8  0C39 0007 000023BD      1380                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001ED8  0C39 0007 000023B7      1380                      CMP.B   #7, opSrcReg                * Destination register <= 7
 00001EE0  6E00 01DE               1381                      BGT     Fn_ID4_Error
 00001EE4  6000 006E               1382                      BRA Fn_ID4_MOVEM_Src
 00001EE8                          1383  
-00001EE8  47F9 000023F1           1384  FN_ID4_MOVEMMtoR    LEA     opNam_MOVEM,A3
-00001EEE  23CB 000023B6           1385                      MOVE.L  A3, opPtrNam
+00001EE8  47F9 000023EB           1384  FN_ID4_MOVEMMtoR    LEA     opNam_MOVEM,A3
+00001EEE  23CB 000023B0           1385                      MOVE.L  A3, opPtrNam
 00001EF4                          1386                      
-00001EF4  0C39 0006 000023BB      1387  Fn_ID4_VERIFY_MMR   CMP.B   #6, opDstReg
+00001EF4  0C39 0006 000023B5      1387  Fn_ID4_VERIFY_MMR   CMP.B   #6, opDstReg
 00001EFC  6600 01C2               1388                      BNE     Fn_ID4_Error
 00001F00                          1389                      
 00001F00                          1390                      * Make sure dest mode is only 2 or 3
-00001F00  0C39 0003 000023BD      1391                      CMP.B   #3, opSrcReg                * Destination register > 2
+00001F00  0C39 0003 000023B7      1391                      CMP.B   #3, opSrcReg                * Destination register > 2
 00001F08  6D00 01B6               1392                      BLT     Fn_ID4_Error
-00001F0C  0C39 0003 000023BD      1393                      CMP.B   #3, opSrcReg                * Destination register < 3
+00001F0C  0C39 0003 000023B7      1393                      CMP.B   #3, opSrcReg                * Destination register < 3
 00001F14  6E00 01AA               1394                      BGT     Fn_ID4_Error
 00001F18                          1395                      
 00001F18                          1396                      * Make sure src mode is only 2,4,5,6,7 (not 0,1,3)
-00001F18  0C39 0000 000023BE      1397                      CMP.B   #0, opSrcMod
+00001F18  0C39 0000 000023B8      1397                      CMP.B   #0, opSrcMod
 00001F20  6700 019E               1398                      BEQ     Fn_ID4_Error
-00001F24  0C39 0001 000023BE      1399                      CMP.B   #1, opSrcMod
+00001F24  0C39 0001 000023B8      1399                      CMP.B   #1, opSrcMod
 00001F2C  6700 0192               1400                      BEQ     Fn_ID4_Error
-00001F30  0C39 0003 000023BE      1401                      CMP.B   #3, opSrcMod
+00001F30  0C39 0003 000023B8      1401                      CMP.B   #3, opSrcMod
 00001F38  6700 0186               1402                      BEQ     Fn_ID4_Error
 00001F3C                          1403                      
 00001F3C                          1404                      * Make sure src reg is between 0-7
-00001F3C  0C39 0000 000023BD      1405                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001F3C  0C39 0000 000023B7      1405                      CMP.B   #0, opSrcReg                * Destination register >= 0
 00001F44  6D00 017A               1406                      BLT     Fn_ID4_Error
-00001F48  0C39 0007 000023BD      1407                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001F48  0C39 0007 000023B7      1407                      CMP.B   #7, opSrcReg                * Destination register <= 7
 00001F50  6E00 016E               1408                      BGT     Fn_ID4_Error
 00001F54                          1409                      
-00001F54  0C39 0007 000023BE      1410  Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
+00001F54  0C39 0007 000023B8      1410  Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
 00001F5C  6700 00DC               1411                      BEQ     Fn_ID4_Data
 00001F60  6000 0160               1412                      BRA     Fn_ID4_Done
 00001F64                          1413  
-00001F64  47F9 000023F7           1414  Fn_ID4_NOP          LEA     opNam_NOP,A3
-00001F6A  23CB 000023B6           1415                      MOVE.L  A3, opPtrNam
+00001F64  47F9 000023F1           1414  Fn_ID4_NOP          LEA     opNam_NOP,A3
+00001F6A  23CB 000023B0           1415                      MOVE.L  A3, opPtrNam
 00001F70                          1416  
-00001F70  0C39 0007 000023BB      1417  Fn_ID4_VERIFY_NOP   CMP.B   #7,opDstReg
+00001F70  0C39 0007 000023B5      1417  Fn_ID4_VERIFY_NOP   CMP.B   #7,opDstReg
 00001F78  6600 0146               1418                      BNE     Fn_ID4_Error
-00001F7C  0C39 0001 000023BC      1419                      CMP.B   #1, opDstMod
+00001F7C  0C39 0001 000023B6      1419                      CMP.B   #1, opDstMod
 00001F84  6600 013A               1420                      BNE     Fn_ID4_Error
-00001F88  0C39 0006 000023BE      1421                      CMP.B   #6, opSrcMod
+00001F88  0C39 0006 000023B8      1421                      CMP.B   #6, opSrcMod
 00001F90  6600 012E               1422                      BNE     Fn_ID4_Error
-00001F94  0C39 0001 000023BD      1423                      CMP.B   #1, opSrcReg
+00001F94  0C39 0001 000023B7      1423                      CMP.B   #1, opSrcReg
 00001F9C  6600 0122               1424                      BNE     Fn_ID4_Error
 00001FA0  6000 0120               1425                      BRA     Fn_ID4_Done
 00001FA4                          1426  
 00001FA4                          1427  
-00001FA4  47F9 000023ED           1428  Fn_ID4_NOT          LEA     opNam_NOT,A3
-00001FAA  23CB 000023B6           1429                      MOVE.L  A3, opPtrNam
+00001FA4  47F9 000023E7           1428  Fn_ID4_NOT          LEA     opNam_NOT,A3
+00001FAA  23CB 000023B0           1429                      MOVE.L  A3, opPtrNam
 00001FB0                          1430                      
-00001FB0  0C39 0003 000023BB      1431  Fn_ID4_VERIFY_NOT   CMP.B   #3, opDstReg
+00001FB0  0C39 0003 000023B5      1431  Fn_ID4_VERIFY_NOT   CMP.B   #3, opDstReg
 00001FB8  6600 0106               1432                      BNE     Fn_ID4_Error
 00001FBC                          1433                      
 00001FBC                          1434                      * Make sure src mode is not 1
-00001FBC  0C39 0001 000023BE      1435                      CMP.B   #1, opSrcMod
+00001FBC  0C39 0001 000023B8      1435                      CMP.B   #1, opSrcMod
 00001FC4  6700 00FA               1436                      BEQ     Fn_ID4_Error
 00001FC8                          1437                      
 00001FC8                          1438                      * Make sure src reg is between 0-7
-00001FC8  0C39 0000 000023BD      1439                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001FC8  0C39 0000 000023B7      1439                      CMP.B   #0, opSrcReg                * Destination register >= 0
 00001FD0  6D00 00EE               1440                      BLT     Fn_ID4_Error
-00001FD4  0C39 0007 000023BD      1441                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001FD4  0C39 0007 000023B7      1441                      CMP.B   #7, opSrcReg                * Destination register <= 7
 00001FDC  6E00 00E2               1442                      BGT     Fn_ID4_Error
 00001FE0                          1443                      
-00001FE0  33F9 000023BC 00002352  1444  Fn_ID4_NOT_Src      MOVE.W  opDstMod,opID              * Dest mod holds the size (move it)
-00001FEA  0C39 0007 000023BE      1445                      CMP.B   #7, opSrcMod
+00001FE0  33F9 000023B6 0000234C  1444  Fn_ID4_NOT_Src      MOVE.W  opDstMod,opID              * Dest mod holds the size (move it)
+00001FEA  0C39 0007 000023B8      1445                      CMP.B   #7, opSrcMod
 00001FF2  6700 0046               1446                      BEQ     Fn_ID4_Data
 00001FF6  6000 00CA               1447                      BRA     Fn_ID4_Done
 00001FFA                          1448  
-00001FFA  47F9 000023FB           1449  Fn_ID4_RTS          LEA    opNam_RTS,A3
-00002000  23CB 000023B6           1450                      MOVE.L A3, opPtrNam
+00001FFA  47F9 000023F5           1449  Fn_ID4_RTS          LEA    opNam_RTS,A3
+00002000  23CB 000023B0           1450                      MOVE.L A3, opPtrNam
 00002006                          1451                      
-00002006  0C39 0007 000023BB      1452  Fn_ID4_VERIFY_RTS   CMP.B   #7,opDstReg
+00002006  0C39 0007 000023B5      1452  Fn_ID4_VERIFY_RTS   CMP.B   #7,opDstReg
 0000200E  6600 00B0               1453                      BNE     Fn_ID4_Error
-00002012  0C39 0001 000023BC      1454                      CMP.B   #1, opDstMod
+00002012  0C39 0001 000023B6      1454                      CMP.B   #1, opDstMod
 0000201A  6600 00A4               1455                      BNE     Fn_ID4_Error
-0000201E  0C39 0006 000023BE      1456                      CMP.B   #6, opSrcMod
+0000201E  0C39 0006 000023B8      1456                      CMP.B   #6, opSrcMod
 00002026  6600 0098               1457                      BNE     Fn_ID4_Error
-0000202A  0C39 0005 000023BD      1458                      CMP.B   #5, opSrcReg
+0000202A  0C39 0005 000023B7      1458                      CMP.B   #5, opSrcReg
 00002032  6600 008C               1459                      BNE     Fn_ID4_Error
 00002036  6000 008A               1460                      BRA     Fn_ID4_Done
 0000203A                          1461  
-0000203A  0C39 0000 000023BD      1462  Fn_ID4_Data         CMP.B   #0, opSrcReg                * Check is source register is 0
+0000203A  0C39 0000 000023B7      1462  Fn_ID4_Data         CMP.B   #0, opSrcReg                * Check is source register is 0
 00002042  6700 0058               1463                      BEQ     Fn_ID4_DtaWrd               * Load next word
-00002046  0C39 0001 000023BD      1464                      CMP.B   #1, opSrcReg                * Check if source register is 1
+00002046  0C39 0001 000023B7      1464                      CMP.B   #1, opSrcReg                * Check if source register is 1
 0000204E  6700 005E               1465                      BEQ     Fn_ID4_DtaLng               * Load next long
-00002052  0C39 0004 000023BD      1466                      CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
+00002052  0C39 0004 000023B7      1466                      CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
 0000205A  6700 0006               1467                      BEQ     Fn_ID4_DtaImd               * Load first word into word one
 0000205E  6000 0060               1468                      BRA     FN_ID4_Error                * Invalid register value
 00002062                          1469                      
-00002062  0C39 0001 00002352      1470  Fn_ID4_DtaImd       CMP.B   #1, opID                    * opID = 0 - size is byte
+00002062  0C39 0001 0000234C      1470  Fn_ID4_DtaImd       CMP.B   #1, opID                    * opID = 0 - size is byte
 0000206A  6700 001E               1471                      BEQ     Fn_ID4_DtaByt               * Load next byte
-0000206E  0C39 0003 00002352      1472                      CMP.B   #3, opID                    * opID = 3 - size is word
+0000206E  0C39 0003 0000234C      1472                      CMP.B   #3, opID                    * opID = 3 - size is word
 00002076  6700 0024               1473                      BEQ     Fn_ID4_DtaWrd               * Load next word
-0000207A  0C39 0002 00002352      1474                      CMP.B   #2, opID                    * opID = 0 - size is long
+0000207A  0C39 0002 0000234C      1474                      CMP.B   #2, opID                    * opID = 0 - size is long
 00002082  6700 002A               1475                      BEQ          Fn_ID4_DtaLng               * Load next
 00002086  6000 0038               1476                      BRA     Fn_ID4_Error                * Invalid opID (this should never happen) long
 0000208A                          1477  
-0000208A  33DA 000023C6           1478  Fn_ID4_DtaByt       MOVE.W  (A2)+, opDta2               * Load byte and increment address count (note .W for byte)
-00002090  13FC 0000 000023C4      1479                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+0000208A  33DA 000023C0           1478  Fn_ID4_DtaByt       MOVE.W  (A2)+, opDta2               * Load byte and increment address count (note .W for byte)
+00002090  13FC 0000 000023BE      1479                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
 00002098  6000 0028               1480                      BRA     Fn_ID4_Done
-0000209C  33DA 000023C6           1481  Fn_ID4_DtaWrd       MOVE.W  (A2)+, opDta2               * Load word and increment address count
-000020A2  13FC 0001 000023C4      1482                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+0000209C  33DA 000023C0           1481  Fn_ID4_DtaWrd       MOVE.W  (A2)+, opDta2               * Load word and increment address count
+000020A2  13FC 0001 000023BE      1482                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
 000020AA  6000 0016               1483                      BRA     Fn_ID4_Done
-000020AE  23DA 000023C6           1484  Fn_ID4_DtaLng       MOVE.L  (A2)+, opDta2               * Load long and increment address count
-000020B4  13FC 0002 000023C4      1485                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+000020AE  23DA 000023C0           1484  Fn_ID4_DtaLng       MOVE.L  (A2)+, opDta2               * Load long and increment address count
+000020B4  13FC 0002 000023BE      1485                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
 000020BC  6000 0004               1486                      BRA     Fn_ID4_Done
 000020C0                          1487  
 000020C0                          1488  Fn_ID4_Error                                             * Exit out if error - main subroutine will handle DATA
@@ -1502,100 +1502,100 @@ Created On: 3/6/2021 5:54:48 PM
 000020C4                          1498  
 000020C4                          1499  
 000020C4                          1500  SR_ID5              * This is to grab the first four that are already set, ID5
-000020C4  3639 00002350           1501                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+000020C4  3639 0000234A           1501                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 000020CA  183C 000C               1502                      MOVE.B  #12,D4
 000020CE  E86B                    1503                      LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
-000020D0  13C3 00002352           1504                      MOVE.B  D3, opID        
+000020D0  13C3 0000234C           1504                      MOVE.B  D3, opID        
 000020D6                          1505                      
 000020D6                          1506                      * Read next 3 bits into D3
-000020D6  3639 00002350           1507                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+000020D6  3639 0000234A           1507                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 000020DC  183C 0004               1508                      MOVE.B  #4, D4
 000020E0  E96B                    1509                      LSL.W   D4,D3                       * Shift left 4 to get rid of first 4 bits
 000020E2  183C 000D               1510                      MOVE.B  #13,D4
 000020E6  E86B                    1511                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-000020E8  13C3 000023BE           1512                      MOVE.B  D3, opSrcMod
+000020E8  13C3 000023B8           1512                      MOVE.B  D3, opSrcMod
 000020EE                          1513                      
 000020EE                          1514                      * Read next 3 bits into D3
-000020EE  3639 00002350           1515                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+000020EE  3639 0000234A           1515                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 000020F4  183C 0007               1516                      MOVE.B  #7, D4
 000020F8  E96B                    1517                      LSL.W   D4,D3                       * Shift left 7 to get rid of first 7 bits
 000020FA  183C 000D               1518                      MOVE.B  #13,D4
 000020FE  E86B                    1519                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00002100  13C3 00002352           1520                      MOVE.B  D3, opID
+00002100  13C3 0000234C           1520                      MOVE.B  D3, opID
 00002106                          1521  
 00002106                          1522                      ** Read next 3 bits
 00002106                          1523                      **
-00002106  3639 00002350           1524                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00002106  3639 0000234A           1524                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 0000210C  183C 000A               1525                      MOVE.B  #10, D4
 00002110  E96B                    1526                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
 00002112  183C 000D               1527                      MOVE.B  #13,D4
 00002116  E86B                    1528                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00002118  13C3 000023BC           1529                      MOVE.B  D3, opDstMod
+00002118  13C3 000023B6           1529                      MOVE.B  D3, opDstMod
 0000211E                          1530  
 0000211E                          1531                      ** Read next 3 bits
 0000211E                          1532                      **
-0000211E  3639 00002350           1533                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+0000211E  3639 0000234A           1533                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00002124  183C 000D               1534                      MOVE.B  #13, D4
 00002128  E96B                    1535                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
 0000212A  183C 000D               1536                      MOVE.B  #13,D4
 0000212E  E86B                    1537                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
-00002130  13C3 000023BB           1538                      MOVE.B  D3, opDstReg
+00002130  13C3 000023B5           1538                      MOVE.B  D3, opDstReg
 00002136                          1539              
 00002136                          1540              ** Set name
-00002136  47F9 00002403           1541              LEA     opNam_ADDQ,A3
+00002136  47F9 000023FD           1541              LEA     opNam_ADDQ,A3
 0000213C                          1542              
 0000213C                          1543  Fn_ID5_VERIFY       * Make sure src mod is between 0-7
-0000213C  0C39 0000 000023BE      1544                      CMP.B   #0, opSrcMod                * Destination register >= 0
+0000213C  0C39 0000 000023B8      1544                      CMP.B   #0, opSrcMod                * Destination register >= 0
 00002144  6D00 00E4               1545                      BLT     Fn_ID5_Error
-00002148  0C39 0007 000023BB      1546                      CMP.B   #7, opDstReg                * Destination register <= 7
+00002148  0C39 0007 000023B5      1546                      CMP.B   #7, opDstReg                * Destination register <= 7
 00002150  6E00 00D8               1547                      BGT     Fn_ID5_Error
 00002154                          1548              
 00002154                          1549              * Make sure opId  is between 0-2
-00002154  0C39 0000 00002352      1550                      CMP.B   #0, opID                    * Destination register >= 0
+00002154  0C39 0000 0000234C      1550                      CMP.B   #0, opID                    * Destination register >= 0
 0000215C  6D00 00CC               1551                      BLT     Fn_ID5_Error
-00002160  0C39 0002 00002352      1552                      CMP.B   #2, opID                    * Destination register <= 2
+00002160  0C39 0002 0000234C      1552                      CMP.B   #2, opID                    * Destination register <= 2
 00002168  6E00 00C0               1553                      BGT     Fn_ID5_Error
 0000216C                          1554              
 0000216C                          1555              * Move data to  appropriate places for printing
-0000216C  13FC 0007 000023BE      1556              MOVE.B  #7,opSrcMod
-00002174  13FC 0004 000023BD      1557              MOVE.B  #4,opSrcReg
+0000216C  13FC 0007 000023B8      1556              MOVE.B  #7,opSrcMod
+00002174  13FC 0004 000023B7      1557              MOVE.B  #4,opSrcReg
 0000217C                          1558  
 0000217C                          1559                      ** Note: Checking immediate value
 0000217C                          1560                      **       opID as size is specific to MOVE, MOVEA
 0000217C                          1561                      **       other instructions will use 3 bits to set size, not part of ID
 0000217C                          1562                      **
-0000217C  0C39 0001 00002352      1563  Fn_ID5_DtaSrcImd    CMP.B   #1, opID                    * opID = 0 - size is byte
+0000217C  0C39 0001 0000234C      1563  Fn_ID5_DtaSrcImd    CMP.B   #1, opID                    * opID = 0 - size is byte
 00002184  6700 001E               1564                      BEQ     Fn_ID5_DtaSrcByt           * Load next byte
-00002188  0C39 0003 00002352      1565                      CMP.B   #3, opID                    * opID = 3 - size is word
+00002188  0C39 0003 0000234C      1565                      CMP.B   #3, opID                    * opID = 3 - size is word
 00002190  6700 0024               1566                      BEQ     Fn_ID5_DtaSrcWrd           * Load next word
-00002194  0C39 0002 00002352      1567                      CMP.B   #2, opID                    * opID = 0 - size is long
+00002194  0C39 0002 0000234C      1567                      CMP.B   #2, opID                    * opID = 0 - size is long
 0000219C  6700 002A               1568                      BEQ     Fn_ID5_DtaSrcLng           * Load next long
 000021A0  6000 0088               1569                      BRA     Fn_ID5_Error               * Invalid opID (this should never happen)
 000021A4                          1570  
-000021A4  33DA 000023C0           1571  Fn_ID5_DtaSrcByt    MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
-000021AA  13FC 0000 000023C4      1572                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+000021A4  33DA 000023BA           1571  Fn_ID5_DtaSrcByt    MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
+000021AA  13FC 0000 000023BE      1572                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
 000021B2  6000 0026               1573                      BRA     Fn_ID5_ChkDstMod            * Check destination mode
-000021B6  33DA 000023C0           1574  Fn_ID5_DtaSrcWrd    MOVE.W  (A2)+, opDta1               * Load word and increment address count
-000021BC  13FC 0001 000023C4      1575                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+000021B6  33DA 000023BA           1574  Fn_ID5_DtaSrcWrd    MOVE.W  (A2)+, opDta1               * Load word and increment address count
+000021BC  13FC 0001 000023BE      1575                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
 000021C4  6000 0014               1576                      BRA     Fn_ID5_ChkDstMod            * Check destination mode
-000021C8  23DA 000023C0           1577  Fn_ID5_DtaSrcLng    MOVE.L  (A2)+, opDta1               * Load long and increment address count
-000021CE  13FC 0002 000023C4      1578                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+000021C8  23DA 000023BA           1577  Fn_ID5_DtaSrcLng    MOVE.L  (A2)+, opDta1               * Load long and increment address count
+000021CE  13FC 0002 000023BE      1578                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
 000021D6  6000 0002               1579                      BRA     Fn_ID5_ChkDstMod            * Check destination mode
 000021DA                          1580              
-000021DA  0C39 0007 000023BC      1581  Fn_ID5_ChkDstMod    CMP.B   #7, opDstMod                * Check if destination mode is 7
+000021DA  0C39 0007 000023B6      1581  Fn_ID5_ChkDstMod    CMP.B   #7, opDstMod                * Check if destination mode is 7
 000021E2  6700 0006               1582                      BEQ     Fn_ID5_ChkDstReg            * Check destination register
 000021E6  6000 0044               1583                      BRA     Fn_ID5_Done                 * Destination not 7, done with data
-000021EA  0C39 0000 000023BB      1584  Fn_ID5_ChkDstReg    CMP.B   #0, opDstReg                * Check if destination register is 0
+000021EA  0C39 0000 000023B5      1584  Fn_ID5_ChkDstReg    CMP.B   #0, opDstReg                * Check if destination register is 0
 000021F2  6700 0012               1585                      BEQ     Fn_ID5_DtaDstWrd            * Load next word
-000021F6  0C39 0001 000023BB      1586                      CMP.B   #1, opDstReg                * Check if destination register is 1
+000021F6  0C39 0001 000023B5      1586                      CMP.B   #1, opDstReg                * Check if destination register is 1
 000021FE  6700 0018               1587                      BEQ     Fn_ID5_DtaDstLng            * Load next long
 00002202  6000 0026               1588                      BRA     Fn_ID5_Error                * Invalid registration Mode
 00002206                          1589  
-00002206  33DA 000023C6           1590  Fn_ID5_DtaDstWrd    MOVE.W  (A2)+, opDta2               * Load word and increment address count
-0000220C  13FC 0001 000023CA      1591                      MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
+00002206  33DA 000023C0           1590  Fn_ID5_DtaDstWrd    MOVE.W  (A2)+, opDta2               * Load word and increment address count
+0000220C  13FC 0001 000023C4      1591                      MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
 00002214  6000 0016               1592                      BRA     Fn_ID5_Done
-00002218  23DA 000023C6           1593  Fn_ID5_DtaDstLng    MOVE.L  (A2)+, opDta2               * Load long and increment address count
-0000221E  13FC 0002 000023CA      1594                      MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
+00002218  23DA 000023C0           1593  Fn_ID5_DtaDstLng    MOVE.L  (A2)+, opDta2               * Load long and increment address count
+0000221E  13FC 0002 000023C4      1594                      MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
 00002226  6000 0004               1595                      BRA     Fn_ID5_Done
 0000222A                          1596  
 0000222A                          1597  Fn_ID5_Error                                             * Exit out if error - main subroutine will handle DATA
@@ -1608,26 +1608,26 @@ Created On: 3/6/2021 5:54:48 PM
 0000222E                          1604  
 0000222E                          1605  
 0000222E                          1606  SR_ID6              * This is to grab the first four that are already set, ID6
-0000222E  3639 00002350           1607                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+0000222E  3639 0000234A           1607                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00002234  183C 000C               1608                      MOVE.B  #12,D4
 00002238  E86B                    1609                      LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
-0000223A  13C3 00002352           1610                      MOVE.B  D3, opID        
+0000223A  13C3 0000234C           1610                      MOVE.B  D3, opID        
 00002240                          1611                      
 00002240                          1612                      * Read next 4 bits into D3
-00002240  3639 00002350           1613                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00002240  3639 0000234A           1613                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 00002246  183C 0004               1614                      MOVE.B  #4, D4
 0000224A  E96B                    1615                      LSL.W   D4,D3                       * Shift left 4 to get rid of first 4 bits
 0000224C  183C 000D               1616                      MOVE.B  #13,D4
 00002250  E86B                    1617                      LSR.W   D4,D3                       * Shift right 12 to get next 4 bits
-00002252  13C3 00002352           1618                      MOVE.B  D3, opID
+00002252  13C3 0000234C           1618                      MOVE.B  D3, opID
 00002258                          1619                      
 00002258                          1620                      * Read next 8 bits into D3
-00002258  3639 00002350           1621                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00002258  3639 0000234A           1621                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
 0000225E  183C 0007               1622                      MOVE.B  #7, D4
 00002262  E96B                    1623                      LSL.W   D4,D3                       * Shift left 8 to get rid of first 8 bits
 00002264  183C 000D               1624                      MOVE.B  #13,D4
 00002268  E86B                    1625                      LSR.W   D4,D3                       * Shift right 16 to get next 8 bits
-0000226A  33C3 000023BC           1626                      MOVE.W  D3, opDstMod
+0000226A  13C3 000023B6           1626                      MOVE.B  D3, opDstMod
 00002270                          1627              
 00002270                          1628              ** Condition is stored in opID - displacement is in DstMod
 00002270                          1629              ** All thats leftis to branch per condition and output name, check reg if needed more
@@ -1635,224 +1635,223 @@ Created On: 3/6/2021 5:54:48 PM
 00002270                          1631              ** BEQ - opID=7
 00002270                          1632              ** BGT - opID=14
 00002270                          1633              ** BLE - opID=15
-00002270  0C39 0000 00002352      1634              CMP.B   #0,opID
+00002270  0C39 0000 0000234C      1634              CMP.B   #0,opID
 00002278  6700 002A               1635              BEQ     Fn_ID6_BRA
-0000227C  0C39 0007 00002352      1636              CMP.B   #7,opID
+0000227C  0C39 0007 0000234C      1636              CMP.B   #7,opID
 00002284  6700 0028               1637              BEQ     Fn_ID6_BEQ
-00002288  0C39 000E 00002352      1638              CMP.B   #14,opID
+00002288  0C39 000E 0000234C      1638              CMP.B   #14,opID
 00002290  6700 0026               1639              BEQ     Fn_ID6_BGT
-00002294  0C39 000F 00002352      1640              CMP.B   #15,opID
+00002294  0C39 000F 0000234C      1640              CMP.B   #15,opID
 0000229C  6700 0024               1641              BEQ     Fn_ID6_BLE
-000022A0  6000 007E               1642              BRA     Fn_ID6_ERROR
+000022A0  6000 0078               1642              BRA     Fn_ID6_ERROR
 000022A4                          1643  
-000022A4  47F9 00002408           1644  Fn_ID6_BRA  LEA     opNam_BRA,A3
+000022A4  47F9 00002402           1644  Fn_ID6_BRA  LEA     opNam_BRA,A3
 000022AA  6000 001C               1645              BRA     Fn_ID6_Displacement
 000022AE                          1646              
-000022AE  47F9 0000240C           1647  Fn_ID6_BEQ  LEA     opNam_BEQ,A3
+000022AE  47F9 00002406           1647  Fn_ID6_BEQ  LEA     opNam_BEQ,A3
 000022B4  6000 0012               1648              BRA     Fn_ID6_Displacement
 000022B8                          1649              
-000022B8  47F9 00002410           1650  Fn_ID6_BGT  LEA     opNam_BGT,A3
+000022B8  47F9 0000240A           1650  Fn_ID6_BGT  LEA     opNam_BGT,A3
 000022BE  6000 0008               1651              BRA     Fn_ID6_Displacement
 000022C2                          1652              
-000022C2  47F9 00002414           1653  Fn_ID6_BLE  LEA     opNam_BLE,A3
+000022C2  47F9 0000240E           1653  Fn_ID6_BLE  LEA     opNam_BLE,A3
 000022C8                          1654              
-000022C8  0C79 0000 000023BC      1655  Fn_ID6_Displacement CMP.W                   #$00,opDstMod
+000022C8  0C39 0000 000023B6      1655  Fn_ID6_Displacement CMP.B                   #$00,opDstMod
 000022D0  6700 0024               1656              BEQ     Fn_ID6_Dsplcmnt16
-000022D4  0C79 00FF 000023BC      1657              CMP.W   #$FF,opDstMod
+000022D4  0C39 00FF 000023B6      1657              CMP.B   #$FF,opDstMod
 000022DC  6700 002A               1658              BEQ     Fn_ID6_Dsplcmnt32
 000022E0                          1659              ** 8 bit is good
-000022E0  33F9 000023BC 000023C6  1660              MOVE.W  opDstMod,opDta2
-000022EA  13FC 0001 000023CA      1661              MOVE.B  #1,opDta2T
-000022F2  6000 002E               1662              BRA     Fn_ID6_Done
+000022E0  33F9 000023B6 000023C0  1660              MOVE.W  opDstMod,opDta2
+000022EA  13FC 0001 000023C4      1661              MOVE.B  #1,opDta2T
+000022F2  6000 0028               1662              BRA     Fn_ID6_Done
 000022F6                          1663              
-000022F6  23DA 000023C6           1664  Fn_ID6_Dsplcmnt16   MOVE.L  (A2)+,opDta2
-000022FC  13FC 0002 000023CA      1665              MOVE.B  #2,opDta2T
-00002304  6000 001C               1666              BRA     Fn_ID6_Done
+000022F6  33DA 000023C0           1664  Fn_ID6_Dsplcmnt16   MOVE.W  (A2)+,opDta2
+000022FC  13FC 0001 000023C4      1665              MOVE.B  #1,opDta2T
+00002304  6000 0016               1666              BRA     Fn_ID6_Done
 00002308                          1667  
-00002308  23DA 000023C6           1668  Fn_ID6_Dsplcmnt32   MOVE.L  (A2)+,opDta2    ** 32 bit instr, first 16 don't matter
-0000230E  23DA 000023C6           1669              MOVE.L  (A2)+,opDta2
-00002314  13FC 0002 000023CA      1670              MOVE.B  #2,opDta2T
-0000231C  6000 0004               1671              BRA     Fn_ID6_Done 
-00002320                          1672  
-00002320                          1673  Fn_ID6_Error                                             * Exit out if error - main subroutine will handle DATA
-00002320                          1674                      *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
-00002320  4E75                    1675                      RTS 
-00002322                          1676  
-00002322  4E75                    1677  Fn_ID6_Done        RTS
-00002322  4E75                    1678  -------------------- end include --------------------
-00002324                          1679                      INCLUDE 'SR_ID7.X68'
-00002324                          1680  
-00002324                          1681  
-00002324                          1682  SR_ID7
-00002324                          1683  
-00002324                          1684  
-00002324  4E75                    1685  Fn_ID7_Done        RTS
-00002324  4E75                    1686  -------------------- end include --------------------
-00002326                          1687                      INCLUDE 'SR_ID8.X68'
-00002326                          1688  
-00002326                          1689  
-00002326                          1690  SR_ID8
-00002326                          1691  
-00002326                          1692  
-00002326  4E75                    1693  Fn_ID8_Done        RTS
-00002326  4E75                    1694  -------------------- end include --------------------
-00002328                          1695                      INCLUDE 'SR_ID9.X68'
-00002328                          1696  
-00002328                          1697  
-00002328                          1698  SR_ID9
-00002328                          1699  
-00002328                          1700  
-00002328  4E75                    1701  Fn_ID9_Done        RTS
-00002328  4E75                    1702  -------------------- end include --------------------
-0000232A                          1703                      INCLUDE 'SR_IDA.X68'
-0000232A                          1704  
-0000232A                          1705  
-0000232A                          1706  SR_IDA
-0000232A                          1707  
-0000232A                          1708  
-0000232A  4E75                    1709  Fn_IDA_Done        RTS
-0000232A  4E75                    1710  -------------------- end include --------------------
-0000232C                          1711                      INCLUDE 'SR_IDB.X68'
-0000232C                          1712  
-0000232C                          1713  
-0000232C                          1714  SR_IDB
-0000232C                          1715  
-0000232C                          1716  
-0000232C  4E75                    1717  Fn_IDB_Done        RTS
-0000232C  4E75                    1718  -------------------- end include --------------------
-0000232E                          1719                      INCLUDE 'SR_IDC.X68'
-0000232E                          1720  
-0000232E                          1721  
-0000232E                          1722  SR_IDC
-0000232E                          1723  
-0000232E                          1724  
-0000232E  4E75                    1725  Fn_IDC_Done        RTS
-0000232E  4E75                    1726  -------------------- end include --------------------
-00002330                          1727                      INCLUDE 'SR_IDD.X68'
-00002330                          1728  
-00002330                          1729  
-00002330                          1730  SR_IDD
-00002330                          1731  
-00002330                          1732  
-00002330  4E75                    1733  Fn_IDD_Done        RTS
-00002330  4E75                    1734  -------------------- end include --------------------
-00002332                          1735                      INCLUDE 'SR_IDE.X68'
-00002332                          1736  
-00002332                          1737  
-00002332                          1738  SR_IDE
-00002332                          1739  
-00002332                          1740  
-00002332  4E75                    1741  Fn_IDE_Done        RTS
-00002332  4E75                    1742  -------------------- end include --------------------
-00002334                          1743  
-00002334                          1744  ** -----------------------------------------------------------
-00002334                          1745  ** Variables and constants
-00002334                          1746  ** -----------------------------------------------------------
-00002334                          1747  
-00002334  =0000001A               1748  maxLines            EQU      26                      * Max lines to display
-00002334                          1749  
-00002334= 00000000                1750  adrValStart         DC.L     $00000000               * Value of starting address - set by user
-00002338= 38 39 41 42 43 44 ...   1751  adrStrStart         DC.B     '89ABCDEF',0            * String hex value display for start address
-00002341= FF                      1752  adrStsStart         DC.B     $FF                     * Status of starting address
-00002342                          1753                                                       *   FF not set, 00 set, 01 length error, 02 hex error
-00002342= 00000000                1754  adrValEnd           DC.L     $00000000               * Value of ending address - set by user
-00002346= 38 39 41 42 43 44 ...   1755  adrStrEnd           DC.B     '89ABCDEF',0            * String hex value display for end address
-0000234F= FF                      1756  adrStsEnd           DC.B     $FF                     * Status of ending address
-00002350                          1757                                                       *   FF not set, 00 set, 01 length error, 02 hex error
-00002350                          1758  
-00002350= 0000                    1759  opWord              DC.W     $0000                   * 16 bit instruction Word
-00002352= 00                      1760  opID                DC.B     $00                     * First 4 bit value ID
-00002353= 01                      1761  opErr               DC.B     $01                     * Error byte: If set to 1 then is DATA. default is error
-00002354                          1762  
-00002354= 00000000                1763  opValAdr            DC.L     $00000000               * Instruction address - used for calculation
-00002358= 38 39 41 42 43 44 ...   1764  opStrAdr            DC.B     '89ABCDEF',0            * String address
-00002362= 00000000                1765  opNxtAdr            DC.L     $00000000               * Store next valid word in case instruction returns error
-00002366                          1766  
-00002366= 50 6C 61 63 65 68 ...   1767  opOutBuf            DC.B     'Placeholder 80 cols wide output buffer                                          '
-000023B6= 00000000                1768  opPtrNam            DC.L     $00000000               * Pointer to full text name e.g. 'MOVE'
-000023BA                          1769  
-000023BA= FF                      1770  opValSiz            DC.B     $FF                     * Instruction size value $FF=Not set, 1=Byte, 2=Word, 3=Long
-000023BB                          1771  
-000023BB= FF                      1772  opDstReg            DC.B     $FF                     * Destination Register Value
-000023BC= FF                      1773  opDstMod            DC.B     $FF                     * Destination Mode Value
-000023BD= FF                      1774  opSrcReg            DC.B     $FF                     * Source Register Value
-000023BE= FF                      1775  opSrcMod            DC.B     $FF                     * Source Register Mode
-000023BF                          1776  
-000023C0= 00000000                1777  opDta1              DC.L     $00000000               * Data value one (most likely source)
-000023C4= FF                      1778  opDta1T             DC.B     $FF                     * Data value one type ($FF not set, 0=byte, 1=word, 2=long)
-000023C6= 00000000                1779  opDta2              DC.L     $00000000               * Data value two (most likely destination)
-000023CA= FF                      1780  opDta2T             DC.B     $FF                     * Data value two type ($FF not set, 0=byte, 1=word, 2=long)
-000023CB= 30 30 30 30 00          1781  opStrDtaWrd         DC.B     '0000',0                * Data value string placeholder - dynamically built
-000023D0= 30 30 30 30 30 30 ...   1782  opStrDtaLng         DC.B     '00000000',0            * Data value string placeholder - dynamically built
-000023D9                          1783  
-000023D9= 44 41 54 41 00          1784  opNam_DATA          DC.B     'DATA',0
-000023DE= 4D 4F 56 45 00          1785  opNam_MOVE          DC.B     'MOVE',0                * String value for instruction
-000023E3= 4D 4F 56 45 41 00       1786  opNam_MOVEA         DC.B     'MOVEA',0               * String value for instruction
-000023E9= 4C 45 41 00             1787  opNam_LEA           DC.B     'LEA',0                 * String value for instruction
-000023ED= 4E 4F 54 00             1788  opNam_NOT           DC.B     'NOT',0                 * String value for instruction
-000023F1= 4D 4F 56 45 4D 00       1789  opNam_MOVEM         DC.B     'MOVEM',0               * String value for instruction
-000023F7= 4E 4F 50 00             1790  opNam_NOP           DC.B     'NOP',0                 * String value for instruction
-000023FB= 52 54 53 00             1791  opNam_RTS           DC.B     'RTS',0                 * String value for instruction
-000023FF= 4A 53 52 00             1792  opNam_JSR           DC.B     'JSR',0                 * String value for instruction
-00002403= 41 44 44 51 00          1793  opNam_ADDQ          DC.B     'ADDQ',0                * String value for instruction
-00002408= 42 52 41 00             1794  opNam_BRA           DC.B     'BRA',0                 * String value for instruction
-0000240C= 42 45 51 00             1795  opNam_BEQ           DC.B     'BEQ',0                 * String value for instruction
-00002410= 42 47 54 00             1796  opNam_BGT           DC.B     'BGT',0                 * String value for instruction
-00002414= 42 4C 45 00             1797  opNam_BLE           DC.B     'BLE',0                 * String value for instruction
-00002418= 4D 4F 56 45 51 00       1798  opNam_MOVEQ         DC.B     'MOVEQ',0               * String value for instruction
-0000241E= 4F 52 00                1799  opNam_OR            DC.B     'OR',0                  * String value for instruction
-00002421= 53 55 42 00             1800  opNam_SUB           DC.B     'SUB',0                 * String value for instruction
-00002425= 41 4E 44 00             1801  opNam_AND           DC.B     'AND',0                 * String value for instruction
-00002429= 41 44 44 00             1802  opNam_ADD           DC.B     'ADD',0                 * String value for instruction
-0000242D= 41 44 44 41 00          1803  opNam_ADDA          DC.B     'ADDA',0                * String value for instruction
-00002432= 41 53 4C 00             1804  opNam_ASL           DC.B     'ASL',0                 * String value for instruction
-00002436= 41 53 52 00             1805  opNam_ASR           DC.B     'ASR',0                 * String value for instruction
-0000243A= 4C 53 4C 00             1806  opNam_LSL           DC.B     'LSL',0                 * String value for instruction
-0000243E= 4C 53 52 00             1807  opNam_LSR           DC.B     'LSR',0                 * String value for instruction
-00002442= 52 4F 4C 00             1808  opNam_ROL           DC.B     'ROL',0                 * String value for instruction
-00002446= 52 4F 52 00             1809  opNam_ROR           DC.B     'ROR',0                 * String value for instruction
-0000244A                          1810  
-0000244A= 2E 42 00                1811  opSizB              DC.B     '.B',0                  * String value for instruction size 'B'
-0000244D= 2E 57 00                1812  opSizW              DC.B     '.W',0                  * String value for instruction size 'W'
-00002450= 2E 4C 00                1813  opSizL              DC.B     '.L',0                  * String value for instruction size 'L'
-00002453                          1814  
-00002453= 50 6C 61 63 65 68 ...   1815  msgInTemp           DC.B     'Placeholder for user input. 80 characters long is the max input limit...........',0
-000024A4= 45 72 72 6F 72 00       1816  msgErr              DC.B     'Error',0               * Debug message
-000024AA                          1817  
-000024AA= 33 20 43 6F 72 65 ...   1818  msgHdr01            DC.B     '3 Cores disassembler',CR,LF,0
-000024C1= 4D 65 6D 6F 72 79 ...   1819  msgHdr02a           DC.B     'Memory range:',0
-000024CF= 20 74 6F 20 00          1820  msgHdr02b           DC.B     ' to ',0
-000024D4                          1821  
-000024D4= 20 2D 20 41 6C 6C ...   1822  msgStrIntro         DC.B     ' - All addresses must be 32 bit hexadecimal.',CR,LF,0
-00002503= 20 2D 20 56 61 6C ...   1823  msgStrRange         DC.B     ' - Valid address range is 00000000 to 00FFFFED.',CR,LF,0
-00002535= 20 2D 20 53 74 61 ...   1824  msgStrSize          DC.B     ' - Starting address should start on a word boundry',CR,LF,0
-0000256A= 20 20 20 40 20 58 ...   1825  msgStrSizeExmpl     DC.B     '   @ XXXXXXX(0,2,4,8,A,C,E).',CR,LF,0
-00002589= 20 2D 20 41 64 64 ...   1826  msgStrNote          DC.B     ' - Addresses will be adjusted if out of order or out of range.',CR,LF,0
-000025CA= 20 20 20 28 61 75 ...   1827  msgStrNoteMore      DC.B     '   (automagically)',CR,LF,0
-000025DF= 50 6C 65 61 73 65 ...   1828  msgStrAdr1          DC.B     'Please enter a starting address: ',0
-00002601= 49 6E 76 61 6C 69 ...   1829  msgStrAdr1Err1      DC.B     'Invalid starting address length',CR,LF,0
-00002623= 49 6E 76 61 6C 69 ...   1830  msgStrAdr1Err2      DC.B     'Invalid starting address hexadecimal value',CR,LF,0
-00002650= 53 74 61 72 74 69 ...   1831  msgStrAdr1Scc       DC.B     'Starting address: ',0
-00002663= 50 6C 65 61 73 65 ...   1832  msgStrAdr2          DC.B     'Please enter an ending address: ',0
-00002684= 49 6E 76 61 6C 69 ...   1833  msgStrAdr2Err1      DC.B     'Invalid ending address length',CR,LF,0
-000026A4= 49 6E 76 61 6C 69 ...   1834  msgStrAdr2Err2      DC.B     'Invalid ending address hexadecimal value',CR,LF,0
-000026CF                          1835  
-000026CF= 48 69 74 20 45 6E ...   1836  msgPage             DC.B     'Hit Enter to go to the next page',CR,LF,0
-000026F2= 59 6F 75 20 68 61 ...   1837  msgEndMem01         DC.B     'You have reached the end of the memory sequence.',CR,LF,0
-00002725= 20 20 20 20 20 20 ...   1838  msgEndMem02         DC.B     '         Y to continue or any other key to quit: ',0
-00002757= 54 68 61 6E 6B 20 ...   1839  msgDone             DC.B     'Thank you for using 3 Cores disassembler!',0
-00002781                          1840  
-00002781= 2A 2A 2A 2A 2A 2A ...   1841  msgLine             DC.B     '**************************************************',CR,LF,0
-000027B6= 0D 0A 00                1842  msgNewLine          DC.B     CR,LF,0
-000027B9= 2C 00                   1843  opComma             DC.B     ',',0
-000027BB= 2E 00                   1844  opPeriod            DC.B     '.',0
-000027BD= 20 00                   1845  opSpace             DC.B     ' ',0
-000027C0= 0900                    1846  opTab               DC.W     $0900                  * Tab - doesn't work as expected
-000027C2= 00                      1847  opBlank             DC.B     '',0
-000027C3  =0000000D               1848  CR                  EQU      $0D                     * ASCII code for Carriage Return
-000027C3  =0000000A               1849  LF                  EQU      $0A                     * ASCII code for Line Feed
-000027C3                          1850  
-000027C3                          1851                      END      $1000
+00002308  23DA 000023C0           1668  Fn_ID6_Dsplcmnt32   MOVE.L  (A2)+,opDta2
+0000230E  13FC 0002 000023C4      1669              MOVE.B  #2,opDta2T
+00002316  6000 0004               1670              BRA     Fn_ID6_Done 
+0000231A                          1671  
+0000231A                          1672  Fn_ID6_Error                                             * Exit out if error - main subroutine will handle DATA
+0000231A                          1673                      *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
+0000231A  4E75                    1674                      RTS 
+0000231C                          1675  
+0000231C  4E75                    1676  Fn_ID6_Done        RTS
+0000231C  4E75                    1677  -------------------- end include --------------------
+0000231E                          1678                      INCLUDE 'SR_ID7.X68'
+0000231E                          1679  
+0000231E                          1680  
+0000231E                          1681  SR_ID7
+0000231E                          1682  
+0000231E                          1683  
+0000231E  4E75                    1684  Fn_ID7_Done        RTS
+0000231E  4E75                    1685  -------------------- end include --------------------
+00002320                          1686                      INCLUDE 'SR_ID8.X68'
+00002320                          1687  
+00002320                          1688  
+00002320                          1689  SR_ID8
+00002320                          1690  
+00002320                          1691  
+00002320  4E75                    1692  Fn_ID8_Done        RTS
+00002320  4E75                    1693  -------------------- end include --------------------
+00002322                          1694                      INCLUDE 'SR_ID9.X68'
+00002322                          1695  
+00002322                          1696  
+00002322                          1697  SR_ID9
+00002322                          1698  
+00002322                          1699  
+00002322  4E75                    1700  Fn_ID9_Done        RTS
+00002322  4E75                    1701  -------------------- end include --------------------
+00002324                          1702                      INCLUDE 'SR_IDA.X68'
+00002324                          1703  
+00002324                          1704  
+00002324                          1705  SR_IDA
+00002324                          1706  
+00002324                          1707  
+00002324  4E75                    1708  Fn_IDA_Done        RTS
+00002324  4E75                    1709  -------------------- end include --------------------
+00002326                          1710                      INCLUDE 'SR_IDB.X68'
+00002326                          1711  
+00002326                          1712  
+00002326                          1713  SR_IDB
+00002326                          1714  
+00002326                          1715  
+00002326  4E75                    1716  Fn_IDB_Done        RTS
+00002326  4E75                    1717  -------------------- end include --------------------
+00002328                          1718                      INCLUDE 'SR_IDC.X68'
+00002328                          1719  
+00002328                          1720  
+00002328                          1721  SR_IDC
+00002328                          1722  
+00002328                          1723  
+00002328  4E75                    1724  Fn_IDC_Done        RTS
+00002328  4E75                    1725  -------------------- end include --------------------
+0000232A                          1726                      INCLUDE 'SR_IDD.X68'
+0000232A                          1727  
+0000232A                          1728  
+0000232A                          1729  SR_IDD
+0000232A                          1730  
+0000232A                          1731  
+0000232A  4E75                    1732  Fn_IDD_Done        RTS
+0000232A  4E75                    1733  -------------------- end include --------------------
+0000232C                          1734                      INCLUDE 'SR_IDE.X68'
+0000232C                          1735  
+0000232C                          1736  
+0000232C                          1737  SR_IDE
+0000232C                          1738  
+0000232C                          1739  
+0000232C  4E75                    1740  Fn_IDE_Done        RTS
+0000232C  4E75                    1741  -------------------- end include --------------------
+0000232E                          1742  
+0000232E                          1743  ** -----------------------------------------------------------
+0000232E                          1744  ** Variables and constants
+0000232E                          1745  ** -----------------------------------------------------------
+0000232E                          1746  
+0000232E  =0000001A               1747  maxLines            EQU      26                      * Max lines to display
+0000232E                          1748  
+0000232E= 00000000                1749  adrValStart         DC.L     $00000000               * Value of starting address - set by user
+00002332= 38 39 41 42 43 44 ...   1750  adrStrStart         DC.B     '89ABCDEF',0            * String hex value display for start address
+0000233B= FF                      1751  adrStsStart         DC.B     $FF                     * Status of starting address
+0000233C                          1752                                                       *   FF not set, 00 set, 01 length error, 02 hex error
+0000233C= 00000000                1753  adrValEnd           DC.L     $00000000               * Value of ending address - set by user
+00002340= 38 39 41 42 43 44 ...   1754  adrStrEnd           DC.B     '89ABCDEF',0            * String hex value display for end address
+00002349= FF                      1755  adrStsEnd           DC.B     $FF                     * Status of ending address
+0000234A                          1756                                                       *   FF not set, 00 set, 01 length error, 02 hex error
+0000234A                          1757  
+0000234A= 0000                    1758  opWord              DC.W     $0000                   * 16 bit instruction Word
+0000234C= 00                      1759  opID                DC.B     $00                     * First 4 bit value ID
+0000234D= 01                      1760  opErr               DC.B     $01                     * Error byte: If set to 1 then is DATA. default is error
+0000234E                          1761  
+0000234E= 00000000                1762  opValAdr            DC.L     $00000000               * Instruction address - used for calculation
+00002352= 38 39 41 42 43 44 ...   1763  opStrAdr            DC.B     '89ABCDEF',0            * String address
+0000235C= 00000000                1764  opNxtAdr            DC.L     $00000000               * Store next valid word in case instruction returns error
+00002360                          1765  
+00002360= 50 6C 61 63 65 68 ...   1766  opOutBuf            DC.B     'Placeholder 80 cols wide output buffer                                          '
+000023B0= 00000000                1767  opPtrNam            DC.L     $00000000               * Pointer to full text name e.g. 'MOVE'
+000023B4                          1768  
+000023B4= FF                      1769  opValSiz            DC.B     $FF                     * Instruction size value $FF=Not set, 1=Byte, 2=Word, 3=Long
+000023B5                          1770  
+000023B5= FF                      1771  opDstReg            DC.B     $FF                     * Destination Register Value
+000023B6= FF                      1772  opDstMod            DC.B     $FF                     * Destination Mode Value
+000023B7= FF                      1773  opSrcReg            DC.B     $FF                     * Source Register Value
+000023B8= FF                      1774  opSrcMod            DC.B     $FF                     * Source Register Mode
+000023B9                          1775  
+000023BA= 00000000                1776  opDta1              DC.L     $00000000               * Data value one (most likely source)
+000023BE= FF                      1777  opDta1T             DC.B     $FF                     * Data value one type ($FF not set, 0=byte, 1=word, 2=long)
+000023C0= 00000000                1778  opDta2              DC.L     $00000000               * Data value two (most likely destination)
+000023C4= FF                      1779  opDta2T             DC.B     $FF                     * Data value two type ($FF not set, 0=byte, 1=word, 2=long)
+000023C5= 30 30 30 30 00          1780  opStrDtaWrd         DC.B     '0000',0                * Data value string placeholder - dynamically built
+000023CA= 30 30 30 30 30 30 ...   1781  opStrDtaLng         DC.B     '00000000',0            * Data value string placeholder - dynamically built
+000023D3                          1782  
+000023D3= 44 41 54 41 00          1783  opNam_DATA          DC.B     'DATA',0
+000023D8= 4D 4F 56 45 00          1784  opNam_MOVE          DC.B     'MOVE',0                * String value for instruction
+000023DD= 4D 4F 56 45 41 00       1785  opNam_MOVEA         DC.B     'MOVEA',0               * String value for instruction
+000023E3= 4C 45 41 00             1786  opNam_LEA           DC.B     'LEA',0                 * String value for instruction
+000023E7= 4E 4F 54 00             1787  opNam_NOT           DC.B     'NOT',0                 * String value for instruction
+000023EB= 4D 4F 56 45 4D 00       1788  opNam_MOVEM         DC.B     'MOVEM',0               * String value for instruction
+000023F1= 4E 4F 50 00             1789  opNam_NOP           DC.B     'NOP',0                 * String value for instruction
+000023F5= 52 54 53 00             1790  opNam_RTS           DC.B     'RTS',0                 * String value for instruction
+000023F9= 4A 53 52 00             1791  opNam_JSR           DC.B     'JSR',0                 * String value for instruction
+000023FD= 41 44 44 51 00          1792  opNam_ADDQ          DC.B     'ADDQ',0                * String value for instruction
+00002402= 42 52 41 00             1793  opNam_BRA           DC.B     'BRA',0                 * String value for instruction
+00002406= 42 45 51 00             1794  opNam_BEQ           DC.B     'BEQ',0                 * String value for instruction
+0000240A= 42 47 54 00             1795  opNam_BGT           DC.B     'BGT',0                 * String value for instruction
+0000240E= 42 4C 45 00             1796  opNam_BLE           DC.B     'BLE',0                 * String value for instruction
+00002412= 4D 4F 56 45 51 00       1797  opNam_MOVEQ         DC.B     'MOVEQ',0               * String value for instruction
+00002418= 4F 52 00                1798  opNam_OR            DC.B     'OR',0                  * String value for instruction
+0000241B= 53 55 42 00             1799  opNam_SUB           DC.B     'SUB',0                 * String value for instruction
+0000241F= 41 4E 44 00             1800  opNam_AND           DC.B     'AND',0                 * String value for instruction
+00002423= 41 44 44 00             1801  opNam_ADD           DC.B     'ADD',0                 * String value for instruction
+00002427= 41 44 44 41 00          1802  opNam_ADDA          DC.B     'ADDA',0                * String value for instruction
+0000242C= 41 53 4C 00             1803  opNam_ASL           DC.B     'ASL',0                 * String value for instruction
+00002430= 41 53 52 00             1804  opNam_ASR           DC.B     'ASR',0                 * String value for instruction
+00002434= 4C 53 4C 00             1805  opNam_LSL           DC.B     'LSL',0                 * String value for instruction
+00002438= 4C 53 52 00             1806  opNam_LSR           DC.B     'LSR',0                 * String value for instruction
+0000243C= 52 4F 4C 00             1807  opNam_ROL           DC.B     'ROL',0                 * String value for instruction
+00002440= 52 4F 52 00             1808  opNam_ROR           DC.B     'ROR',0                 * String value for instruction
+00002444                          1809  
+00002444= 2E 42 00                1810  opSizB              DC.B     '.B',0                  * String value for instruction size 'B'
+00002447= 2E 57 00                1811  opSizW              DC.B     '.W',0                  * String value for instruction size 'W'
+0000244A= 2E 4C 00                1812  opSizL              DC.B     '.L',0                  * String value for instruction size 'L'
+0000244D                          1813  
+0000244D= 50 6C 61 63 65 68 ...   1814  msgInTemp           DC.B     'Placeholder for user input. 80 characters long is the max input limit...........',0
+0000249E= 45 72 72 6F 72 00       1815  msgErr              DC.B     'Error',0               * Debug message
+000024A4                          1816  
+000024A4= 33 20 43 6F 72 65 ...   1817  msgHdr01            DC.B     '3 Cores disassembler',CR,LF,0
+000024BB= 4D 65 6D 6F 72 79 ...   1818  msgHdr02a           DC.B     'Memory range:',0
+000024C9= 20 74 6F 20 00          1819  msgHdr02b           DC.B     ' to ',0
+000024CE                          1820  
+000024CE= 20 2D 20 41 6C 6C ...   1821  msgStrIntro         DC.B     ' - All addresses must be 32 bit hexadecimal.',CR,LF,0
+000024FD= 20 2D 20 56 61 6C ...   1822  msgStrRange         DC.B     ' - Valid address range is 00000000 to 00FFFFED.',CR,LF,0
+0000252F= 20 2D 20 53 74 61 ...   1823  msgStrSize          DC.B     ' - Starting address should start on a word boundry',CR,LF,0
+00002564= 20 20 20 40 20 58 ...   1824  msgStrSizeExmpl     DC.B     '   @ XXXXXXX(0,2,4,8,A,C,E).',CR,LF,0
+00002583= 20 2D 20 41 64 64 ...   1825  msgStrNote          DC.B     ' - Addresses will be adjusted if out of order or out of range.',CR,LF,0
+000025C4= 20 20 20 28 61 75 ...   1826  msgStrNoteMore      DC.B     '   (automagically)',CR,LF,0
+000025D9= 50 6C 65 61 73 65 ...   1827  msgStrAdr1          DC.B     'Please enter a starting address: ',0
+000025FB= 49 6E 76 61 6C 69 ...   1828  msgStrAdr1Err1      DC.B     'Invalid starting address length',CR,LF,0
+0000261D= 49 6E 76 61 6C 69 ...   1829  msgStrAdr1Err2      DC.B     'Invalid starting address hexadecimal value',CR,LF,0
+0000264A= 53 74 61 72 74 69 ...   1830  msgStrAdr1Scc       DC.B     'Starting address: ',0
+0000265D= 50 6C 65 61 73 65 ...   1831  msgStrAdr2          DC.B     'Please enter an ending address: ',0
+0000267E= 49 6E 76 61 6C 69 ...   1832  msgStrAdr2Err1      DC.B     'Invalid ending address length',CR,LF,0
+0000269E= 49 6E 76 61 6C 69 ...   1833  msgStrAdr2Err2      DC.B     'Invalid ending address hexadecimal value',CR,LF,0
+000026C9                          1834  
+000026C9= 48 69 74 20 45 6E ...   1835  msgPage             DC.B     'Hit Enter to go to the next page',CR,LF,0
+000026EC= 59 6F 75 20 68 61 ...   1836  msgEndMem01         DC.B     'You have reached the end of the memory sequence.',CR,LF,0
+0000271F= 20 20 20 20 20 20 ...   1837  msgEndMem02         DC.B     '         Y to continue or any other key to quit: ',0
+00002751= 54 68 61 6E 6B 20 ...   1838  msgDone             DC.B     'Thank you for using 3 Cores disassembler!',0
+0000277B                          1839  
+0000277B= 2A 2A 2A 2A 2A 2A ...   1840  msgLine             DC.B     '**************************************************',CR,LF,0
+000027B0= 0D 0A 00                1841  msgNewLine          DC.B     CR,LF,0
+000027B3= 2C 00                   1842  opComma             DC.B     ',',0
+000027B5= 2E 00                   1843  opPeriod            DC.B     '.',0
+000027B7= 20 00                   1844  opSpace             DC.B     ' ',0
+000027BA= 0900                    1845  opTab               DC.W     $0900                  * Tab - doesn't work as expected
+000027BC= 00                      1846  opBlank             DC.B     '',0
+000027BD  =0000000D               1847  CR                  EQU      $0D                     * ASCII code for Carriage Return
+000027BD  =0000000A               1848  LF                  EQU      $0A                     * ASCII code for Line Feed
+000027BD                          1849  
+000027BD                          1850                      END      $1000
 
 No errors detected
 No warnings generated
@@ -1861,12 +1860,12 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-ADRSTREND           2346
-ADRSTRSTART         2338
-ADRSTSEND           234F
-ADRSTSSTART         2341
-ADRVALEND           2342
-ADRVALSTART         2334
+ADRSTREND           2340
+ADRSTRSTART         2332
+ADRSTSEND           2349
+ADRSTSSTART         233B
+ADRVALEND           233C
+ADRVALSTART         232E
 CR                  D
 FN_ASCII_LCLTR      1994
 FN_ASCII_NUM        1988
@@ -1951,18 +1950,18 @@ FN_ID6_BGT          22B8
 FN_ID6_BLE          22C2
 FN_ID6_BRA          22A4
 FN_ID6_DISPLACEMENT  22C8
-FN_ID6_DONE         2322
+FN_ID6_DONE         231C
 FN_ID6_DSPLCMNT16   22F6
 FN_ID6_DSPLCMNT32   2308
-FN_ID6_ERROR        2320
-FN_ID7_DONE         2324
-FN_ID8_DONE         2326
-FN_ID9_DONE         2328
-FN_IDA_DONE         232A
-FN_IDB_DONE         232C
-FN_IDC_DONE         232E
-FN_IDD_DONE         2330
-FN_IDE_DONE         2332
+FN_ID6_ERROR        231A
+FN_ID7_DONE         231E
+FN_ID8_DONE         2320
+FN_ID9_DONE         2322
+FN_IDA_DONE         2324
+FN_IDB_DONE         2326
+FN_IDC_DONE         2328
+FN_IDD_DONE         232A
+FN_IDE_DONE         232C
 FN_IDX_DONE         19FA
 FN_MAIN_CHKAGN      1140
 FN_MAIN_CHKEND      1132
@@ -2031,83 +2030,83 @@ FN_UI_START_IN      1334
 LF                  A
 MAIN                1000
 MAXLINES            1A
-MSGDONE             2757
-MSGENDMEM01         26F2
-MSGENDMEM02         2725
-MSGERR              24A4
-MSGHDR01            24AA
-MSGHDR02A           24C1
-MSGHDR02B           24CF
-MSGINTEMP           2453
-MSGLINE             2781
-MSGNEWLINE          27B6
-MSGPAGE             26CF
-MSGSTRADR1          25DF
-MSGSTRADR1ERR1      2601
-MSGSTRADR1ERR2      2623
-MSGSTRADR1SCC       2650
-MSGSTRADR2          2663
-MSGSTRADR2ERR1      2684
-MSGSTRADR2ERR2      26A4
-MSGSTRINTRO         24D4
-MSGSTRNOTE          2589
-MSGSTRNOTEMORE      25CA
-MSGSTRRANGE         2503
-MSGSTRSIZE          2535
-MSGSTRSIZEEXMPL     256A
-OPBLANK             27C2
-OPCOMMA             27B9
-OPDSTMOD            23BC
-OPDSTREG            23BB
-OPDTA1              23C0
-OPDTA1T             23C4
-OPDTA2              23C6
-OPDTA2T             23CA
-OPERR               2353
-OPID                2352
-OPNAM_ADD           2429
-OPNAM_ADDA          242D
-OPNAM_ADDQ          2403
-OPNAM_AND           2425
-OPNAM_ASL           2432
-OPNAM_ASR           2436
-OPNAM_BEQ           240C
-OPNAM_BGT           2410
-OPNAM_BLE           2414
-OPNAM_BRA           2408
-OPNAM_DATA          23D9
-OPNAM_JSR           23FF
-OPNAM_LEA           23E9
-OPNAM_LSL           243A
-OPNAM_LSR           243E
-OPNAM_MOVE          23DE
-OPNAM_MOVEA         23E3
-OPNAM_MOVEM         23F1
-OPNAM_MOVEQ         2418
-OPNAM_NOP           23F7
-OPNAM_NOT           23ED
-OPNAM_OR            241E
-OPNAM_ROL           2442
-OPNAM_ROR           2446
-OPNAM_RTS           23FB
-OPNAM_SUB           2421
-OPNXTADR            2362
-OPOUTBUF            2366
-OPPERIOD            27BB
-OPPTRNAM            23B6
-OPSIZB              244A
-OPSIZL              2450
-OPSIZW              244D
-OPSPACE             27BD
-OPSRCMOD            23BE
-OPSRCREG            23BD
-OPSTRADR            2358
-OPSTRDTALNG         23D0
-OPSTRDTAWRD         23CB
-OPTAB               27C0
-OPVALADR            2354
-OPVALSIZ            23BA
-OPWORD              2350
+MSGDONE             2751
+MSGENDMEM01         26EC
+MSGENDMEM02         271F
+MSGERR              249E
+MSGHDR01            24A4
+MSGHDR02A           24BB
+MSGHDR02B           24C9
+MSGINTEMP           244D
+MSGLINE             277B
+MSGNEWLINE          27B0
+MSGPAGE             26C9
+MSGSTRADR1          25D9
+MSGSTRADR1ERR1      25FB
+MSGSTRADR1ERR2      261D
+MSGSTRADR1SCC       264A
+MSGSTRADR2          265D
+MSGSTRADR2ERR1      267E
+MSGSTRADR2ERR2      269E
+MSGSTRINTRO         24CE
+MSGSTRNOTE          2583
+MSGSTRNOTEMORE      25C4
+MSGSTRRANGE         24FD
+MSGSTRSIZE          252F
+MSGSTRSIZEEXMPL     2564
+OPBLANK             27BC
+OPCOMMA             27B3
+OPDSTMOD            23B6
+OPDSTREG            23B5
+OPDTA1              23BA
+OPDTA1T             23BE
+OPDTA2              23C0
+OPDTA2T             23C4
+OPERR               234D
+OPID                234C
+OPNAM_ADD           2423
+OPNAM_ADDA          2427
+OPNAM_ADDQ          23FD
+OPNAM_AND           241F
+OPNAM_ASL           242C
+OPNAM_ASR           2430
+OPNAM_BEQ           2406
+OPNAM_BGT           240A
+OPNAM_BLE           240E
+OPNAM_BRA           2402
+OPNAM_DATA          23D3
+OPNAM_JSR           23F9
+OPNAM_LEA           23E3
+OPNAM_LSL           2434
+OPNAM_LSR           2438
+OPNAM_MOVE          23D8
+OPNAM_MOVEA         23DD
+OPNAM_MOVEM         23EB
+OPNAM_MOVEQ         2412
+OPNAM_NOP           23F1
+OPNAM_NOT           23E7
+OPNAM_OR            2418
+OPNAM_ROL           243C
+OPNAM_ROR           2440
+OPNAM_RTS           23F5
+OPNAM_SUB           241B
+OPNXTADR            235C
+OPOUTBUF            2360
+OPPERIOD            27B5
+OPPTRNAM            23B0
+OPSIZB              2444
+OPSIZL              244A
+OPSIZW              2447
+OPSPACE             27B7
+OPSRCMOD            23B8
+OPSRCREG            23B7
+OPSTRADR            2352
+OPSTRDTALNG         23CA
+OPSTRDTAWRD         23C5
+OPTAB               27BA
+OPVALADR            234E
+OPVALSIZ            23B4
+OPWORD              234A
 SR_ASCII_HEX        1974
 SR_CNT_STR_BUF      19F4
 SR_CPY_STR_BUF      19E4
@@ -2119,14 +2118,14 @@ SR_ID3              19FC
 SR_ID4              1C3E
 SR_ID5              20C4
 SR_ID6              222E
-SR_ID7              2324
-SR_ID8              2326
-SR_ID9              2328
-SR_IDA              232A
-SR_IDB              232C
-SR_IDC              232E
-SR_IDD              2330
-SR_IDE              2332
+SR_ID7              231E
+SR_ID8              2320
+SR_ID9              2322
+SR_IDA              2324
+SR_IDB              2326
+SR_IDC              2328
+SR_IDD              232A
+SR_IDE              232C
 SR_IDX              19F6
 SR_JUMP             1196
 SR_UI_INPUT         1216

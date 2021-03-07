@@ -27,7 +27,7 @@ SR_ID6              * This is to grab the first four that are already set, ID6
                     LSL.W   D4,D3                       * Shift left 8 to get rid of first 8 bits
                     MOVE.B  #13,D4
                     LSR.W   D4,D3                       * Shift right 16 to get next 8 bits
-                    MOVE.W  D3, opDstMod
+                    MOVE.B  D3, opDstMod
 					
 					** Condition is stored in opID - displacement is in DstMod
 					** All thats leftis to branch per condition and output name, check reg if needed more
@@ -56,21 +56,20 @@ Fn_ID6_BGT			LEA     opNam_BGT,A3
 					
 Fn_ID6_BLE			LEA     opNam_BLE,A3
 					
-Fn_ID6_Displacement	CMP.W	#$00,opDstMod
+Fn_ID6_Displacement	CMP.B	#$00,opDstMod
 					BEQ		Fn_ID6_Dsplcmnt16
-					CMP.W	#$FF,opDstMod
+					CMP.B	#$FF,opDstMod
 					BEQ		Fn_ID6_Dsplcmnt32
 					** 8 bit is good
 					MOVE.W	opDstMod,opDta2
-					MOVE.B 	#1,opDta2T
+					MOVE.B 	#0,opDta2T
 					BRA     Fn_ID6_Done
 					
-Fn_ID6_Dsplcmnt16   MOVE.L  (A2)+,opDta2
-					MOVE.B	#2,opDta2T
+Fn_ID6_Dsplcmnt16   MOVE.W  (A2)+,opDta2
+					MOVE.B	#1,opDta2T
 					BRA		Fn_ID6_Done
 
-Fn_ID6_Dsplcmnt32   MOVE.L  (A2)+,opDta2	** 32 bit instr, first 16 don't matter
-					MOVE.L  (A2)+,opDta2
+Fn_ID6_Dsplcmnt32   MOVE.L  (A2)+,opDta2
 					MOVE.B	#2,opDta2T
 					BRA		Fn_ID6_Done 
 
