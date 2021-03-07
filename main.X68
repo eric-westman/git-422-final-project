@@ -93,6 +93,11 @@ fn_MAIN_Loop
                     MOVE.L  #$0000, opDta2
                     MOVE.B  #$FF, opDta2T
 
+                    MOVE.L  #$00000000,opMask
+                    MOVE.B  #$00,opRotate
+                    MOVE.B  #$00,opSizDir
+                    MOVE.B  #$00,opIR
+
                     ** Jump table
                     **
                     MOVE.W  opWord,D5               * opWord to D5 for multiplication
@@ -1047,6 +1052,11 @@ opDta2              DC.L     $00000000               * Data value two (most like
 opDta2T             DC.B     $FF                     * Data value two type ($FF not set, 0=byte, 1=word, 2=long)
 opStrDtaWrd         DC.B     '0000',0                * Data value string placeholder - dynamically built
 opStrDtaLng         DC.B     '00000000',0            * Data value string placeholder - dynamically built
+
+opMask              DC.L     $00000000               * Mask for MOVEM
+opRotate            DC.B     $00                     * Rotation for IDE(14)
+opSizDir            DC.B     $00                     * Size/Direction for IDE(14)
+opIR                DC.B     $00                     * Immediate/Rotate for IDE(14)
 
 opNam_DATA          DC.B     'DATA',0
 opNam_MOVE          DC.B     'MOVE',0                * String value for instruction
