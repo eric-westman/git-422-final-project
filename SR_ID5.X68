@@ -7,7 +7,7 @@
 **
 ** -----------------------------------------------------------
 
-SR_ID5              * This is to grab the first four that are already set, ID4
+SR_ID5              * This is to grab the first four that are already set, ID5
                     MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
                     MOVE.B  #12,D4
                     LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
@@ -46,6 +46,9 @@ SR_ID5              * This is to grab the first four that are already set, ID4
                     MOVE.B  #13,D4
                     LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
                     MOVE.B  D3, opDstReg
+					
+					** Set name
+					LEA     opNam_ADDQ,A3
 					
 Fn_ID5_VERIFY		* Make sure src mod is between 0-7
                     CMP.B   #0, opSrcMod                * Destination register >= 0
