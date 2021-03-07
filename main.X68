@@ -995,7 +995,7 @@ SR_CNT_STR_BUF
 ** Includes: Subroutines etc.
 ** -----------------------------------------------------------
                     INCLUDE 'SR_IDX.X68'
-                    INCLUDE 'SR_MOVE.X68'
+                    INCLUDE 'SR_ID3.X68'
                     INCLUDE 'SR_ID4.X68'
                     INCLUDE 'SR_ID5.X68'
                     INCLUDE 'SR_ID6.X68'

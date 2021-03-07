@@ -1,13 +1,13 @@
-
 ** -----------------------------------------------------------
 ** Subroutine: IDE
-**             INVALID OPCODE ID
 **
 **   This will run after the initial jump instruction
+**
+**   This subroutine only returns back to the caller,
+**      no errors or other tracking
 **
 ** -----------------------------------------------------------
 
 SR_IDE
 
-
-Fn_IDE_Done        RTS
+              RTS
