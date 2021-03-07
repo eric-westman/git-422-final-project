@@ -50,6 +50,7 @@ SR_ID8              * This is to grab the first four that are already set, ID4
 					** Find out if its Dn, ea or ea, Dn
 					** ea, Dn - 0,1,2
 					** Dn, ea - 4,5,6
+					LEA     opNam_OR,A3
 					CMP.B	#3,opDstMod
 					BLT		Fn_ID8_Case1
 					CMP.B   #7,opDstMod
