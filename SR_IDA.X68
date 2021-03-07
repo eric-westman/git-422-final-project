@@ -1,7 +1,7 @@
 
 ** -----------------------------------------------------------
 ** Subroutine: IDA
-**             INVALID OPCODE ID
+**             Covers AND
 **
 **   This will run after the initial jump instruction
 **

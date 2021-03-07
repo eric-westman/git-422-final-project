@@ -1,7 +1,7 @@
 
 ** -----------------------------------------------------------
 ** Subroutine: ID8
-**             INVALID OPCODE ID
+**             Covers OR
 **
 **   This will run after the initial jump instruction
 **

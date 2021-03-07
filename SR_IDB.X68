@@ -1,7 +1,7 @@
 
 ** -----------------------------------------------------------
 ** Subroutine: IDB
-**             INVALID OPCODE ID
+**             Covers ADD, ADDA
 **
 **   This will run after the initial jump instruction
 **
