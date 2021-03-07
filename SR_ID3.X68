@@ -104,15 +104,15 @@ SR_ID3
                     **
                     ** ***************************************
                     CMP.B   #1, opDstMod                * Destination mode is 1 - must be MOVEA
-                    BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
-                    BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
+                    BEQ     Fn_ID3_Ins02                * Set as instruction 0 MOVEA
+                    BRA     Fn_ID3_Ins01                * Set as instruction 1 MOVE
 
-Fn_MOVE_Ins01       LEA     opNam_MOVE,A3
+Fn_ID3_Ins01        LEA     opNam_MOVE,A3
                     MOVE.L  A3,opPtrNam                 * Display name points to name
-                    BRA     Fn_MOVE_Verify
+                    BRA     Fn_ID3_Verify
 
-Fn_MOVE_Ins02       CMP.B   #1, opID
-                    BEQ     Fn_MOVE_Error               * MOVEA cannot have opID = 1 (byte)
+Fn_ID3_Ins02        CMP.B   #1, opID
+                    BEQ     Fn_ID3_Error               * MOVEA cannot have opID = 1 (byte)
                     LEA     opNam_MOVEA,A3
                     MOVE.L  A3,opPtrNam                 * Display name points to name
 
@@ -125,23 +125,23 @@ Fn_MOVE_Ins02       CMP.B   #1, opID
                     **    SrcReg = 0 to 7
                     **
                     ** ***************************************
-Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >= 0
-                    BLT     Fn_MOVE_Error
+Fn_ID3_Verify       CMP.B   #0, opDstMod                * Destination mode is >= 0
+                    BLT     Fn_ID3_Error
                     CMP.B   #7, opDstMod                * Destination mode is <= 7
-                    BGT     Fn_MOVE_Error
+                    BGT     Fn_ID3_Error
                     CMP.B   #0, opDstReg                * Destination register >= 0
-                    BLT     Fn_MOVE_Error
+                    BLT     Fn_ID3_Error
                     CMP.B   #7, opDstReg                * Destination register <= 7
-                    BGT     Fn_MOVE_Error
+                    BGT     Fn_ID3_Error
 
                     CMP.B   #0, opSrcMod                * Destination mode is 0
-                    BLT     Fn_MOVE_Error
+                    BLT     Fn_ID3_Error
                     CMP.B   #7, opSrcMod                * Destination mode is <= 7
-                    BGT     Fn_MOVE_Error
+                    BGT     Fn_ID3_Error
                     CMP.B   #0, opSrcReg                * Destination register >= 0
-                    BLT     Fn_MOVE_Error
+                    BLT     Fn_ID3_Error
                     CMP.B   #7, opSrcReg                * Destination register <= 7
-                    BGT     Fn_MOVE_Error
+                    BGT     Fn_ID3_Error
 
                     ** ***************************************
                     ** Set instruction size - the .B,.W,.L part
@@ -149,17 +149,17 @@ Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >=
                     **       other instructions use 3 bits for size
                     ** ***************************************
                     CMP.B   #1, opID                    * Instruction size is Byte
-                    BEQ     Fn_MOVE_SizB
+                    BEQ     Fn_ID3_SizB
                     CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
-                    BEQ     Fn_MOVE_SizW
+                    BEQ     Fn_ID3_SizW
                     CMP.B   #2, opID                    * Instruction size is Long
-                    BEQ     Fn_MOVE_SizL
-Fn_MOVE_SizB        MOVE.B  #0,opValSiz                 * Set size to 0=Byte
-                    BRA     Fn_MOVE_SrcMod
-Fn_MOVE_SizW        MOVE.B  #1,opValSiz                 * Set size to 1=Word
-                    BRA     Fn_MOVE_SrcMod
-Fn_MOVE_SizL        MOVE.B  #2,opValSiz                 * Set size to 2=Long
-                    BRA     Fn_MOVE_SrcMod
+                    BEQ     Fn_ID3_SizL
+Fn_ID3_SizB         MOVE.B  #0,opValSiz                 * Set size to 0=Byte
+                    BRA     Fn_ID3_SrcMod
+Fn_ID3_SizW         MOVE.B  #1,opValSiz                 * Set size to 1=Word
+                    BRA     Fn_ID3_SrcMod
+Fn_ID3_SizL         MOVE.B  #2,opValSiz                 * Set size to 2=Long
+                    BRA     Fn_ID3_SrcMod
 
                     ** ***************************************
                     ** Grab extra DATA if needed
@@ -178,62 +178,62 @@ Fn_MOVE_SizL        MOVE.B  #2,opValSiz                 * Set size to 2=Long
                     ** SOURCE
                     **
                     ** ***************************************
-Fn_MOVE_SrcMod      CMP.B   #7, opSrcMod                * Check if source mode is 7
-                    BEQ     Fn_MOVE_ChkSrcReg           * Check source register
-                    BRA     Fn_MOVE_ChkDstMod           * Source not 7, now check destination Mod
-Fn_MOVE_ChkSrcReg   CMP.B   #0, opSrcReg                * Check is source register is 0
-                    BEQ     Fn_MOVE_DtaSrcWrd           * Load next word
+Fn_ID3_SrcMod       CMP.B   #7, opSrcMod                * Check if source mode is 7
+                    BEQ     Fn_ID3_ChkSrcReg            * Check source register
+                    BRA     Fn_ID3_ChkDstMod           * Source not 7, now check destination Mod
+Fn_ID3_ChkSrcReg    CMP.B   #0, opSrcReg                 * Check is source register is 0
+                    BEQ     Fn_ID3_DtaSrcWrd            * Load next word
                     CMP.B   #1, opSrcReg                * Check if source register is 1
-                    BEQ     Fn_MOVE_DtaSrcLng           * Load next long
+                    BEQ     Fn_ID3_DtaSrcLng            * Load next long
                     CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
-                    BEQ     Fn_MOVE_DtaSrcImd           * Load first word into word one
-                    BRA     FN_MOVE_Error               * Invalid register value
+                    BEQ     Fn_ID3_DtaSrcImd            * Load first word into word one
+                    BRA     FN_ID3_Error                * Invalid register value
 
                     ** Note: Checking immediate value
                     **       opID as size is specific to MOVE, MOVEA
                     **       other instructions will use 3 bits to set size, not part of ID
                     **
-Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byte
-                    BEQ     Fn_MOVE_DtaSrcByt           * Load next byte
+Fn_ID3_DtaSrcImd    CMP.B   #1, opID                    * opID = 0 - size is byte
+                    BEQ     Fn_ID3_DtaSrcByt            * Load next byte
                     CMP.B   #3, opID                    * opID = 3 - size is word
-                    BEQ     Fn_MOVE_DtaSrcWrd           * Load next word
+                    BEQ     Fn_ID3_DtaSrcWrd            * Load next word
                     CMP.B   #2, opID                    * opID = 0 - size is long
-                    BEQ     Fn_MOVE_DtaSrcLng           * Load next long
-                    BRA     Fn_MOVE_Error               * Invalid opID (this should never happen)
+                    BEQ     Fn_ID3_DtaSrcLng            * Load next long
+                    BRA     Fn_ID3_Error                * Invalid opID (this should never happen)
 
-Fn_MOVE_DtaSrcByt   MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
+Fn_ID3_DtaSrcByt    MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
                     MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
-                    BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
+                    BRA     Fn_ID3_ChkDstMod            * Check destination mode
+Fn_ID3_DtaSrcWrd    MOVE.W  (A2)+, opDta1               * Load word and increment address count
                     MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
-                    BRA     Fn_MOVE_ChkDstMod           * Check destination mode
-Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
+                    BRA     Fn_ID3_ChkDstMod            * Check destination mode
+Fn_ID3_DtaSrcLng    MOVE.L  (A2)+, opDta1               * Load long and increment address count
                     MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
-                    BRA     Fn_MOVE_ChkDstMod           * Check destination mode
+                    BRA     Fn_ID3_ChkDstMod            * Check destination mode
 
                     ** DESTINATION
                     **
-Fn_MOVE_ChkDstMod   CMP.B   #7, opDstMod                * Check if destination mode is 7
-                    BEQ     Fn_MOVE_ChkDstReg           * Check destination register
-                    BRA     Fn_MOVE_Done                * Destination not 7, done with data
-Fn_MOVE_ChkDstReg   CMP.B   #0, opDstReg                * Check if destination register is 0
-                    BEQ     Fn_MOVE_DtaDstWrd           * Load next word
+Fn_ID3_ChkDstMod    CMP.B   #7, opDstMod                * Check if destination mode is 7
+                    BEQ     Fn_ID3_ChkDstReg            * Check destination register
+                    BRA     Fn_ID3_Done                 * Destination not 7, done with data
+Fn_ID3_ChkDstReg    CMP.B   #0, opDstReg                * Check if destination register is 0
+                    BEQ     Fn_ID3_DtaDstWrd            * Load next word
                     CMP.B   #1, opDstReg                * Check if destination register is 1
-                    BEQ     Fn_MOVE_DtaDstLng           * Load next long
-                    BRA     fn_MOVE_Error               * Invalid registration Mode
+                    BEQ     Fn_ID3_DtaDstLng            * Load next long
+                    BRA     fn_ID3_Error                * Invalid registration Mode
 
-Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and increment address count
+Fn_ID3_DtaDstWrd    MOVE.W  (A2)+, opDta2               * Load word and increment address count
                     MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
-                    BRA     Fn_MOVE_Done
-Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
+                    BRA     Fn_ID3_Done
+Fn_ID3_DtaDstLng    MOVE.L  (A2)+, opDta2               * Load long and increment address count
                     MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
-                    BRA     Fn_MOVE_Done
+                    BRA     Fn_ID3_Done
 
 ** ********************************************************************************
 ** do not edit below
 ** ********************************************************************************
-Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
+Fn_ID3_Done         MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
 
-Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
+Fn_ID3_Error                                           * Exit out if error - main subroutine will handle DATA
                     *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
                     RTS                                 * Return to main
