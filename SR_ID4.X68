@@ -374,7 +374,8 @@ Fn_ID4_Error                                             * Exit out if error - m
                     *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
                     RTS                                  * Return to main
 
-Fn_ID4_Done         RTS
+Fn_ID4_Done         MOVE.B  #0, opErr                    * Clear error flag so this will display instruction info
+					RTS
 
 
 
