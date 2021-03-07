@@ -17,7 +17,7 @@ SR_ID6              * This is to grab the first four that are already set, ID6
                     MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
                     MOVE.B  #4, D4
                     LSL.W   D4,D3                       * Shift left 4 to get rid of first 4 bits
-                    MOVE.B  #13,D4
+                    MOVE.B  #12,D4
                     LSR.W   D4,D3                       * Shift right 12 to get next 4 bits
                     MOVE.B  D3, opID
                     
@@ -25,8 +25,8 @@ SR_ID6              * This is to grab the first four that are already set, ID6
                     MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
                     MOVE.B  #7, D4
                     LSL.W   D4,D3                       * Shift left 8 to get rid of first 8 bits
-                    MOVE.B  #13,D4
-                    LSR.W   D4,D3                       * Shift right 16 to get next 8 bits
+                    MOVE.B  #8,D4
+                    LSR.W   D4,D3                       * Shift right 8 to get next 8 bits
                     MOVE.B  D3, opDstMod
 					
 					** Condition is stored in opID - displacement is in DstMod

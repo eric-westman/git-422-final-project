@@ -354,17 +354,17 @@ Fn_ID4_DtaImd       CMP.B   #1, opID                    * opID = 0 - size is byt
                     CMP.B   #3, opID                    * opID = 3 - size is word
                     BEQ     Fn_ID4_DtaWrd               * Load next word
                     CMP.B   #2, opID                    * opID = 0 - size is long
-                    BEQ          Fn_ID4_DtaLng               * Load next
+                    BEQ     Fn_ID4_DtaLng               * Load next
                     BRA     Fn_ID4_Error                * Invalid opID (this should never happen) long
 
 Fn_ID4_DtaByt       MOVE.W  (A2)+, opDta2               * Load byte and increment address count (note .W for byte)
-                    MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+                    MOVE.B  #0, opDta2T                 * Set Data 1 type as 0=Byte
                     BRA     Fn_ID4_Done
 Fn_ID4_DtaWrd       MOVE.W  (A2)+, opDta2               * Load word and increment address count
-                    MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+                    MOVE.B  #1, opDta2T                 * Set Data 1 type as 1=Word
                     BRA     Fn_ID4_Done
 Fn_ID4_DtaLng       MOVE.L  (A2)+, opDta2               * Load long and increment address count
-                    MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+                    MOVE.B  #2, opDta2T                 * Set Data 1 type as 2=Long
                     BRA     Fn_ID4_Done
 
 ** ***************************************
