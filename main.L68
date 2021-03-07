@@ -1,0 +1,1948 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 3/6/2021 4:33:30 PM
+
+00000000                             1  ** -----------------------------------------------------------
+00000000                             2  * Title      : Disassembler
+00000000                             3  * Written by : 3 Cores
+00000000                             4  * Date       : Winter 2021
+00000000                             5  * Description: CSS 422 machine code disassembler
+00000000                             6  ** -----------------------------------------------------------
+00000000                             7  
+00001000                             8                      ORG    $1000
+00001000                             9  
+00001000                            10  ** -----------------------------------------------------------
+00001000                            11  ** MAIN LOGIC
+00001000                            12  **
+00001000                            13  ** Program data (do not overwrite)
+00001000                            14  **   D0 - Reserved for Trap
+00001000                            15  **   D1 - Reserved for Trap
+00001000                            16  **   D2 - Reserved for Trap
+00001000                            17  **   D7 - Line Counter (do not overwrite)
+00001000                            18  
+00001000                            19  **   A0 - Jump Table
+00001000                            20  **   A1 - Reserved for Trap
+00001000                            21  **   A2 - Pointer to Instruction space (the contents being disassembled)
+00001000                            22  **   A3 - Pointer to Output buffer
+00001000                            23  **   A7 - Stack pointer
+00001000                            24  **
+00001000                            25  ** Other data (ok to overwrite)
+00001000                            26  **   D3 - misc
+00001000                            27  **   D4 - misc
+00001000                            28  **   D5 - misc
+00001000                            29  **   D6 - misc
+00001000                            30  **   A4 - misc
+00001000                            31  **   A5 - misc
+00001000                            32  **   A6 - misc
+00001000                            33  **
+00001000                            34  ** -----------------------------------------------------------
+00001000                            35  MAIN
+00001000  2E7C 00100000             36                      MOVEA.L #$00100000,SP           * Initialize stack pointer
+00001006                            37  Fn_MAIN_Start
+00001006                            38  
+00001006                            39                      ** Test addresses if SR_UI_INPUT is turned off
+00001006                            40                      **
+00001006  23FC 00009000 000020D8    41                      MOVE.L  #$00009000, adrValStart
+00001010  23FC 000093D0 000020E6    42                      MOVE.L  #$000093D0, adrValEnd
+0000101A                            43  
+0000101A                            44                      ** Address input interface
+0000101A                            45                      ** Note: comment out to run tests
+0000101A                            46                      **
+0000101A                            47                      *JSR     SR_UI_INPUT             * Initiate user input for addresses
+0000101A                            48  
+0000101A                            49                      ** Load address strings for display
+0000101A                            50                      **
+0000101A  49F9 000020D8             51                      LEA     adrValStart,A4
+00001020  4BF9 000020DC             52                      LEA     adrStrStart,A5
+00001026  4EB9 000019B2             53                      JSR     SR_HEX_STR              * Copy address value to string for display
+0000102C  49F9 000020E6             54                      LEA     adrValEnd,A4
+00001032  4BF9 000020EA             55                      LEA     adrStrEnd,A5
+00001038  4EB9 000019B2             56                      JSR     SR_HEX_STR              * Copy address value to string for display
+0000103E                            57  
+0000103E                            58                      ** Main program variable setup
+0000103E                            59                      ** Note: Don't change this!
+0000103E                            60                      **
+0000103E  4207                      61                      CLR.B   D7                      * Reset line counter to zero
+00001040  41F9 00001196             62                      LEA     SR_JUMP,A0              * Mem space for jump table
+00001046  2479 000020D8             63                      MOVE.L  adrValStart,A2          * Mem space for disassembly
+0000104C                            64  
+0000104C                            65                      ** Clear screen
+0000104C  103C 000B                 66                      MOVE.B  #11,D0                  * Trap task 2 does the following:
+00001050  323C FF00                 67                      MOVE.W  #$FF00,D1               * Clear the screen
+00001054  4E4F                      68                      TRAP    #15
+00001056                            69  
+00001056                            70                      ** Display header
+00001056  4EB9 00001530             71                      JSR     SR_DSP_HEADER
+0000105C                            72  fn_MAIN_Loop
+0000105C                            73                      ** Prepare loop variables
+0000105C                            74                      **
+0000105C  23CA 000020F8             75                      MOVE.L  A2,opValAdr             * Set output address as current - need for display
+00001062  33DA 000020F4             76                      MOVE.W  (A2)+,opWord            * load first 4 bit OpCode Word, increment A2 (4 bytes)
+00001068  23CA 00002106             77                      MOVE.L  A2,opNxtAdr             * Save next valid word address for invalid instruction
+0000106E                            78  
+0000106E                            79                      ** Reset local variables
+0000106E                            80                      **
+0000106E                            81  
+0000106E  13FC 0000 000020F6        82                      MOVE.B  #$00,opID               * Reset opID (first 4 bits of opcode word)
+00001076  13FC 0001 000020F7        83                      MOVE.B  #$01,opErr              * Reset error $01 - assume error until instruction found
+0000107E  13FC 00FF 0000215E        84                      MOVE.b  #$FF,opValSiz
+00001086                            85  
+00001086  13FC 00FF 0000215F        86                      MOVE.B  #$FF, opDstReg
+0000108E  13FC 00FF 00002160        87                      MOVE.B  #$FF, opDstMod
+00001096  13FC 00FF 00002161        88                      MOVE.B  #$FF, opSrcReg
+0000109E  13FC 00FF 00002162        89                      MOVE.B  #$FF, opSrcMod
+000010A6                            90  
+000010A6  23FC 00000000 00002164    91                      MOVE.L  #$0000, opDta1
+000010B0  13FC 00FF 00002168        92                      MOVE.B  #$FF, opDta1T
+000010B8  23FC 00000000 0000216A    93                      MOVE.L  #$0000, opDta2
+000010C2  13FC 00FF 0000216E        94                      MOVE.B  #$FF, opDta2T
+000010CA                            95  
+000010CA                            96                      ** Jump table
+000010CA                            97                      **
+000010CA  3A39 000020F4             98                      MOVE.W  opWord,D5               * opWord to D5 for multiplication
+000010D0  1C3C 000C                 99                      MOVE.B  #12,D6
+000010D4  EC6D                     100                      LSR.W   D6,D5                   * Shift 12 bits to the right (to get first 4 bits)
+000010D6  CAFC 0008                101                      MULU    #8,D5                   * offset is multiple of 8
+000010DA  4EB0 5000                102                      JSR     0(A0,D5)                * Jump indirect with index
+000010DE                           103  
+000010DE                           104                      ** Invalid instruction
+000010DE                           105                      **
+000010DE  0C39 0001 000020F7       106                      CMP.B   #1,opErr
+000010E6  6700 0006                107                      BEQ     Fn_MAIN_ErrIns          * Instruction error, reset A2
+000010EA  6000 0008                108                      BRA     Fn_MAIN_Dsp             * Instruction valid, display
+000010EE  2479 00002106            109  Fn_MAIN_ErrIns      MOVE.L  opNxtAdr,A2             * Resetting A2 to next valid word
+000010F4                           110  
+000010F4                           111                      ** Display result
+000010F4                           112                      **
+000010F4  4EB9 00001592            113  Fn_MAIN_Dsp         JSR     SR_DSP_DISPLAY
+000010FA                           114  
+000010FA                           115                      ** Max lines display stop, wait for enter
+000010FA                           116                      **
+000010FA  5207                     117  Fn_MAIN_ChkLin      ADDI.B  #1,D7                   * Increment line counter
+000010FC                           118  
+000010FC  2C07                     119                      MOVE.L  D7,D6                   * Line counter to D6 for division
+000010FE  8CFC 001A                120                      DIVU.W  #maxLines,D6            * Divide unsigned -> [remainder|quotient]
+00001102  4846                     121                      SWAP    D6                      * Swap for remainder (modulo)
+00001104  BC3C 0000                122                      CMP.B   #0,D6                   * Check remainder for zero
+00001108  6700 0006                123                      BEQ     Fn_MAIN_ChkPag          * Reached the maximum number of lines per page
+0000110C  6000 0024                124                      BRA     Fn_MAIN_ChkEnd          * Continue to Check if at End of address space
+00001110                           125  
+00001110                           126                      ** Logic to check ENTER key to show next page
+00001110                           127                      **
+00001110  43F9 00002473            128  Fn_MAIN_ChkPag      LEA     msgPage,A1              * Loads MESSAGE into A1
+00001116  103C 000E                129                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000111A  4E4F                     130                      TRAP    #15                     * Display to screen
+0000111C  103C 0005                131                      MOVE.B  #5,D0                   * Trap task 2 does the following:
+00001120  4E4F                     132                      TRAP    #15                     * Read single char into D1.B - repurposed for ENTER key
+00001122                           133  
+00001122                           134                      ** Clear screen
+00001122  103C 000B                135                      MOVE.B  #11,D0                  * Trap task 2 does the following:
+00001126  323C FF00                136                      MOVE.W  #$FF00,D1               * Clear the screen
+0000112A  4E4F                     137                      TRAP    #15
+0000112C                           138  
+0000112C                           139                      ** Display header
+0000112C  4EB9 00001530            140                      JSR     SR_DSP_HEADER
+00001132                           141  
+00001132                           142                      ** Reached end of memory @ A2 - stop main logic, ask to do it again
+00001132                           143                      **
+00001132  B5F9 000020E6            144  Fn_MAIN_ChkEnd      CMP.L   adrValEnd, A2
+00001138  6C00 0006                145                      BGE     Fn_MAIN_ChkAgn          * Reached end of memory region
+0000113C  6000 003A                146                      BRA     Fn_MAIN_Continue        * Continue to next loop iteration
+00001140                           147  
+00001140                           148                      ** Logic to check for for Y or N to check another region of memory
+00001140                           149                      **
+00001140  43F9 00002496            150  Fn_MAIN_ChkAgn      LEA     msgEndMem01,A1          * Loads MESSAGE into A1
+00001146  103C 000E                151                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000114A  4E4F                     152                      TRAP    #15                     * Display to screen
+0000114C  43F9 000024C9            153                      LEA     msgEndMem02,A1          * Loads MESSAGE into A1
+00001152  103C 000E                154                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001156  4E4F                     155                      TRAP    #15                     * Display to screen
+00001158                           156  
+00001158  43F9 000021F7            157                      LEA     msgInTemp,A1            * Load placeholder for input string
+0000115E  103C 0002                158                      MOVE.B  #2,D0                   * Trap task 2 does the following:
+00001162  4E4F                     159                      TRAP    #15                     * Read string to (A1), length in D1.W
+00001164  0C11 0059                160                      CMP.B   #$59,(A1)               * Checking for 'Y' - otherwise Nope
+00001168  6700 FE9C                161                      BEQ     Fn_MAIN_Start           * Restart program
+0000116C  0C11 0079                162                      CMP.B   #$79,(A1)               * Checking for 'y' - otherwise Nope
+00001170  6700 FE94                163                      BEQ     Fn_MAIN_Start           * Restart program
+00001174  6000 0006                164                      BRA     Fn_Main_Done            * Exit program
+00001178                           165  
+00001178  6000 FEE2                166  Fn_MAIN_Continue    BRA     Fn_MAIN_Loop            * Loop around and check another Word
+0000117C                           167  
+0000117C                           168  Fn_MAIN_Done        ** That's all folks
+0000117C  103C 000B                169                      MOVE.B  #11,D0                  * Trap task 2 does the following:
+00001180  323C FF00                170                      MOVE.W  #$FF00,D1               * Clear the screen
+00001184  4E4F                     171                      TRAP    #15
+00001186                           172  
+00001186                           173                      ** Thank you message
+00001186  43F9 000024FB            174                      LEA     msgDone,A1              * Loads MESSAGE into A1
+0000118C  103C 000E                175                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001190  4E4F                     176                      TRAP    #15                     * Display to screen
+00001192                           177  
+00001192                           178  
+00001192  4E72 2700                179                      STOP   #$2700                   * Stop execution
+00001196                           180  
+00001196                           181  ** -----------------------------------------------------------
+00001196                           182  ** JUMP TABLE: First 4 bits of instruction
+00001196                           183  **
+00001196                           184  ** Jump instruction: pointing to label (xxx).L
+00001196                           185  **  |4    E    |F    9     |00 |00 |04 |80 - Offset 6 bytes
+00001196                           186  **                          label address (Long)
+00001196                           187  **
+00001196                           188  ** RTS instruction:
+00001196                           189  **  |4    E    |7    5     |               - Offset 2 bytes
+00001196                           190  **
+00001196                           191  ** e.g. If looking for code0010 - 8 bytes (offset) * 4 bit code (0 to 15)
+00001196                           192  **
+00001196                           193  ** Note: should find a value since 4 bits is 0 to F
+00001196                           194  ** Note: There aren't any instructions that start with F
+00001196                           195  **
+00001196                           196  ** -----------------------------------------------------------
+00001196  4EB9 000019F6            197  SR_JUMP             JSR     SR_IDX                  * No instructions @ ID=0
+0000119C  4E75                     198                      RTS
+0000119E  4EB9 000019FC            199                      JSR     SR_ID3
+000011A4  4E75                     200                      RTS
+000011A6  4EB9 000019FC            201                      JSR     SR_ID3
+000011AC  4E75                     202                      RTS
+000011AE  4EB9 000019FC            203                      JSR     SR_ID3                  * Instructions @ ID=1,2,3 MOVE, MOVEA
+000011B4  4E75                     204                      RTS
+000011B6  4EB9 00001C3E            205                      JSR     SR_ID4
+000011BC  4E75                     206                      RTS
+000011BE  4EB9 000020C4            207                      JSR     SR_ID5
+000011C4  4E75                     208                      RTS
+000011C6  4EB9 000020C6            209                      JSR     SR_ID6
+000011CC  4E75                     210                      RTS
+000011CE  4EB9 000020C8            211                      JSR     SR_ID7
+000011D4  4E75                     212                      RTS
+000011D6  4EB9 000020CA            213                      JSR     SR_ID8
+000011DC  4E75                     214                      RTS
+000011DE  4EB9 000020CC            215                      JSR     SR_ID9
+000011E4  4E75                     216                      RTS
+000011E6  4EB9 000020CE            217                      JSR     SR_IDA
+000011EC  4E75                     218                      RTS
+000011EE  4EB9 000020D0            219                      JSR     SR_IDB
+000011F4  4E75                     220                      RTS
+000011F6  4EB9 000020D2            221                      JSR     SR_IDC
+000011FC  4E75                     222                      RTS
+000011FE  4EB9 000020D4            223                      JSR     SR_IDD
+00001204  4E75                     224                      RTS
+00001206  4EB9 000020D6            225                      JSR     SR_IDE
+0000120C  4E75                     226                      RTS
+0000120E  4EB9 000019F6            227                      JSR     SR_IDX                   * No instructions @ ID=15
+00001214  4E75                     228                      RTS
+00001216                           229  
+00001216                           230  ** -----------------------------------------------------------
+00001216                           231  ** UI: User mem input
+00001216                           232  ** -----------------------------------------------------------
+00001216                           233  SR_UI_INPUT
+00001216  13F8 00FF 000020E5       234                      MOVE.B  $FF,adrStsStart         * Reset starting address status
+0000121E  13F8 00FF 000020F3       235                      MOVE.B  $FF,adrStsEnd           * Reset ending address status
+00001226                           236  
+00001226                           237  Fn_UI_Loop          ** Clear screen
+00001226  103C 000B                238                      MOVE.B  #11,D0                  * Trap task 2 does the following:
+0000122A  323C FF00                239                      MOVE.W  #$FF00,D1               * Clear the screen
+0000122E  4E4F                     240                      TRAP    #15
+00001230                           241  
+00001230                           242                      ** Header
+00001230                           243                      ** ***************************************
+00001230                           244  
+00001230  43F9 00002525            245                      LEA     msgLine,A1              * '********************'
+00001236  103C 000E                246                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000123A  4E4F                     247                      TRAP    #15                     * Display to screen
+0000123C                           248  
+0000123C  43F9 0000224E            249                      LEA     msgHdr01,A1             * '3 Cores disassembler'
+00001242  103C 000E                250                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001246  4E4F                     251                      TRAP    #15                     * Display to screen
+00001248                           252  
+00001248  0C39 0000 000020E5       253                      CMP.B   #0,adrStsStart          * Starting address is set
+00001250  6700 0006                254                      BEQ     Fn_UI_DspStart          * Display starting address
+00001254  6000 0026                255                      BRA     Fn_UI_HdrNext           * Display the rest of the header
+00001258                           256  
+00001258  43F9 000023F4            257  Fn_UI_DspStart      LEA     msgStrAdr1Scc,A1        * 'Starting address: '
+0000125E  103C 000E                258                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001262  4E4F                     259                      TRAP    #15                     * Display to screen
+00001264                           260  
+00001264  43F9 000020DC            261                      LEA     adrStrStart,A1          * '89ABCDEF' (string address)
+0000126A  103C 000E                262                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000126E  4E4F                     263                      TRAP    #15                     * Display to screen
+00001270                           264  
+00001270  43F9 0000255A            265                      LEA     msgNewLine,A1           * CR,LF
+00001276  103C 000E                266                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000127A  4E4F                     267                      TRAP    #15                     * Display to screen
+0000127C                           268  
+0000127C  43F9 00002525            269  Fn_UI_HdrNext       LEA     msgLine,A1              * '********************'
+00001282  103C 000E                270                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001286  4E4F                     271                      TRAP    #15                     * Display to screen
+00001288                           272  
+00001288  43F9 00002278            273                      LEA     msgStrIntro,A1          * ' - All addresses must be 32 bit hexadecimal.'
+0000128E  103C 000E                274                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001292  4E4F                     275                      TRAP    #15                     * Display to screen
+00001294                           276  
+00001294  43F9 000022A7            277                      LEA     msgStrRange,A1          * ' - Valid address range is 00000000 to 00FFFFFF.'
+0000129A  103C 000E                278                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000129E  4E4F                     279                      TRAP    #15                     * Display to screen
+000012A0                           280  
+000012A0  43F9 000022D9            281                      LEA     msgStrSize,A1           * ' - Starting address should start on a word boundry'
+000012A6  103C 000E                282                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+000012AA  4E4F                     283                      TRAP    #15                     * Display to screen
+000012AC                           284  
+000012AC  43F9 0000230E            285                      LEA     msgStrSizeExmpl,A1      * '   @ XXXXXXX(0,2,4,8,A,C,E).'
+000012B2  103C 000E                286                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+000012B6  4E4F                     287                      TRAP    #15                     * Display to screen
+000012B8                           288  
+000012B8  43F9 0000232D            289                      LEA     msgStrNote,A1           * ' - Addresses will be adjusted if out of order or out of range.'
+000012BE  103C 000E                290                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+000012C2  4E4F                     291                      TRAP    #15                     * Display to screen
+000012C4                           292  
+000012C4  43F9 0000236E            293                      LEA     msgStrNoteMore,A1       * '   (automagically)'
+000012CA  103C 000E                294                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+000012CE  4E4F                     295                      TRAP    #15                     * Display to screen
+000012D0                           296  
+000012D0  43F9 0000255A            297                      LEA     msgNewLine,A1           * CR,LF
+000012D6  103C 000E                298                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+000012DA  4E4F                     299                      TRAP    #15                     * Display to screen
+000012DC                           300  
+000012DC                           301                      ** Input check
+000012DC                           302                      ** ***************************************
+000012DC                           303  
+000012DC  0C39 0000 000020E5       304                      CMP.B #0,adrStsStart            * Check status of address 0 = success
+000012E4  6600 0012                305                      BNE   Fn_UI_Start               * Input starting address
+000012E8                           306  
+000012E8  0C39 0000 000020F3       307                      CMP.B #0,adrStsEnd              * Check status of address 0 = success
+000012F0  6600 005E                308                      BNE   Fn_UI_End                 * Input ending address
+000012F4                           309  
+000012F4                           310                      *BRA   Fn_UI_Done                * Both addresses set, bail out of UI
+000012F4  6000 01C6                311                      BRA   Fn_UI_ChkVal              * Check address values (range, order)
+000012F8                           312  
+000012F8                           313  Fn_UI_Start         ** Input Start Address
+000012F8                           314                      ** ***************************************
+000012F8                           315  
+000012F8                           316                      ** Check errors
+000012F8  0C39 0001 000020E5       317                      CMP.B   #1,adrStsStart
+00001300  6700 0012                318                      BEQ     Fn_UI_StartE1           * Error: length
+00001304  0C39 0002 000020E5       319                      CMP.B   #2,adrStsStart
+0000130C  6700 0016                320                      BEQ     Fn_UI_StartE2           * Error: hex value
+00001310  6000 0022                321                      BRA     Fn_UI_Start_In          * No error: ask for input
+00001314                           322  
+00001314  43F9 000023A5            323  Fn_UI_StartE1       LEA     msgStrAdr1Err1,A1       * 'Invalid starting address length'
+0000131A  103C 000E                324                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000131E  4E4F                     325                      TRAP    #15
+00001320  6000 0012                326                      BRA     Fn_UI_Start_In          * User input
+00001324                           327  
+00001324  43F9 000023C7            328  Fn_UI_StartE2       LEA     msgStrAdr1Err2,A1       * 'Invalid starting address hexadecimal value'
+0000132A  103C 000E                329                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000132E  4E4F                     330                      TRAP    #15
+00001330  6000 0002                331                      BRA     Fn_UI_Start_In          * User input
+00001334                           332  
+00001334  43F9 00002383            333  Fn_UI_Start_In      LEA     msgStrAdr1,A1           * 'Please enter a starting address'
+0000133A  103C 000E                334                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000133E  4E4F                     335                      TRAP    #15                     * Display to screen
+00001340                           336  
+00001340  43F9 000021F7            337                      LEA     msgInTemp,A1            * Load placeholder for input string
+00001346  103C 0002                338                      MOVE.B  #2,D0                   * Trap task 2 does the following:
+0000134A  4E4F                     339                      TRAP    #15                     * Read string to (A1), length in D1.W
+0000134C                           340  
+0000134C  6000 005A                341                      BRA     Fn_UI_ChkLen            * Check addresses (length, hex validation)
+00001350                           342  
+00001350                           343  Fn_UI_End           ** Input End Address
+00001350                           344                      ** ***************************************
+00001350                           345  
+00001350                           346                      ** Check errors
+00001350  0C39 0001 000020F3       347                      CMP.B   #1,adrStsEnd
+00001358  6700 0012                348                      BEQ     Fn_UI_EndE1             * Error: length
+0000135C  0C39 0002 000020F3       349                      CMP.B   #2,adrStsEnd
+00001364  6700 0016                350                      BEQ     Fn_UI_EndE2             * Error: hex value
+00001368  6000 0022                351                      BRA     Fn_UI_End_In            * No error: ask for input
+0000136C                           352  
+0000136C  43F9 00002428            353  Fn_UI_EndE1         LEA     msgStrAdr2Err1,A1       * 'Invalid ending address length'
+00001372  103C 000E                354                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001376  4E4F                     355                      TRAP    #15
+00001378  6000 0012                356                      BRA     Fn_UI_End_In            * User input
+0000137C                           357  
+0000137C  43F9 00002448            358  Fn_UI_EndE2         LEA     msgStrAdr2Err2,A1       * 'Invalid ending address hexadecimal value'
+00001382  103C 000E                359                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001386  4E4F                     360                      TRAP    #15
+00001388  6000 0002                361                      BRA     Fn_UI_End_In            * User input
+0000138C                           362  
+0000138C  43F9 00002407            363  Fn_UI_End_In        LEA     msgStrAdr2,A1           * 'Please enter a ending address'
+00001392  103C 000E                364                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001396  4E4F                     365                      TRAP    #15                     * Display to screen
+00001398                           366  
+00001398  43F9 000021F7            367                      LEA     msgInTemp,A1            * Load placeholder for input string
+0000139E  103C 0002                368                      MOVE.B  #2,D0                   * Trap task 2 does the following:
+000013A2  4E4F                     369                      TRAP    #15                     * Read string to (A1), length in D1.W
+000013A4                           370  
+000013A4  6000 0002                371                      BRA     Fn_UI_ChkLen            * Check addresses (length, hex validation)
+000013A8                           372  
+000013A8                           373  Fn_UI_ChkLen        ** Check length
+000013A8                           374                      **   length should be 8 ascii characters
+000013A8                           375                      **   value stored in D1.W from input
+000013A8                           376                      ** ***************************************
+000013A8                           377  
+000013A8  B27C 0008                378                      CMP.W   #8,D1                   * Address should be 8 chars long
+000013AC  6600 0006                379                      BNE     Fn_UI_SetELen           * Invalid address length
+000013B0  6000 002A                380                      BRA     Fn_UI_ChkHex            * Length ok, now check hex values
+000013B4                           381  
+000013B4                           382  Fn_UI_SetELen       ** Error: length
+000013B4  0C39 0000 000020E5       383                      CMP.B #0,adrStsStart
+000013BC  6600 0006                384                      BNE     Fn_UI_SetELenI1         * Error must be with first input
+000013C0  6000 000E                385                      BRA     Fn_UI_SetELenI2         * Error must be with second input
+000013C4                           386  Fn_UI_SetELenI1     ** Set error on input 1
+000013C4  13FC 0001 000020E5       387                      MOVE.B  #1,adrStsStart          * Set error code 1 (invalid length)
+000013CC  6000 FE58                388                      BRA     Fn_UI_Loop
+000013D0                           389  Fn_UI_SetELenI2     ** Set error on input 2         * Set error code 1 (invalid length)
+000013D0  13FC 0001 000020F3       390                      MOVE.B  #1,adrStsEnd
+000013D8  6000 FE4C                391                      BRA     Fn_UI_Loop
+000013DC                           392  
+000013DC                           393  Fn_UI_ChkHex        ** Check hex values
+000013DC                           394                      **   30 - 39 (0-9)
+000013DC                           395                      **   41 - 46 (A-F), 61 - 66 (a - f)
+000013DC                           396                      ** ***************************************
+000013DC                           397  
+000013DC  163C 0000                398                      MOVE.B  #0,D3                   * Loop counter
+000013E0  4286                     399                      CLR.L   D6                      * Temporary address storage
+000013E2                           400  
+000013E2                           401  Fn_UI_ChkHexLoop    ** Check hex values one at a time
+000013E2  1819                     402                      MOVE.B  (A1)+,D4                * Unload byte and increment input
+000013E4                           403  
+000013E4  B83C 0030                404                      CMP.B   #$30,D4
+000013E8  6D00 00AA                405                      BLT     Fn_UI_SetEHex           * Error - invalid hex character
+000013EC                           406  
+000013EC  B83C 0039                407                      CMP.B   #$39,D4
+000013F0  6F00 0026                408                      BLE     Fn_UI_ChkHexDone        * Loop around to check next value
+000013F4                           409  
+000013F4  B83C 0041                410                      CMP.B   #$41,D4
+000013F8  6D00 009A                411                      BLT     Fn_UI_SetEHex           * Error - invalid hex character
+000013FC                           412  
+000013FC  B83C 0046                413                      CMP.B   #$46,D4
+00001400  6F00 0016                414                      BLE     Fn_UI_ChkHexDone        * Loop around to check next value
+00001404                           415  
+00001404  B83C 0061                416                      CMP.B   #$61,D4
+00001408  6D00 008A                417                      BLT     Fn_UI_SetEHex           * Error - invalid hex character
+0000140C                           418  
+0000140C  B83C 0066                419                      CMP.B   #$66,D4
+00001410  6F00 0006                420                      BLE     Fn_UI_ChkHexDone        * Loop around to check next value
+00001414                           421  
+00001414  6000 007E                422                      BRA     Fn_UI_SetEHex           * Error - invalid hex character
+00001418                           423  
+00001418                           424  Fn_UI_ChkHexDone    ** Check if at end of loop
+00001418                           425  
+00001418  5203                     426                      ADDI.B  #1,D3                   * Increment loop counter
+0000141A                           427  
+0000141A                           428                      ** Insert ascii value into temp address
+0000141A  1A04                     429                      MOVE.B  D4,D5                   * Load current value into D5 for conversion
+0000141C  4EB9 00001974            430                      JSR     SR_ASCII_HEX            * Convert ascii to hex, return in D5
+00001422  DC05                     431                      ADD.B   D5,D6                   * Insert hex value into temp storage
+00001424  B63C 0008                432                      CMP.B   #8,D3                   * To shift or not to shift
+00001428  6D00 0006                433                      BLT     Fn_UI_ChkHexASL         * Shift D6 left when loop < 8
+0000142C  6000 0004                434                      BRA     Fn_UI_ChkHexRdr         * No shift to D6 when loop >= 8
+00001430  E986                     435  Fn_UI_ChkHexASL     ASL.L   #4,D6                   * Left shift 4 to make room for next hex value
+00001432                           436  
+00001432                           437  Fn_UI_ChkHexRdr     ** Check counter and redirect accordingly
+00001432  B63C 0008                438                      CMP.B   #8,D3                   * Loop 8 times
+00001436  66AA                     439                      BNE     Fn_UI_ChkHexLoop        * Back to Hex Loop
+00001438  6000 0002                440                      BRA     Fn_UI_SetVHex           * Set address as valid (done checking hex)
+0000143C                           441  
+0000143C                           442  Fn_UI_SetVHex       ** Valid: hex values
+0000143C  0C39 0000 000020E5       443                      CMP.B   #0,adrStsStart          * Value of 0 means it is a valid address
+00001444  6600 0006                444                      BNE     Fn_UI_SetVHexI1         * Error must be with first input
+00001448  6000 0026                445                      BRA     Fn_UI_SetVHexI2         * Error must be with second input
+0000144C                           446  
+0000144C                           447  Fn_UI_SetVHexI1     ** Set valid on input 1
+0000144C  13FC 0000 000020E5       448                      MOVE.B  #0,adrStsStart          * Set valid code 0 (address is valid)
+00001454  23C6 000020D8            449                      MOVE.L  D6,adrValStart          * Copy input address to adrValEnd
+0000145A  49F9 000020D8            450                      LEA     adrValStart,A4
+00001460  4BF9 000020DC            451                      LEA     adrStrStart,A5
+00001466  4EB9 000019B2            452                      JSR     SR_HEX_STR              * Copy address value to string for display
+0000146C  6000 FDB8                453                      BRA     Fn_UI_Loop              * Loop back to make sure both addresses set
+00001470                           454  
+00001470                           455  Fn_UI_SetVHexI2     ** Set valid on input 2
+00001470  13FC 0000 000020F3       456                      MOVE.B  #0,adrStsEnd            * Set valid code 0 (address is valid)
+00001478  23C6 000020E6            457                      MOVE.L  D6,adrValEnd            * Copy input address to adrValEnd
+0000147E  49F9 000020E6            458                      LEA     adrValEnd,A4
+00001484  4BF9 000020EA            459                      LEA     adrStrEnd,A5
+0000148A  4EB9 000019B2            460                      JSR     SR_HEX_STR              * Copy address value to string for display
+00001490  6000 FD94                461                      BRA     Fn_UI_Loop              * Loop back to make sure both addresses set
+00001494                           462  
+00001494                           463  Fn_UI_SetEHex       ** Error: hex values
+00001494  0C39 0000 000020E5       464                      CMP.B   #0,adrStsStart
+0000149C  6600 0006                465                      BNE     Fn_UI_SetEHexI1         * Error must be with first input
+000014A0  6000 000E                466                      BRA     Fn_UI_SetEHexI2         * Error must be with second input
+000014A4                           467  
+000014A4                           468  Fn_UI_SetEHexI1     ** Set error on input 1
+000014A4  13FC 0002 000020E5       469                      MOVE.B  #2,adrStsStart          * Set error code 2 (invalid hex values)
+000014AC  6000 FD78                470                      BRA     Fn_UI_Loop              * Loop around to see if we are done
+000014B0                           471  
+000014B0                           472  Fn_UI_SetEHexI2     ** Set error on input 2
+000014B0  13FC 0002 000020F3       473                      MOVE.B  #2,adrStsEnd            * Set error code 2 (invalid hex values)
+000014B8  6000 FD6C                474                      BRA     Fn_UI_Loop              * Loop around to see if we are done
+000014BC                           475  
+000014BC                           476  Fn_UI_ChkVal        ** Check address range, order
+000014BC                           477                      **   Address automagic - will fix addresses if invalid input
+000014BC                           478                      ** Note: addresses are unsigned; should not be less than zero
+000014BC                           479                      ** Note: use BHI instead of BGT to compare unsigned addresses
+000014BC                           480                      ** Note: subtracting one from Start address if not even
+000014BC                           481                      **       doesn't really matter if end address is even or odd
+000014BC                           482                      ** ***************************************
+000014BC                           483  
+000014BC  2A39 000020D8            484                      MOVE.L  adrValStart,D5
+000014C2  2C39 000020E6            485                      MOVE.L  adrValEnd,D6
+000014C8                           486  
+000014C8  BABC 00FFFFEC            487  Fn_UI_ChkValSMax    CMP.L   #$00FFFFEC,D5            * Start should be <= (max - 1)
+000014CE  6200 0006                488                      BHI     Fn_UI_ChkValSBig         * Start is > (max - 1); Set start to (max - 1)
+000014D2  6000 0008                489                      BRA     Fn_UI_ChkValEMax         * Start is <= (max - 1); Check if End < 0
+000014D6                           490  
+000014D6  2A3C 00FFFFEC            491  Fn_UI_ChkValSBig    MOVE.L  #$00FFFFEC,D5            * Set Start to (max - 1)
+000014DC                           492  
+000014DC  BCBC 00FFFFED            493  Fn_UI_ChkValEMax    CMP.L   #$00FFFFED,D6            * End should be <= max
+000014E2  6200 0006                494                      BHI     Fn_UI_ChkValEBig         * End is > max; Set End to max
+000014E6  6000 0008                495                      BRA     Fn_UI_ChkValCmp          * End is <= max; Check if Start > End
+000014EA                           496  
+000014EA  2C3C 00FFFFED            497  Fn_UI_ChkValEBig    MOVE.L  #$00FFFFED,D6            * Set End to max
+000014F0                           498  
+000014F0  BA86                     499  Fn_UI_ChkValCmp     CMP.L   D6,D5                    * Start should be <= End
+000014F2  6200 0006                500                      BHI     Fn_UI_ChkValSwp          * Start < End; Swap start and end
+000014F6  6000 0008                501                      BRA     FN_UI_ChkValSWrd         * Start >= End; Check Start word boundry
+000014FA                           502  
+000014FA  2805                     503  Fn_UI_ChkValSwp     MOVE.L  D5,D4
+000014FC  2A06                     504                      MOVE.L  D6,D5
+000014FE  2C04                     505                      MOVE.L  D4,D6
+00001500                           506  
+00001500                           507  FN_UI_ChkValSWrd    ** Check start for word boundry
+00001500  1605                     508                      MOVE.B  D5,D3                    * Move low order byte to D3 for division
+00001502  183C 0002                509                      MOVE.B  #2,D4                    * Setup even/odd comparison
+00001506  86C4                     510                      DIVU.W  D4,D3                    * Divide unsigned D3/D4
+00001508  4843                     511                      SWAP    D3                       * Swap for remainder (the modulo part)
+0000150A  B63C 0000                512                      CMP.B   #0,D3                    * If zero, then even
+0000150E  6600 0006                513                      BNE     Fn_UI_ChkValSOne         * Start is not even; Subtract one from address
+00001512  6000 0004                514                      BRA     Fn_UI_Done               * Start is even; finally, we're done
+00001516                           515  
+00001516  5385                     516  Fn_UI_ChkValSOne    SUBI.L  #1,D5
+00001518                           517  
+00001518                           518  Fn_UI_Done          ** All done with input, time to go
+00001518                           519                      ** ***************************************
+00001518                           520  
+00001518  23C5 000020D8            521                      MOVE.L  D5,adrValStart          * Move final address to Start
+0000151E  23C6 000020E6            522                      MOVE.L  D6,adrValEnd            * Move final address to End
+00001524                           523  
+00001524                           524                      ** Clear screen
+00001524  103C 000B                525                      MOVE.B  #11,D0                  * Trap task 2 does the following:
+00001528  323C FF00                526                      MOVE.W  #$FF00,D1               * Clear the screen
+0000152C  4E4F                     527                      TRAP    #15
+0000152E                           528  
+0000152E  4E75                     529                      RTS
+00001530                           530  
+00001530                           531  ** -----------------------------------------------------------
+00001530                           532  ** UI: Display Header
+00001530                           533  ** -----------------------------------------------------------
+00001530                           534  SR_DSP_HEADER
+00001530                           535  
+00001530                           536                      ** Header line 03
+00001530  43F9 00002525            537                      LEA     msgLine,A1              * Loads MESSAGE into A1
+00001536  103C 000E                538                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000153A  4E4F                     539                      TRAP    #15                     * Display to screen
+0000153C                           540  
+0000153C                           541                      ** Header line 01
+0000153C  43F9 0000224E            542                      LEA     msgHdr01,A1             * Loads MESSAGE into A1
+00001542  103C 000E                543                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001546  4E4F                     544                      TRAP    #15                     * Display to screen
+00001548                           545  
+00001548                           546                      ** Header line 02
+00001548  43F9 00002265            547                      LEA     msgHdr02a,A1            * Loads MESSAGE into A1
+0000154E  103C 000E                548                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001552  4E4F                     549                      TRAP    #15                     * Display to screen
+00001554                           550  
+00001554  43F9 000020DC            551                      LEA     adrStrStart,A1          * Loads MESSAGE into A1
+0000155A  103C 000E                552                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000155E  4E4F                     553                      TRAP    #15                     * Display to screen
+00001560                           554  
+00001560  43F9 00002273            555                      LEA     msgHdr02b,A1            * Loads MESSAGE into A1
+00001566  103C 000E                556                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000156A  4E4F                     557                      TRAP    #15
+0000156C                           558  
+0000156C  43F9 000020EA            559                      LEA     adrStrEnd,A1          * Loads MESSAGE into A1
+00001572  103C 000E                560                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001576  4E4F                     561                      TRAP    #15                     * Display to screen
+00001578                           562  
+00001578  43F9 0000255A            563                      LEA     msgNewLine,A1           * Loads MESSAGE into A1
+0000157E  103C 000E                564                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+00001582  4E4F                     565                      TRAP    #15                     * Display to screen
+00001584                           566  
+00001584                           567                      ** Header line 03
+00001584  43F9 00002525            568                      LEA     msgLine,A1              * Loads MESSAGE into A1
+0000158A  103C 000E                569                      MOVE.B  #14,D0                  * Use (A1) no CR/LF
+0000158E  4E4F                     570                      TRAP    #15                     * Display to screen
+00001590                           571  
+00001590  4E75                     572                      RTS
+00001592                           573  
+00001592                           574  ** -----------------------------------------------------------
+00001592                           575  ** UI: Display item
+00001592                           576  ** -----------------------------------------------------------
+00001592                           577  SR_DSP_DISPLAY
+00001592                           578                      ** Output buffer
+00001592                           579                      **   Need buffer for spacing issues
+00001592                           580                      **
+00001592  47F9 0000210A            581                      LEA     opOutBuf,A3             * Reset pointer to output buffer
+00001598  16BC 0000                582                      MOVE.B  #$00,(A3)               * Insert NULL
+0000159C                           583  
+0000159C                           584                      ** Push opValAdr to opStrAdr
+0000159C  49F9 000020F8            585                      LEA     opValAdr,A4             * input hex
+000015A2  4BF9 000020FC            586                      LEA     opStrAdr,A5             * output string
+000015A8  4EB9 000019B2            587                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+000015AE  49F9 000020FC            588                      LEA     opStrAdr,A4
+000015B4  4EB9 000019E4            589                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000015BA                           590  
+000015BA                           591                      ** Instruction or DATA redirector
+000015BA                           592                      **
+000015BA  0C39 0001 000020F7       593                      CMP.B   #1, opErr               * Check instruction type
+000015C2  6700 0006                594                      BEQ     Fn_Dsp_Data             * Error flag - must be data
+000015C6  6000 001E                595                      BRA     Fn_Dsp_Instr            * No error flag - must be instruction
+000015CA                           596  
+000015CA                           597  Fn_Dsp_Data         ** Process invalid instruction (DATA)
+000015CA                           598                      **
+000015CA                           599  
+000015CA                           600                      ** Space
+000015CA  49F9 00002561            601                      LEA     opSpace,A4
+000015D0  4EB9 000019E4            602                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000015D6                           603  
+000015D6                           604                      ** Instruction name
+000015D6  49F9 0000217D            605                      LEA     opNam_DATA,A4
+000015DC  4EB9 000019E4            606                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000015E2                           607  
+000015E2  6000 037E                608                      BRA     Fn_Dsp_Done
+000015E6                           609  
+000015E6                           610  Fn_Dsp_Instr        ** Process instruction
+000015E6                           611                      **
+000015E6                           612  
+000015E6                           613                      ** Space
+000015E6  49F9 00002561            614                      LEA     opSpace,A4
+000015EC  4EB9 000019E4            615                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000015F2                           616  
+000015F2                           617                      ** Instruction name
+000015F2  2879 0000215A            618                      MOVE.L  opPtrNam,A4
+000015F8  4EB9 000019E4            619                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000015FE                           620  
+000015FE                           621                      ** Instruciton size
+000015FE                           622                      **
+000015FE  0C39 0000 0000215E       623                      CMP.B   #0,opValSiz
+00001606  6700 001E                624                      BEQ     Fn_DSP_SizB             * Size is Byte
+0000160A  0C39 0001 0000215E       625                      CMP.B   #1,opValSiz
+00001612  6700 0022                626                      BEQ     Fn_DSP_SizW             * Size is Word
+00001616  0C39 0002 0000215E       627                      CMP.B   #2,opValSiz
+0000161E  6700 0026                628                      BEQ     Fn_DSP_SizL             * Size is Long
+00001622  6000 003E                629                      BRA     Fn_DSP_DTA1             * Size not set, go to check Data 1
+00001626                           630  
+00001626  49F9 000021EE            631  Fn_DSP_SizB         LEA     opSizB,A4               * '.B' string
+0000162C  4EB9 000019E4            632                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+00001632  6000 0022                633                      BRA     Fn_DSP_OPR1
+00001636                           634  
+00001636  49F9 000021F1            635  Fn_DSP_SizW         LEA     opSizW,A4               * '.W' string
+0000163C  4EB9 000019E4            636                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+00001642  6000 0012                637                      BRA     Fn_DSP_OPR1
+00001646                           638  
+00001646  49F9 000021F4            639  Fn_DSP_SizL         LEA     opSizL,A4              * '.L' string
+0000164C  4EB9 000019E4            640                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+00001652  6000 0002                641                      BRA     Fn_DSP_OPR1
+00001656                           642  
+00001656                           643  Fn_DSP_OPR1         ** Display First Operand
+00001656  49F9 00002564            644                      LEA     opTab,A4                * Tab (or calculated spaces)
+0000165C  4EB9 000019E4            645                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+00001662                           646  
+00001662                           647  Fn_DSP_DTA1         ** Data 1 (source)
+00001662                           648                      ** **************************************************
+00001662                           649                      **
+00001662                           650  
+00001662                           651                      ** Check if source mode set (may not have a source)
+00001662  0C39 00FF 00002164       652                      CMP.B   #$FF,opDta1
+0000166A  6700 017C                653                      BEQ     Fn_DSP_DTA2             * No source data, goto check Dta2
+0000166E                           654  
+0000166E                           655                      ** Check source mode
+0000166E                           656                      **
+0000166E  0C39 0000 00002162       657                      CMP.B   #0,opSrcMod
+00001676  6700 0042                658                      BEQ     Fn_DSP_DTA1_00          * Handle Reg Mode 0 Dn
+0000167A  0C39 0001 00002162       659                      CMP.B   #1,opSrcMod
+00001682  6700 004A                660                      BEQ     Fn_DSP_DTA1_01          * Handle Reg Mode 1 An
+00001686  0C39 0002 00002162       661                      CMP.B   #2,opSrcMod
+0000168E  6700 0052                662                      BEQ     Fn_DSP_DTA1_02          * Handle Reg Mode 2 (An)
+00001692  0C39 0003 00002162       663                      CMP.B   #3,opSrcMod
+0000169A  6700 0062                664                      BEQ     Fn_DSP_DTA1_03          * Handle Reg Mode 3 (An)+
+0000169E  0C39 0004 00002162       665                      CMP.B   #4,opSrcMod
+000016A6  6700 0076                666                      BEQ     Fn_DSP_DTA1_04          * Handle Reg Mode 4 -(An)
+000016AA  0C39 0007 00002162       667                      CMP.B   #7,opSrcMod
+000016B2  6700 008A                668                      BEQ     Fn_DSP_DTA1_07          * Handle Reg Mode 7 (xxx).W, (xxx).L, #<data>
+000016B6                           669  
+000016B6  6000 0114                670                      BRA     Fn_DSP_DTA1_ERR         * Mode not 1 to 7 - display error
+000016BA                           671  
+000016BA                           672  Fn_DSP_DTA1_00      ** Handling data mode 0
+000016BA  16FC 0044                673                      MOVE.B  #$44,(A3)+              * Insert 'D' character
+000016BE  1639 00002161            674                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000016C4  0603 0030                675                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+000016C8  16C3                     676                      MOVE.B  D3,(A3)+                * Insert Register value
+000016CA  6000 0110                677                      BRA     Fn_DSP_OPR2             * Display data 2
+000016CE                           678  
+000016CE                           679  Fn_DSP_DTA1_01      ** Handling data mode 1
+000016CE  16FC 0041                680                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+000016D2  1639 00002161            681                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000016D8  0603 0030                682                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+000016DC  16C3                     683                      MOVE.B  D3,(A3)+                * Insert Register value
+000016DE  6000 00FC                684                      BRA     Fn_DSP_OPR2             * Display data 2
+000016E2                           685  
+000016E2                           686  Fn_DSP_DTA1_02      ** Handling data mode 2
+000016E2  16FC 0028                687                      MOVE.B  #$28,(A3)+              * Insert '(' character
+000016E6  16FC 0041                688                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+000016EA  1639 00002161            689                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000016F0  0603 0030                690                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+000016F4  16C3                     691                      MOVE.B  D3,(A3)+                * Insert Register value
+000016F6  16FC 0029                692                      MOVE.B  #$29,(A3)+              * Insert ')' character
+000016FA  6000 00E0                693                      BRA     Fn_DSP_OPR2             * Display data 2
+000016FE                           694  
+000016FE                           695  Fn_DSP_DTA1_03      ** Handling data mode 3
+000016FE  16FC 0028                696                      MOVE.B  #$28,(A3)+              * Insert '(' character
+00001702  16FC 0041                697                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+00001706  1639 00002161            698                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+0000170C  0603 0030                699                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+00001710  16C3                     700                      MOVE.B  D3,(A3)+                * Insert Register value
+00001712  16FC 0029                701                      MOVE.B  #$29,(A3)+              * Insert ')' character
+00001716  16FC 002B                702                      MOVE.B  #$2B,(A3)+              * Insert '+' character
+0000171A  6000 00C0                703                      BRA     Fn_DSP_OPR2             * Display data 2
+0000171E                           704  
+0000171E                           705  Fn_DSP_DTA1_04      ** Handling data mode 4
+0000171E  16FC 002D                706                      MOVE.B  #$2D,(A3)+              * Insert '-' character
+00001722  16FC 0028                707                      MOVE.B  #$28,(A3)+              * Insert '(' character
+00001726  16FC 0041                708                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+0000172A  1639 00002161            709                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+00001730  0603 0030                710                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+00001734  16C3                     711                      MOVE.B  D3,(A3)+                * Insert Register value
+00001736  16FC 0029                712                      MOVE.B  #$29,(A3)+              * Insert ')' character
+0000173A  6000 00A0                713                      BRA     Fn_DSP_OPR2             * Display data 2
+0000173E                           714  
+0000173E                           715  Fn_DSP_DTA1_07      ** Handling data mode 7
+0000173E  0C39 0000 00002168       716                      CMP.B   #0,opDta1T
+00001746  6700 001E                717                      BEQ     Fn_DSP_DTA1_BYT         * Display data as byte
+0000174A  0C39 0001 00002168       718                      CMP.B   #1,opDta1T
+00001752  6700 0034                719                      BEQ     Fn_DSP_DTA1_WRD         * Display data as word
+00001756  0C39 0002 00002168       720                      CMP.B   #2,opDta1T
+0000175E  6700 004A                721                      BEQ     Fn_DSP_DTA1_LNG         * Display data as long
+00001762                           722  
+00001762  6000 0068                723                      BRA     Fn_DSP_DTA1_ERR         * Data type not 0 to 2 - display error
+00001766                           724  
+00001766                           725  Fn_DSP_DTA1_BYT     ** Display data Byte (it's really a word with 00 tacked on)
+00001766  49F9 00002164            726                      LEA     opDta1,A4               * input hex
+0000176C  4BF9 0000216F            727                      LEA     opStrDtaWrd,A5          * output string
+00001772  4EB9 000019B2            728                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+00001778  49F9 0000216F            729                      LEA     opStrDtaWrd,A4
+0000177E  4EB9 000019E4            730                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+00001784  6000 0056                731                      BRA     Fn_DSP_OPR2             * Display data 2
+00001788                           732  
+00001788                           733  Fn_DSP_DTA1_WRD     ** Display data Word
+00001788  49F9 00002164            734                      LEA     opDta1,A4               * input hex
+0000178E  4BF9 0000216F            735                      LEA     opStrDtaWrd,A5          * output string
+00001794  4EB9 000019B2            736                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+0000179A  49F9 0000216F            737                      LEA     opStrDtaWrd,A4
+000017A0  4EB9 000019E4            738                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000017A6  6000 0034                739                      BRA     Fn_DSP_OPR2             * Display data 2
+000017AA                           740  
+000017AA                           741  Fn_DSP_DTA1_LNG     ** Display data Long
+000017AA  49F9 00002164            742                      LEA     opDta1,A4               * input hex
+000017B0  4BF9 00002174            743                      LEA     opStrDtaLng,A5          * output string
+000017B6  4EB9 000019B2            744                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+000017BC  49F9 00002174            745                      LEA     opStrDtaLng,A4
+000017C2  4EB9 000019E4            746                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000017C8  6000 0012                747                      BRA     Fn_DSP_OPR2             * Display data 2
+000017CC                           748  
+000017CC                           749  Fn_DSP_DTA1_ERR     ** Something is messed up
+000017CC  49F9 00002248            750                      LEA     msgErr,A4
+000017D2  4EB9 000019E4            751                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000017D8  6000 0002                752                      BRA     Fn_DSP_OPR2             * Display data 2
+000017DC                           753  
+000017DC                           754  Fn_DSP_OPR2         ** Display Second Operand
+000017DC  49F9 0000255D            755                      LEA     opComma,A4              * Comma
+000017E2  4EB9 000019E4            756                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+000017E8                           757  
+000017E8                           758  Fn_DSP_DTA2         ** Data 2 (destination)
+000017E8                           759                      ** **************************************************
+000017E8                           760                      **
+000017E8                           761  
+000017E8                           762                      ** Check if destination mode set (may not have a destination)
+000017E8  0C39 00FF 00002160       763                      CMP.B   #$FF,opDstMod
+000017F0  6700 0170                764                      BEQ     Fn_DSP_DONE             * No source data, goto check Dta2
+000017F4                           765  
+000017F4  0C39 0000 00002160       766                      CMP.B   #0,opDstMod
+000017FC  6700 0042                767                      BEQ     Fn_DSP_DTA2_00          * Handle Reg mode 0 (Dn)
+00001800  0C39 0001 00002160       768                      CMP.B   #1,opDstMod
+00001808  6700 004A                769                      BEQ     Fn_DSP_DTA2_01          * Handle Reg Mode 1 An
+0000180C  0C39 0002 00002160       770                      CMP.B   #2,opDstMod
+00001814  6700 0052                771                      BEQ     Fn_DSP_DTA2_02          * Handle Reg Mode 2 (An)
+00001818  0C39 0003 00002160       772                      CMP.B   #3,opDstMod
+00001820  6700 0062                773                      BEQ     Fn_DSP_DTA2_03          * Handle Reg Mode 3 (An)+
+00001824  0C39 0004 00002160       774                      CMP.B   #4,opDstMod
+0000182C  6700 0076                775                      BEQ     Fn_DSP_DTA2_04          * Handle Reg Mode 4 -(An)
+00001830  0C39 0007 00002160       776                      CMP.B   #7,opDstMod
+00001838  6700 008A                777                      BEQ     Fn_DSP_DTA2_07          * Handle Reg Mode 7 (xxx).W, (xxx).L, #<data>
+0000183C                           778  
+0000183C  6000 0114                779                      BRA     Fn_DSP_DTA2_ERR         * Mode not 1 to 7 - display error
+00001840                           780  
+00001840                           781  Fn_DSP_DTA2_00      ** Handling mode 0
+00001840  16FC 0044                782                      MOVE.B  #$44,(A3)+              * Insert 'D' character
+00001844  1639 0000215F            783                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
+0000184A  0603 0030                784                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+0000184E  16C3                     785                      MOVE.B  D3,(A3)+                * Insert Register value
+00001850  6000 0110                786                      BRA     Fn_DSP_DONE             * Done with display
+00001854                           787  
+00001854                           788  Fn_DSP_DTA2_01      ** Handling mode 1
+00001854  16FC 0041                789                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+00001858  1639 0000215F            790                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
+0000185E  0603 0030                791                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+00001862  16C3                     792                      MOVE.B  D3,(A3)+                * Insert Register value
+00001864  6000 00FC                793                      BRA     Fn_DSP_DONE             * Done with display
+00001868                           794  
+00001868                           795  Fn_DSP_DTA2_02      ** Handling mode 2
+00001868  16FC 0028                796                      MOVE.B  #$28,(A3)+              * Insert '(' character
+0000186C  16FC 0041                797                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+00001870  1639 0000215F            798                      MOVE.B  opDSTReg,D3             * Move Register value to D3 for ASCII conversion
+00001876  0603 0030                799                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+0000187A  16C3                     800                      MOVE.B  D3,(A3)+                * Insert Register value
+0000187C  16FC 0029                801                      MOVE.B  #$29,(A3)+              * Insert ')' character
+00001880  6000 00E0                802                      BRA     Fn_DSP_DONE             * Done with display
+00001884                           803  
+00001884                           804  Fn_DSP_DTA2_03      ** Handling mode 3
+00001884  16FC 0028                805                      MOVE.B  #$28,(A3)+              * Insert '(' character
+00001888  16FC 0041                806                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+0000188C  1639 0000215F            807                      MOVE.B  opDstReg,D3             * Move Register value to D3 for ASCII conversion
+00001892  0603 0030                808                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+00001896  16C3                     809                      MOVE.B  D3,(A3)+                * Insert Register value
+00001898  16FC 0029                810                      MOVE.B  #$29,(A3)+              * Insert ')' character
+0000189C  16FC 002B                811                      MOVE.B  #$2B,(A3)+              * Insert '+' character
+000018A0  6000 00C0                812                      BRA     Fn_DSP_DONE             * Done with display
+000018A4                           813  
+000018A4                           814  Fn_DSP_DTA2_04      ** Handling mode 4
+000018A4  16FC 002D                815                      MOVE.B  #$2D,(A3)+              * Insert '-' character
+000018A8  16FC 0028                816                      MOVE.B  #$28,(A3)+              * Insert '(' character
+000018AC  16FC 0041                817                      MOVE.B  #$41,(A3)+              * Insert 'A' character
+000018B0  1639 00002161            818                      MOVE.B  opSrcReg,D3             * Move Register value to D3 for ASCII conversion
+000018B6  0603 0030                819                      ADDI.B  #$30,D3                 * Add 30 to convert number to ASCII
+000018BA  16C3                     820                      MOVE.B  D3,(A3)+                * Insert Register value
+000018BC  16FC 0029                821                      MOVE.B  #$29,(A3)+              * Insert ')' character
+000018C0  6000 00A0                822                      BRA     Fn_DSP_DONE             * Done with display
+000018C4                           823  
+000018C4                           824  Fn_DSP_DTA2_07      ** Handling mode 8
+000018C4  0C39 0000 0000216E       825                      CMP.B   #0,opDta2T
+000018CC  6700 001E                826                      BEQ     Fn_DSP_DTA2_BYT         * Display data as byte
+000018D0  0C39 0001 0000216E       827                      CMP.B   #1,opDta2T
+000018D8  6700 0034                828                      BEQ     Fn_DSP_DTA2_WRD         * Display data as word
+000018DC  0C39 0002 0000216E       829                      CMP.B   #2,opDta2T
+000018E4  6700 004A                830                      BEQ     Fn_DSP_DTA2_LNG         * Display data as long
+000018E8                           831  
+000018E8  6000 0068                832                      BRA     Fn_DSP_DTA2_ERR         * Data type not 0 to 2 - display error
+000018EC                           833  
+000018EC                           834  Fn_DSP_DTA2_BYT     ** Display data Byte (it's really a word with 00 tacked on)
+000018EC  49F9 0000216A            835                      LEA     opDta2,A4               * input hex
+000018F2  4BF9 0000216F            836                      LEA     opStrDtaWrd,A5          * output string
+000018F8  4EB9 000019B2            837                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+000018FE  49F9 0000216F            838                      LEA     opStrDtaWrd,A4
+00001904  4EB9 000019E4            839                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+0000190A  6000 0056                840                      BRA     Fn_DSP_DONE             * Display data 2
+0000190E                           841  
+0000190E                           842  Fn_DSP_DTA2_WRD     ** Display data Word
+0000190E  49F9 0000216A            843                      LEA     opDta2,A4               * input hex
+00001914  4BF9 0000216F            844                      LEA     opStrDtaWrd,A5          * output string
+0000191A  4EB9 000019B2            845                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+00001920  49F9 0000216F            846                      LEA     opStrDtaWrd,A4
+00001926  4EB9 000019E4            847                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+0000192C  6000 0034                848                      BRA     Fn_DSP_DONE             * Display data 2
+00001930                           849  
+00001930                           850  Fn_DSP_DTA2_LNG     ** Display data Long
+00001930  49F9 0000216A            851                      LEA     opDta2,A4               * input hex
+00001936  4BF9 00002174            852                      LEA     opStrDtaLng,A5          * output string
+0000193C  4EB9 000019B2            853                      JSR     SR_HEX_STR              * Hex to ASCII input @A4, output @A5
+00001942  49F9 00002174            854                      LEA     opStrDtaLng,A4
+00001948  4EB9 000019E4            855                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+0000194E  6000 0012                856                      BRA     Fn_DSP_DONE             * Display data 2
+00001952                           857  
+00001952                           858  Fn_DSP_DTA2_ERR     ** Something is messed up
+00001952  49F9 00002248            859                      LEA     msgErr,A4
+00001958  4EB9 000019E4            860                      JSR     SR_CPY_STR_BUF          * Copy string @A4 to output buffer @A3
+0000195E  6000 0002                861                      BRA     Fn_DSP_DONE             * Display data 2
+00001962                           862  
+00001962                           863  Fn_Dsp_Done         ** Done with instruction display
+00001962  16BC 0000                864                      MOVE.B  #$00,(A3)               * Insert NULL to end string
+00001966  43F9 0000210A            865                      LEA     opOutBuf,A1             * Loads MESSAGE into A1
+0000196C  103C 000D                866                      MOVE.B  #13,D0                  * Use (A1) with CR/LF
+00001970  4E4F                     867                      TRAP    #15
+00001972                           868  
+00001972                           869                      ** We're all done here - time to go
+00001972                           870                      **
+00001972  4E75                     871                      RTS                             * Return back to caller
+00001974                           872  
+00001974                           873  ** -----------------------------------------------------------
+00001974                           874  ** Convert single ASCII value to hexadecimal
+00001974                           875  **    ASCII values should be in range 0-9, A-F
+00001974                           876  **
+00001974                           877  ** Parameters
+00001974                           878  **   D5 - Hex value to assess. Converted value returned in D5
+00001974                           879  **
+00001974                           880  ** Example:
+00001974                           881  **   $30 -> $0
+00001974                           882  **   $41 -> $A
+00001974                           883  **   $61 -> $A
+00001974                           884  ** -----------------------------------------------------------
+00001974                           885  SR_ASCII_HEX
+00001974  BA3C 0039                886                      CMP.B   #$39,D5
+00001978  6F00 000E                887                      BLE     Fn_ASCII_Num            * ASCII $0-$9
+0000197C  BA3C 0046                888                      CMP.B   #$46,D5
+00001980  6F00 000C                889                      BLE     Fn_ASCII_UcLtr          * ASCII $A-$F
+00001984  6000 000E                890                      BRA     Fn_ASCII_LcLtr          * ASCII $a-$f
+00001988                           891  
+00001988  0405 0030                892  Fn_ASCII_Num        SUBI.B  #$30, D5                * If Hex is $0-$9, sub $30
+0000198C  4E75                     893                      RTS
+0000198E  0405 0037                894  Fn_ASCII_UcLtr      SUBI.B  #$37, D5                * If Hex is $A-$F, sub $37
+00001992  4E75                     895                      RTS
+00001994  0405 0057                896  Fn_ASCII_LcLtr      SUBI.B  #$57, D5                * If Hex is $a-$f, sub $57
+00001998  4E75                     897                      RTS
+0000199A                           898  
+0000199A                           899  ** -----------------------------------------------------------
+0000199A                           900  ** Convert single hexadecimal value to ASCII
+0000199A                           901  **    hexadecimal values should be in range 0-9, A-F
+0000199A                           902  **
+0000199A                           903  ** Parameters
+0000199A                           904  **   D5 - Hex value to assess. Converted value returned in D5
+0000199A                           905  **
+0000199A                           906  ** Example:
+0000199A                           907  **   $0 -> $30
+0000199A                           908  **   $A -> $41
+0000199A                           909  **   $a -> $41
+0000199A                           910  **
+0000199A                           911  ** Note: this function is case insensitive an $a = $A = $41 etc.
+0000199A                           912  ** -----------------------------------------------------------
+0000199A                           913  SR_HEX_ASCII
+0000199A  BA3C 0009                914                      CMP.B   #$9,D5
+0000199E  6F00 0006                915                      BLE     Fn_HEX_Num              * Hex $0-$9
+000019A2  6000 0008                916                      BRA     Fn_HEX_Ltr              * Hex $A-$F, $a-$f
+000019A6                           917  
+000019A6  0605 0030                918  Fn_HEX_Num          ADDI.B  #$30, D5                * If Hex is $0-$9, add $30
+000019AA  4E75                     919                      RTS
+000019AC  0605 0037                920  Fn_HEX_Ltr          ADDI.B  #$37, D5                * If Hex is $A-$F, add $37
+000019B0  4E75                     921                      RTS
+000019B2                           922  
+000019B2                           923  ** -----------------------------------------------------------
+000019B2                           924  ** Copy hexadecimal value to string
+000019B2                           925  **
+000019B2                           926  ** Parameters
+000019B2                           927  **   A4 - Pointer to value copying from
+000019B2                           928  **   A5 - Pointer to defined constant
+000019B2                           929  **
+000019B2                           930  ** Data registers
+000019B2                           931  **   D4 - Current byte      (hex value A4)
+000019B2                           932  **   D5 - Temp byte         (hex value or string)
+000019B2                           933  **   D6 - Number to shift
+000019B2                           934  **
+000019B2                           935  ** Note: input string @ A5 has to have a null terminator for loop to stop
+000019B2                           936  **
+000019B2                           937  ** -----------------------------------------------------------
+000019B2                           938  SR_HEX_STR
+000019B2                           939  
+000019B2  181C                     940  Fn_Hex_Str_Loop     MOVE.B  (A4)+,D4
+000019B4                           941  
+000019B4  1A15                     942                      MOVE.B  (A5),D5
+000019B6  BA3C 0000                943                      CMP.B   #$00,D5                  * Looking for NULL hex value $00
+000019BA  6700 0022                944                      BEQ     Fn_Hex_Str_Done          * NULL value found - exit SR
+000019BE                           945  
+000019BE                           946                      ** First Hex value (high order value)
+000019BE  1A04                     947                      MOVE.B  D4,D5                    * Copy current value to temp byte holder
+000019C0  1C3C 0004                948                      MOVE.B  #4,D6
+000019C4  EC2D                     949                      LSR.B   D6,D5                    * Shift right to get high order hex value
+000019C6  4EB8 199A                950                      JSR     SR_HEX_ASCII             * Hex to ASCII conversion
+000019CA  1AC5                     951                      MOVE.B  D5,(A5)+                 * Move ASCII value to constant
+000019CC                           952  
+000019CC                           953                      ** Second Hex value (low order value)
+000019CC  1A04                     954                      MOVE.B  D4,D5                    * Copy current vaue to temp byte holder
+000019CE  1C3C 0004                955                      MOVE.B  #4,D6
+000019D2  ED2D                     956                      LSL.B   D6,D5
+000019D4  EC2D                     957                      LSR.B   D6,D5                    * Shift left, right to get low order hex value
+000019D6  4EB8 199A                958                      JSR     SR_HEX_ASCII             * Hex to ASCII conversion
+000019DA  1AC5                     959                      MOVE.B  D5,(A5)+                 * Move ASCII value to constant
+000019DC                           960  
+000019DC  60D4                     961                      BRA     Fn_Hex_Str_Loop
+000019DE                           962  Fn_Hex_Str_Done
+000019DE  1AFC 0000                963                      MOVE.B  #$00,(A5)+               * Insert NULL value (required to print string)
+000019E2                           964  
+000019E2  4E75                     965                      RTS
+000019E4                           966  
+000019E4                           967  ** -----------------------------------------------------------
+000019E4                           968  ** Copy string to output buffer @ A3
+000019E4                           969  **
+000019E4                           970  ** Parameters
+000019E4                           971  **   A4 - Pointer to string copying from
+000019E4                           972  **
+000019E4                           973  ** Data registers
+000019E4                           974  **   D5 - Temp byte         (hex value or string)
+000019E4                           975  ** -----------------------------------------------------------
+000019E4                           976  SR_CPY_STR_BUF
+000019E4                           977  
+000019E4  1A14                     978  Fn_CPY_STR_Loop     MOVE.B  (A4),D5
+000019E6  BA3C 0000                979                      CMP.B   #$00,D5                  * Looking for NULL hex value $00
+000019EA  6700 0006                980                      BEQ     Fn_CPY_STR_Done          * NULL value found - exit SR
+000019EE                           981  
+000019EE  16DC                     982                      MOVE.B  (A4)+,(A3)+
+000019F0  60F2                     983                      BRA     Fn_CPY_STR_Loop
+000019F2                           984  
+000019F2  4E75                     985  Fn_CPY_STR_Done     RTS
+000019F4                           986  
+000019F4                           987  ** -----------------------------------------------------------
+000019F4                           988  ** Length of string output buffer
+000019F4                           989  ** -----------------------------------------------------------
+000019F4                           990  SR_CNT_STR_BUF
+000019F4                           991  
+000019F4  4E75                     992                      RTS
+000019F6                           993  
+000019F6                           994  ** -----------------------------------------------------------
+000019F6                           995  ** Includes: Subroutines etc.
+000019F6                           996  ** -----------------------------------------------------------
+000019F6                           997                      INCLUDE 'SR_IDX.X68'
+000019F6                           998  
+000019F6                           999  
+000019F6                          1000  SR_IDX
+000019F6  143C 0001               1001                     move.b   #1,d2
+000019FA                          1002  
+000019FA  4E75                    1003  Fn_IDX_Done        RTS
+000019FC                          1004  
+000019FC                          1005  -------------------- end include --------------------
+000019FC                          1006                      INCLUDE 'SR_MOVE.X68'
+000019FC                          1007  
+000019FC                          1008  
+000019FC                          1009  SR_ID3
+000019FC                          1010  
+000019FC                          1011                      *MOVEM.L    D0-D7/A0-A6,-(SP)       * Save registers
+000019FC                          1012  
+000019FC                          1013  
+000019FC                          1014                      ** ***************************************
+000019FC                          1015                      ** Read first 4 bits
+000019FC                          1016                      ** need to know if 0(byte), 1(word), 2(long) - only for MOVE, MOVEA
+000019FC                          1017                      ** Note: most instructions will be in this format 3,3,3,3
+000019FC                          1018                      **    I think there is only one instrction that is 4,8
+000019FC                          1019                      **
+000019FC                          1020                      ** ***************************************
+000019FC  3639 000020F4           1021                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A02  183C 000C               1022                      MOVE.B  #12,D4
+00001A06  E86B                    1023                      LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
+00001A08  13C3 000020F6           1024                      MOVE.B  D3, opID
+00001A0E                          1025  
+00001A0E                          1026                      ** Read next 3 bits
+00001A0E                          1027                      **
+00001A0E  3639 000020F4           1028                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A14  183C 0004               1029                      MOVE.B  #4, D4
+00001A18  E96B                    1030                      LSL.W   D4, D3                      * Shift left 4 to get rid of first 4 bits
+00001A1A  183C 000D               1031                      MOVE.B  #13,D4
+00001A1E  E86B                    1032                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001A20  13C3 0000215F           1033                      MOVE.B  D3, opDstReg
+00001A26                          1034  
+00001A26                          1035                      ** Read next 3 bits
+00001A26                          1036                      **
+00001A26  3639 000020F4           1037                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A2C  183C 0007               1038                      MOVE.B  #7, D4
+00001A30  E96B                    1039                      LSL.W   D4, D3                      * Shift left 7 to get rid of first 7 bits
+00001A32  183C 000D               1040                      MOVE.B  #13,D4
+00001A36  E86B                    1041                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001A38  13C3 00002160           1042                      MOVE.B  D3, opDstMod
+00001A3E                          1043  
+00001A3E                          1044                      ** Read next 3 bits
+00001A3E                          1045                      **
+00001A3E  3639 000020F4           1046                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A44  183C 000A               1047                      MOVE.B  #10, D4
+00001A48  E96B                    1048                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
+00001A4A  183C 000D               1049                      MOVE.B  #13,D4
+00001A4E  E86B                    1050                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001A50  13C3 00002162           1051                      MOVE.B  D3, opSrcMod
+00001A56                          1052  
+00001A56                          1053                      ** Read next 3 bits
+00001A56                          1054                      **
+00001A56  3639 000020F4           1055                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001A5C  183C 000D               1056                      MOVE.B  #13, D4
+00001A60  E96B                    1057                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
+00001A62  183C 000D               1058                      MOVE.B  #13,D4
+00001A66  E86B                    1059                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001A68  13C3 00002161           1060                      MOVE.B  D3, opSrcReg
+00001A6E                          1061  
+00001A6E                          1062                      ** ***************************************
+00001A6E                          1063                      ** Verify this is MOVE or MOVEA
+00001A6E                          1064                      **
+00001A6E                          1065                      ** MOVE:  If opID = 1,2,3 & DstMod = 0,2-7
+00001A6E                          1066                      ** MOVEA: If opID =   2,3 & DstMod = 1
+00001A6E                          1067                      **
+00001A6E                          1068                      ** Size: opID = 1: Byte; opID = 2: Long; opID = 3: Word
+00001A6E                          1069                      **
+00001A6E                          1070                      ** ***************************************
+00001A6E  0C39 0001 00002160      1071                      CMP.B   #1, opDstMod                * Destination mode is 1 - must be MOVEA
+00001A76  6700 0016               1072                      BEQ     Fn_MOVE_Ins02               * Set as instruction 0 MOVEA
+00001A7A  6000 0002               1073                      BRA     Fn_MOVE_Ins01               * Set as instruction 1 MOVE
+00001A7E                          1074  
+00001A7E  47F9 00002182           1075  Fn_MOVE_Ins01       LEA     opNam_MOVE,A3
+00001A84  23CB 0000215A           1076                      MOVE.L  A3,opPtrNam                 * Display name points to name
+00001A8A  6000 001A               1077                      BRA     Fn_MOVE_Verify
+00001A8E                          1078  
+00001A8E  0C39 0001 000020F6      1079  Fn_MOVE_Ins02       CMP.B   #1, opID
+00001A96  6700 01A4               1080                      BEQ     Fn_MOVE_Error               * MOVEA cannot have opID = 1 (byte)
+00001A9A  47F9 00002187           1081                      LEA     opNam_MOVEA,A3
+00001AA0  23CB 0000215A           1082                      MOVE.L  A3,opPtrNam                 * Display name points to name
+00001AA6                          1083  
+00001AA6                          1084                      ** ***************************************
+00001AA6                          1085                      ** Verify other instruction parameters are correct
+00001AA6                          1086                      **
+00001AA6                          1087                      **    DstMod = 0 to 7
+00001AA6                          1088                      **    DstReg = 0 to 7
+00001AA6                          1089                      **    SrcMod = 0 to 7
+00001AA6                          1090                      **    SrcReg = 0 to 7
+00001AA6                          1091                      **
+00001AA6                          1092                      ** ***************************************
+00001AA6  0C39 0000 00002160      1093  Fn_MOVE_Verify      CMP.B   #0, opDstMod                * Destination mode is >= 0
+00001AAE  6D00 018C               1094                      BLT     Fn_MOVE_Error
+00001AB2  0C39 0007 00002160      1095                      CMP.B   #7, opDstMod                * Destination mode is <= 7
+00001ABA  6E00 0180               1096                      BGT     Fn_MOVE_Error
+00001ABE  0C39 0000 0000215F      1097                      CMP.B   #0, opDstReg                * Destination register >= 0
+00001AC6  6D00 0174               1098                      BLT     Fn_MOVE_Error
+00001ACA  0C39 0007 0000215F      1099                      CMP.B   #7, opDstReg                * Destination register <= 7
+00001AD2  6E00 0168               1100                      BGT     Fn_MOVE_Error
+00001AD6                          1101  
+00001AD6  0C39 0000 00002162      1102                      CMP.B   #0, opSrcMod                * Destination mode is 0
+00001ADE  6D00 015C               1103                      BLT     Fn_MOVE_Error
+00001AE2  0C39 0007 00002162      1104                      CMP.B   #7, opSrcMod                * Destination mode is <= 7
+00001AEA  6E00 0150               1105                      BGT     Fn_MOVE_Error
+00001AEE  0C39 0000 00002161      1106                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001AF6  6D00 0144               1107                      BLT     Fn_MOVE_Error
+00001AFA  0C39 0007 00002161      1108                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001B02  6E00 0138               1109                      BGT     Fn_MOVE_Error
+00001B06                          1110  
+00001B06                          1111                      ** ***************************************
+00001B06                          1112                      ** Set instruction size - the .B,.W,.L part
+00001B06                          1113                      ** Note: size set by opID only for MOVE, MOVEA
+00001B06                          1114                      **       other instructions use 3 bits for size
+00001B06                          1115                      ** ***************************************
+00001B06  0C39 0001 000020F6      1116                      CMP.B   #1, opID                    * Instruction size is Byte
+00001B0E  6700 001A               1117                      BEQ     Fn_MOVE_SizB
+00001B12  0C39 0003 000020F6      1118                      CMP.B   #3, opID                    * Instruction size is Word (Note sizes reversed for MOVE)
+00001B1A  6700 001A               1119                      BEQ     Fn_MOVE_SizW
+00001B1E  0C39 0002 000020F6      1120                      CMP.B   #2, opID                    * Instruction size is Long
+00001B26  6700 001A               1121                      BEQ     Fn_MOVE_SizL
+00001B2A  13FC 0000 0000215E      1122  Fn_MOVE_SizB        MOVE.B  #0,opValSiz                 * Set size to 0=Byte
+00001B32  6000 001A               1123                      BRA     Fn_MOVE_SrcMod
+00001B36  13FC 0001 0000215E      1124  Fn_MOVE_SizW        MOVE.B  #1,opValSiz                 * Set size to 1=Word
+00001B3E  6000 000E               1125                      BRA     Fn_MOVE_SrcMod
+00001B42  13FC 0002 0000215E      1126  Fn_MOVE_SizL        MOVE.B  #2,opValSiz                 * Set size to 2=Long
+00001B4A  6000 0002               1127                      BRA     Fn_MOVE_SrcMod
+00001B4E                          1128  
+00001B4E                          1129                      ** ***************************************
+00001B4E                          1130                      ** Grab extra DATA if needed
+00001B4E                          1131                      **
+00001B4E                          1132                      **    If DstMod = 7
+00001B4E                          1133                      **       DstReg = 0 (get Word)
+00001B4E                          1134                      **       DstReg = 1 (get Long)
+00001B4E                          1135                      **
+00001B4E                          1136                      **    If SrcMod = 7
+00001B4E                          1137                      **       SrcReg = 0 (get Word)
+00001B4E                          1138                      **       SrcReg = 1 (get Long)
+00001B4E                          1139                      **       SrcReg = 4
+00001B4E                          1140                      **          MOVE.B, MOVE.W (get Word)
+00001B4E                          1141                      **          MOVE.L         (get Long)
+00001B4E                          1142                      **
+00001B4E                          1143                      ** SOURCE
+00001B4E                          1144                      **
+00001B4E                          1145                      ** ***************************************
+00001B4E  0C39 0007 00002162      1146  Fn_MOVE_SrcMod      CMP.B   #7, opSrcMod                * Check if source mode is 7
+00001B56  6700 0006               1147                      BEQ     Fn_MOVE_ChkSrcReg           * Check source register
+00001B5A  6000 0088               1148                      BRA     Fn_MOVE_ChkDstMod           * Source not 7, now check destination Mod
+00001B5E  0C39 0000 00002161      1149  Fn_MOVE_ChkSrcReg   CMP.B   #0, opSrcReg                * Check is source register is 0
+00001B66  6700 0058               1150                      BEQ     Fn_MOVE_DtaSrcWrd           * Load next word
+00001B6A  0C39 0001 00002161      1151                      CMP.B   #1, opSrcReg                * Check if source register is 1
+00001B72  6700 005E               1152                      BEQ     Fn_MOVE_DtaSrcLng           * Load next long
+00001B76  0C39 0004 00002161      1153                      CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
+00001B7E  6700 0006               1154                      BEQ     Fn_MOVE_DtaSrcImd           * Load first word into word one
+00001B82  6000 00B8               1155                      BRA     FN_MOVE_Error               * Invalid register value
+00001B86                          1156  
+00001B86                          1157                      ** Note: Checking immediate value
+00001B86                          1158                      **       opID as size is specific to MOVE, MOVEA
+00001B86                          1159                      **       other instructions will use 3 bits to set size, not part of ID
+00001B86                          1160                      **
+00001B86  0C39 0001 000020F6      1161  Fn_MOVE_DtaSrcImd   CMP.B   #1, opID                    * opID = 0 - size is byte
+00001B8E  6700 001E               1162                      BEQ     Fn_MOVE_DtaSrcByt           * Load next byte
+00001B92  0C39 0003 000020F6      1163                      CMP.B   #3, opID                    * opID = 3 - size is word
+00001B9A  6700 0024               1164                      BEQ     Fn_MOVE_DtaSrcWrd           * Load next word
+00001B9E  0C39 0002 000020F6      1165                      CMP.B   #2, opID                    * opID = 0 - size is long
+00001BA6  6700 002A               1166                      BEQ     Fn_MOVE_DtaSrcLng           * Load next long
+00001BAA  6000 0090               1167                      BRA     Fn_MOVE_Error               * Invalid opID (this should never happen)
+00001BAE                          1168  
+00001BAE  33DA 00002164           1169  Fn_MOVE_DtaSrcByt   MOVE.W  (A2)+, opDta1               * Load byte and increment address count (note .W for byte)
+00001BB4  13FC 0000 00002168      1170                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+00001BBC  6000 0026               1171                      BRA     Fn_MOVE_ChkDstMod           * Check destination mode
+00001BC0  33DA 00002164           1172  Fn_MOVE_DtaSrcWrd   MOVE.W  (A2)+, opDta1               * Load word and increment address count
+00001BC6  13FC 0001 00002168      1173                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+00001BCE  6000 0014               1174                      BRA     Fn_MOVE_ChkDstMod           * Check destination mode
+00001BD2  23DA 00002164           1175  Fn_MOVE_DtaSrcLng   MOVE.L  (A2)+, opDta1               * Load long and increment address count
+00001BD8  13FC 0002 00002168      1176                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+00001BE0  6000 0002               1177                      BRA     Fn_MOVE_ChkDstMod           * Check destination mode
+00001BE4                          1178  
+00001BE4                          1179                      ** DESTINATION
+00001BE4                          1180                      **
+00001BE4  0C39 0007 00002160      1181  Fn_MOVE_ChkDstMod   CMP.B   #7, opDstMod                * Check if destination mode is 7
+00001BEC  6700 0006               1182                      BEQ     Fn_MOVE_ChkDstReg           * Check destination register
+00001BF0  6000 0042               1183                      BRA     Fn_MOVE_Done                * Destination not 7, done with data
+00001BF4  0C39 0000 0000215F      1184  Fn_MOVE_ChkDstReg   CMP.B   #0, opDstReg                * Check if destination register is 0
+00001BFC  6700 0012               1185                      BEQ     Fn_MOVE_DtaDstWrd           * Load next word
+00001C00  0C39 0001 0000215F      1186                      CMP.B   #1, opDstReg                * Check if destination register is 1
+00001C08  6700 0018               1187                      BEQ     Fn_MOVE_DtaDstLng           * Load next long
+00001C0C  6000 002E               1188                      BRA     fn_MOVE_Error               * Invalid registration Mode
+00001C10                          1189  
+00001C10  33DA 0000216A           1190  Fn_MOVE_DtaDstWrd   MOVE.W  (A2)+, opDta2               * Load word and increment address count
+00001C16  13FC 0001 0000216E      1191                      MOVE.B  #1, opDta2T                 * Set Data2 type as 1=Word
+00001C1E  6000 0014               1192                      BRA     Fn_MOVE_Done
+00001C22  23DA 0000216A           1193  Fn_MOVE_DtaDstLng   MOVE.L  (A2)+, opDta2               * Load long and increment address count
+00001C28  13FC 0002 0000216E      1194                      MOVE.B  #2, opDta2T                 * Set Data2 type as 2=Long
+00001C30  6000 0002               1195                      BRA     Fn_MOVE_Done
+00001C34                          1196  
+00001C34  13FC 0000 000020F7      1197  Fn_MOVE_Done        MOVE.B  #0, opErr                   * Clear error flag so this will display instruction info
+00001C3C                          1198  
+00001C3C                          1199  Fn_MOVE_Error                                           * Exit out if error - main subroutine will handle DATA
+00001C3C                          1200                      *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
+00001C3C  4E75                    1201                      RTS                                 * Return to main
+00001C3C  4E75                    1202  -------------------- end include --------------------
+00001C3E                          1203                      INCLUDE 'SR_ID4.X68'
+00001C3E                          1204  
+00001C3E                          1205  SR_ID4              * This is to grab the first four that are already set, ID4
+00001C3E  3639 000020F4           1206                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C44  183C 000C               1207                      MOVE.B  #12,D4
+00001C48  E86B                    1208                      LSR.W   D4,D3                       * Shift right 12 to get first 4 bits
+00001C4A  13C3 000020F6           1209                      MOVE.B  D3, opID        
+00001C50                          1210                      
+00001C50                          1211                      * Read next 3 bits into D3
+00001C50  3639 000020F4           1212                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C56  183C 0004               1213                      MOVE.B  #4, D4
+00001C5A  E96B                    1214                      LSL.W   D4,D3                       * Shift left 4 to get rid of first 4 bits
+00001C5C  183C 000D               1215                      MOVE.B  #13,D4
+00001C60  E86B                    1216                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001C62  13C3 0000215F           1217                      MOVE.B  D3, opDstReg
+00001C68                          1218                      
+00001C68                          1219                      * Read next 3 bits into D3
+00001C68  3639 000020F4           1220                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C6E  183C 0007               1221                      MOVE.B  #7, D4
+00001C72  E96B                    1222                      LSL.W   D4,D3                       * Shift left 7 to get rid of first 7 bits
+00001C74  183C 000D               1223                      MOVE.B  #13,D4
+00001C78  E86B                    1224                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001C7A  13C3 00002160           1225                      MOVE.B  D3, opDstMod
+00001C80                          1226  
+00001C80                          1227                      ** Read next 3 bits
+00001C80                          1228                      **
+00001C80  3639 000020F4           1229                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C86  183C 000A               1230                      MOVE.B  #10, D4
+00001C8A  E96B                    1231                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
+00001C8C  183C 000D               1232                      MOVE.B  #13,D4
+00001C90  E86B                    1233                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001C92  13C3 00002162           1234                      MOVE.B  D3, opSrcMod
+00001C98                          1235  
+00001C98                          1236                      ** Read next 3 bits
+00001C98                          1237                      **
+00001C98  3639 000020F4           1238                      MOVE.W  opWord, D3                  * store opWord in D3 so it doesn't get modified
+00001C9E  183C 000D               1239                      MOVE.B  #13, D4
+00001CA2  E96B                    1240                      LSL.W   D4, D3                      * Shift left 10 to get rid of first 10 bits
+00001CA4  183C 000D               1241                      MOVE.B  #13,D4
+00001CA8  E86B                    1242                      LSR.W   D4,D3                       * Shift right 13 to get next 3 bits
+00001CAA  13C3 00002161           1243                      MOVE.B  D3, opSrcReg
+00001CB0                          1244                      
+00001CB0                          1245                      ** ***************************************
+00001CB0                          1246                      ** Verify instruction
+00001CB0                          1247                      **
+00001CB0                          1248                      ** JSR: If DstReg=7, DstMod=2 
+00001CB0                          1249                      ** LEA: If DstReg=0-7, DstMod=7
+00001CB0                          1250                      ** MOVEM:
+00001CB0                          1251                      **    RegToMem: DestReg=4, DestMod=2,3
+00001CB0                          1252                      **    MemToReg: DestReg=6, DestMod=2,3
+00001CB0                          1253                      ** NOP: If DestReg=7, DstMod=1, SrcMod=6, SrcReg=1
+00001CB0                          1254                      ** NOT: If DstReg=3, DstMod=0-2
+00001CB0                          1255                      ** RTS: If DstReg=7, DstMod=1, SrcMod=6, SrcReg=5
+00001CB0                          1256                      **
+00001CB0                          1257                      ** ***************************************
+00001CB0  0C39 0000 00002160      1258                      CMP.B   #0, opDstMod
+00001CB8  6700 02EA               1259                      BEQ     Fn_ID4_NOT
+00001CBC  0C39 0001 00002160      1260                      CMP.B   #1, opDstMod
+00001CC4  6700 002A               1261                      BEQ     Fn_ID4_CheckD1
+00001CC8  0C39 0002 00002160      1262                      CMP.B   #2, opDstMod
+00001CD0  6700 0042               1263                      BEQ     Fn_ID4_CheckD2
+00001CD4  0C39 0003 00002160      1264                      CMP.B   #3, opDstMod
+00001CDC  6700 0066               1265                      BEQ     Fn_ID4_CheckD3
+00001CE0  0C39 0007 00002160      1266                      CMP.B   #7, opDstMod
+00001CE8  6700 011E               1267                      BEQ     Fn_ID4_LEA
+00001CEC  6000 03D2               1268                      BRA     Fn_ID4_Error
+00001CF0                          1269                      
+00001CF0                          1270  Fn_ID4_CheckD1
+00001CF0  0C39 0003 0000215F      1271                      CMP.B   #3, opDstReg
+00001CF8  6700 02AA               1272                      BEQ     Fn_ID4_NOT
+00001CFC  0C39 0001 00002161      1273                      CMP.B   #1, opSrcReg
+00001D04  6700 025E               1274                      BEQ     Fn_ID4_NOP
+00001D08  0C39 0005 00002161      1275                      CMP.B   #5, opSrcReg
+00001D10  6700 02E8               1276                      BEQ     Fn_ID4_RTS
+00001D14                          1277                      
+00001D14                          1278  Fn_ID4_CheckD2
+00001D14  0C39 0003 0000215F      1279                      CMP.B   #3, opDstReg
+00001D1C  6700 0286               1280                      BEQ     Fn_ID4_NOT
+00001D20  0C39 0004 0000215F      1281                      CMP.B   #4, opDstReg
+00001D28  6700 014E               1282                      BEQ     Fn_ID4_MOVEMRTOM
+00001D2C  0C39 0006 0000215F      1283                      CMP.B   #6, opDstReg
+00001D34  6700 01B2               1284                      BEQ     Fn_ID4_MOVEMMTOR
+00001D38  0C39 0007 0000215F      1285                      CMP.B   #7, opDstReg
+00001D40  6700 001A               1286                      BEQ     Fn_ID4_JSR
+00001D44                          1287  Fn_ID4_CheckD3
+00001D44  0C39 0004 0000215F      1288                      CMP.B   #4, opDstReg
+00001D4C  6700 012A               1289                      BEQ     Fn_ID4_MOVEMRTOM
+00001D50  0C39 0006 0000215F      1290                      CMP.B   #6, opDstReg
+00001D58  6700 018E               1291                      BEQ     Fn_ID4_MOVEMMTOR
+00001D5C                          1292  
+00001D5C  47F9 000021A3           1293  Fn_ID4_JSR          LEA     opNam_JSR,A3
+00001D62  23CB 0000215A           1294                      MOVE.L  A3, opPtrNam
+00001D68                          1295                      
+00001D68  0C39 0007 0000215F      1296  Fn_ID4_VERIFY_JSR   CMP.B   #7, opDstReg
+00001D70  6600 034E               1297                      BNE     Fn_ID4_Error
+00001D74  0C39 0002 00002160      1298                      CMP.B   #2, opDstMod
+00001D7C  6600 0342               1299                      BNE     Fn_ID4_Error
+00001D80                          1300                      
+00001D80                          1301                      * Make sure dst reg is only 2,5,6,7 (not 0,1,3,4)
+00001D80  0C39 0000 0000215F      1302                      CMP.B   #0, opDstReg
+00001D88  6700 0336               1303                      BEQ     Fn_ID4_Error
+00001D8C  0C39 0001 0000215F      1304                      CMP.B   #1, opDstReg
+00001D94  6700 032A               1305                      BEQ     Fn_ID4_Error
+00001D98  0C39 0003 0000215F      1306                      CMP.B   #3, opDstReg
+00001DA0  6700 031E               1307                      BEQ     Fn_ID4_Error
+00001DA4  0C39 0004 0000215F      1308                      CMP.B   #4, opDstReg
+00001DAC  6700 0312               1309                      BEQ     Fn_ID4_Error
+00001DB0                          1310                      
+00001DB0                          1311                      * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
+00001DB0  0C39 0000 00002162      1312                      CMP.B   #0, opSrcMod
+00001DB8  6700 0306               1313                      BEQ     Fn_ID4_Error
+00001DBC  0C39 0001 00002162      1314                      CMP.B   #1, opSrcMod
+00001DC4  6700 02FA               1315                      BEQ     Fn_ID4_Error
+00001DC8  0C39 0003 00002162      1316                      CMP.B   #3, opSrcMod
+00001DD0  6700 02EE               1317                      BEQ     Fn_ID4_Error
+00001DD4  0C39 0004 00002162      1318                      CMP.B   #4, opSrcMod
+00001DDC  6700 02E2               1319                      BEQ     Fn_ID4_Error
+00001DE0                          1320                      
+00001DE0                          1321                      * Make sure src reg is between 0-7
+00001DE0  0C39 0000 00002161      1322                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001DE8  6D00 02D6               1323                      BLT     Fn_ID4_Error
+00001DEC  0C39 0007 00002161      1324                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001DF4  6E00 02CA               1325                      BGT     Fn_ID4_Error
+00001DF8                          1326                      
+00001DF8  0C39 0007 00002162      1327  Fn_ID4_JSR_Src      CMP.B   #7, opSrcMod
+00001E00  6700 0238               1328                      BEQ     Fn_ID4_Data
+00001E04  6000 02BC               1329                      BRA     Fn_ID4_Done
+00001E08                          1330  
+00001E08  47F9 0000218D           1331  Fn_ID4_LEA          LEA     opNam_LEA,A3
+00001E0E  23CB 0000215A           1332                      MOVE.L  A3, opPtrNam
+00001E14                          1333                      
+00001E14  0C39 0007 00002160      1334  Fn_ID4_VERIFY_LEA   CMP.B   #7, opDstMod
+00001E1C  6600 02A2               1335                      BNE     Fn_ID4_Error
+00001E20                          1336                      
+00001E20                          1337                      * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
+00001E20  0C39 0000 00002162      1338                      CMP.B   #0, opSrcMod
+00001E28  6700 0296               1339                      BEQ     Fn_ID4_Error
+00001E2C  0C39 0001 00002162      1340                      CMP.B   #1, opSrcMod
+00001E34  6700 028A               1341                      BEQ     Fn_ID4_Error
+00001E38  0C39 0003 00002162      1342                      CMP.B   #3, opSrcMod
+00001E40  6700 027E               1343                      BEQ     Fn_ID4_Error
+00001E44  0C39 0004 00002162      1344                      CMP.B   #4, opSrcMod
+00001E4C  6700 0272               1345                      BEQ     Fn_ID4_Error
+00001E50                          1346                      
+00001E50                          1347                      * Make sure src reg is between 0-7
+00001E50  0C39 0000 00002161      1348                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001E58  6D00 0266               1349                      BLT     Fn_ID4_Error
+00001E5C  0C39 0007 00002161      1350                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001E64  6E00 025A               1351                      BGT     Fn_ID4_Error
+00001E68                          1352                      
+00001E68  0C39 0007 00002162      1353  Fn_ID4_LEA_Src      CMP.B   #7, opSrcMod
+00001E70  6700 01C8               1354                      BEQ     Fn_ID4_Data
+00001E74  6000 024C               1355                      BRA     Fn_ID4_Done
+00001E78                          1356  
+00001E78  47F9 00002195           1357  Fn_ID4_MOVEMRtoM    LEA     opNam_MOVEM,A3
+00001E7E  23CB 0000215A           1358                      MOVE.L  A3, opPtrNam
+00001E84                          1359                      
+00001E84  0C39 0004 0000215F      1360  Fn_ID4_VERIFY_MRM   CMP.B   #4, opDstReg
+00001E8C  6600 0232               1361                      BNE     Fn_ID4_Error
+00001E90                          1362                      
+00001E90                          1363                      * Make sure dest mode is only 2 or 3
+00001E90  0C39 0003 00002161      1364                      CMP.B   #3, opSrcReg                * Destination register > 2
+00001E98  6D00 0226               1365                      BLT     Fn_ID4_Error
+00001E9C  0C39 0003 00002161      1366                      CMP.B   #3, opSrcReg                * Destination register < 3
+00001EA4  6E00 021A               1367                      BGT     Fn_ID4_Error
+00001EA8                          1368                      
+00001EA8                          1369                      * Make sure src mode is only 2,4,5,6,7 (not 0,1,3)
+00001EA8  0C39 0000 00002162      1370                      CMP.B   #0, opSrcMod
+00001EB0  6700 020E               1371                      BEQ     Fn_ID4_Error
+00001EB4  0C39 0001 00002162      1372                      CMP.B   #1, opSrcMod
+00001EBC  6700 0202               1373                      BEQ     Fn_ID4_Error
+00001EC0  0C39 0003 00002162      1374                      CMP.B   #3, opSrcMod
+00001EC8  6700 01F6               1375                      BEQ     Fn_ID4_Error
+00001ECC                          1376                      
+00001ECC                          1377                      * Make sure src reg is between 0-7
+00001ECC  0C39 0000 00002161      1378                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001ED4  6D00 01EA               1379                      BLT     Fn_ID4_Error
+00001ED8  0C39 0007 00002161      1380                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001EE0  6E00 01DE               1381                      BGT     Fn_ID4_Error
+00001EE4  6000 006E               1382                      BRA Fn_ID4_MOVEM_Src
+00001EE8                          1383  
+00001EE8  47F9 00002195           1384  FN_ID4_MOVEMMtoR    LEA     opNam_MOVEM,A3
+00001EEE  23CB 0000215A           1385                      MOVE.L  A3, opPtrNam
+00001EF4                          1386                      
+00001EF4  0C39 0006 0000215F      1387  Fn_ID4_VERIFY_MMR   CMP.B   #6, opDstReg
+00001EFC  6600 01C2               1388                      BNE     Fn_ID4_Error
+00001F00                          1389                      
+00001F00                          1390                      * Make sure dest mode is only 2 or 3
+00001F00  0C39 0003 00002161      1391                      CMP.B   #3, opSrcReg                * Destination register > 2
+00001F08  6D00 01B6               1392                      BLT     Fn_ID4_Error
+00001F0C  0C39 0003 00002161      1393                      CMP.B   #3, opSrcReg                * Destination register < 3
+00001F14  6E00 01AA               1394                      BGT     Fn_ID4_Error
+00001F18                          1395                      
+00001F18                          1396                      * Make sure src mode is only 2,4,5,6,7 (not 0,1,3)
+00001F18  0C39 0000 00002162      1397                      CMP.B   #0, opSrcMod
+00001F20  6700 019E               1398                      BEQ     Fn_ID4_Error
+00001F24  0C39 0001 00002162      1399                      CMP.B   #1, opSrcMod
+00001F2C  6700 0192               1400                      BEQ     Fn_ID4_Error
+00001F30  0C39 0003 00002162      1401                      CMP.B   #3, opSrcMod
+00001F38  6700 0186               1402                      BEQ     Fn_ID4_Error
+00001F3C                          1403                      
+00001F3C                          1404                      * Make sure src reg is between 0-7
+00001F3C  0C39 0000 00002161      1405                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001F44  6D00 017A               1406                      BLT     Fn_ID4_Error
+00001F48  0C39 0007 00002161      1407                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001F50  6E00 016E               1408                      BGT     Fn_ID4_Error
+00001F54                          1409                      
+00001F54  0C39 0007 00002162      1410  Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
+00001F5C  6700 00DC               1411                      BEQ     Fn_ID4_Data
+00001F60  6000 0160               1412                      BRA     Fn_ID4_Done
+00001F64                          1413  
+00001F64  47F9 0000219B           1414  Fn_ID4_NOP          LEA     opNam_NOP,A3
+00001F6A  23CB 0000215A           1415                      MOVE.L  A3, opPtrNam
+00001F70                          1416  
+00001F70  0C39 0007 0000215F      1417  Fn_ID4_VERIFY_NOP   CMP.B   #7,opDstReg
+00001F78  6600 0146               1418                      BNE     Fn_ID4_Error
+00001F7C  0C39 0001 00002160      1419                      CMP.B   #1, opDstMod
+00001F84  6600 013A               1420                      BNE     Fn_ID4_Error
+00001F88  0C39 0006 00002162      1421                      CMP.B   #6, opSrcMod
+00001F90  6600 012E               1422                      BNE     Fn_ID4_Error
+00001F94  0C39 0001 00002161      1423                      CMP.B   #1, opSrcReg
+00001F9C  6600 0122               1424                      BNE     Fn_ID4_Error
+00001FA0  6000 0120               1425                      BRA     Fn_ID4_Done
+00001FA4                          1426  
+00001FA4                          1427  
+00001FA4  47F9 00002191           1428  Fn_ID4_NOT          LEA     opNam_NOT,A3
+00001FAA  23CB 0000215A           1429                      MOVE.L  A3, opPtrNam
+00001FB0                          1430                      
+00001FB0  0C39 0003 0000215F      1431  Fn_ID4_VERIFY_NOT   CMP.B   #3, opDstReg
+00001FB8  6600 0106               1432                      BNE     Fn_ID4_Error
+00001FBC                          1433                      
+00001FBC                          1434                      * Make sure src mode is not 1
+00001FBC  0C39 0001 00002162      1435                      CMP.B   #1, opSrcMod
+00001FC4  6700 00FA               1436                      BEQ     Fn_ID4_Error
+00001FC8                          1437                      
+00001FC8                          1438                      * Make sure src reg is between 0-7
+00001FC8  0C39 0000 00002161      1439                      CMP.B   #0, opSrcReg                * Destination register >= 0
+00001FD0  6D00 00EE               1440                      BLT     Fn_ID4_Error
+00001FD4  0C39 0007 00002161      1441                      CMP.B   #7, opSrcReg                * Destination register <= 7
+00001FDC  6E00 00E2               1442                      BGT     Fn_ID4_Error
+00001FE0                          1443                      
+00001FE0  33F9 00002160 000020F6  1444  Fn_ID4_NOT_Src      MOVE.W  opDstMod,opID              * Dest mod holds the size (move it)
+00001FEA  0C39 0007 00002162      1445                      CMP.B   #7, opSrcMod
+00001FF2  6700 0046               1446                      BEQ     Fn_ID4_Data
+00001FF6  6000 00CA               1447                      BRA     Fn_ID4_Done
+00001FFA                          1448  
+00001FFA  47F9 0000219F           1449  Fn_ID4_RTS          LEA    opNam_RTS,A3
+00002000  23CB 0000215A           1450                      MOVE.L A3, opPtrNam
+00002006                          1451                      
+00002006  0C39 0007 0000215F      1452  Fn_ID4_VERIFY_RTS   CMP.B   #7,opDstReg
+0000200E  6600 00B0               1453                      BNE     Fn_ID4_Error
+00002012  0C39 0001 00002160      1454                      CMP.B   #1, opDstMod
+0000201A  6600 00A4               1455                      BNE     Fn_ID4_Error
+0000201E  0C39 0006 00002162      1456                      CMP.B   #6, opSrcMod
+00002026  6600 0098               1457                      BNE     Fn_ID4_Error
+0000202A  0C39 0005 00002161      1458                      CMP.B   #5, opSrcReg
+00002032  6600 008C               1459                      BNE     Fn_ID4_Error
+00002036  6000 008A               1460                      BRA     Fn_ID4_Done
+0000203A                          1461  
+0000203A  0C39 0000 00002161      1462  Fn_ID4_Data         CMP.B   #0, opSrcReg                * Check is source register is 0
+00002042  6700 0058               1463                      BEQ     Fn_ID4_DtaWrd               * Load next word
+00002046  0C39 0001 00002161      1464                      CMP.B   #1, opSrcReg                * Check if source register is 1
+0000204E  6700 005E               1465                      BEQ     Fn_ID4_DtaLng               * Load next long
+00002052  0C39 0004 00002161      1466                      CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
+0000205A  6700 0006               1467                      BEQ     Fn_ID4_DtaImd               * Load first word into word one
+0000205E  6000 0060               1468                      BRA     FN_ID4_Error                * Invalid register value
+00002062                          1469                      
+00002062  0C39 0001 000020F6      1470  Fn_ID4_DtaImd       CMP.B   #1, opID                    * opID = 0 - size is byte
+0000206A  6700 001E               1471                      BEQ     Fn_ID4_DtaByt               * Load next byte
+0000206E  0C39 0003 000020F6      1472                      CMP.B   #3, opID                    * opID = 3 - size is word
+00002076  6700 0024               1473                      BEQ     Fn_ID4_DtaWrd               * Load next word
+0000207A  0C39 0002 000020F6      1474                      CMP.B   #2, opID                    * opID = 0 - size is long
+00002082  6700 002A               1475                      BEQ          Fn_ID4_DtaLng               * Load next
+00002086  6000 0038               1476                      BRA     Fn_ID4_Error                * Invalid opID (this should never happen) long
+0000208A                          1477  
+0000208A  33DA 0000216A           1478  Fn_ID4_DtaByt       MOVE.W  (A2)+, opDta2               * Load byte and increment address count (note .W for byte)
+00002090  13FC 0000 00002168      1479                      MOVE.B  #0, opDta1T                 * Set Data 1 type as 0=Byte
+00002098  6000 0028               1480                      BRA     Fn_ID4_Done
+0000209C  33DA 0000216A           1481  Fn_ID4_DtaWrd       MOVE.W  (A2)+, opDta2               * Load word and increment address count
+000020A2  13FC 0001 00002168      1482                      MOVE.B  #1, opDta1T                 * Set Data 1 type as 1=Word
+000020AA  6000 0016               1483                      BRA     Fn_ID4_Done
+000020AE  23DA 0000216A           1484  Fn_ID4_DtaLng       MOVE.L  (A2)+, opDta2               * Load long and increment address count
+000020B4  13FC 0002 00002168      1485                      MOVE.B  #2, opDta1T                 * Set Data 1 type as 2=Long
+000020BC  6000 0004               1486                      BRA     Fn_ID4_Done
+000020C0                          1487  
+000020C0                          1488  Fn_ID4_Error                                             * Exit out if error - main subroutine will handle DATA
+000020C0                          1489                      *MOVEM.L (SP)+,D0-D7/A0-A6           * Restore registers
+000020C0  4E75                    1490                      RTS                                  * Return to main
+000020C2                          1491  
+000020C2  4E75                    1492  Fn_ID4_Done         RTS
+000020C4                          1493  
+000020C4                          1494  
+000020C4                          1495  
+000020C4                          1496  -------------------- end include --------------------
+000020C4                          1497                      INCLUDE 'SR_ID5.X68'
+000020C4                          1498  
+000020C4                          1499  
+000020C4                          1500  SR_ID5
+000020C4                          1501  
+000020C4                          1502  
+000020C4  4E75                    1503  Fn_ID5_Done        RTS
+000020C4  4E75                    1504  -------------------- end include --------------------
+000020C6                          1505                      INCLUDE 'SR_ID6.X68'
+000020C6                          1506  
+000020C6                          1507  
+000020C6                          1508  SR_ID6
+000020C6                          1509  
+000020C6                          1510  
+000020C6  4E75                    1511  Fn_ID6_Done        RTS
+000020C6  4E75                    1512  -------------------- end include --------------------
+000020C8                          1513                      INCLUDE 'SR_ID7.X68'
+000020C8                          1514  
+000020C8                          1515  
+000020C8                          1516  SR_ID7
+000020C8                          1517  
+000020C8                          1518  
+000020C8  4E75                    1519  Fn_ID7_Done        RTS
+000020C8  4E75                    1520  -------------------- end include --------------------
+000020CA                          1521                      INCLUDE 'SR_ID8.X68'
+000020CA                          1522  
+000020CA                          1523  
+000020CA                          1524  SR_ID8
+000020CA                          1525  
+000020CA                          1526  
+000020CA  4E75                    1527  Fn_ID8_Done        RTS
+000020CA  4E75                    1528  -------------------- end include --------------------
+000020CC                          1529                      INCLUDE 'SR_ID9.X68'
+000020CC                          1530  
+000020CC                          1531  
+000020CC                          1532  SR_ID9
+000020CC                          1533  
+000020CC                          1534  
+000020CC  4E75                    1535  Fn_ID9_Done        RTS
+000020CC  4E75                    1536  -------------------- end include --------------------
+000020CE                          1537                      INCLUDE 'SR_IDA.X68'
+000020CE                          1538  
+000020CE                          1539  
+000020CE                          1540  SR_IDA
+000020CE                          1541  
+000020CE                          1542  
+000020CE  4E75                    1543  Fn_IDA_Done        RTS
+000020CE  4E75                    1544  -------------------- end include --------------------
+000020D0                          1545                      INCLUDE 'SR_IDB.X68'
+000020D0                          1546  
+000020D0                          1547  
+000020D0                          1548  SR_IDB
+000020D0                          1549  
+000020D0                          1550  
+000020D0  4E75                    1551  Fn_IDB_Done        RTS
+000020D0  4E75                    1552  -------------------- end include --------------------
+000020D2                          1553                      INCLUDE 'SR_IDC.X68'
+000020D2                          1554  
+000020D2                          1555  
+000020D2                          1556  SR_IDC
+000020D2                          1557  
+000020D2                          1558  
+000020D2  4E75                    1559  Fn_IDC_Done        RTS
+000020D2  4E75                    1560  -------------------- end include --------------------
+000020D4                          1561                      INCLUDE 'SR_IDD.X68'
+000020D4                          1562  
+000020D4                          1563  
+000020D4                          1564  SR_IDD
+000020D4                          1565  
+000020D4                          1566  
+000020D4  4E75                    1567  Fn_IDD_Done        RTS
+000020D4  4E75                    1568  -------------------- end include --------------------
+000020D6                          1569                      INCLUDE 'SR_IDE.X68'
+000020D6                          1570  
+000020D6                          1571  
+000020D6                          1572  SR_IDE
+000020D6                          1573  
+000020D6                          1574  
+000020D6  4E75                    1575  Fn_IDE_Done        RTS
+000020D6  4E75                    1576  -------------------- end include --------------------
+000020D8                          1577  
+000020D8                          1578  ** -----------------------------------------------------------
+000020D8                          1579  ** Variables and constants
+000020D8                          1580  ** -----------------------------------------------------------
+000020D8                          1581  
+000020D8  =0000001A               1582  maxLines            EQU      26                      * Max lines to display
+000020D8                          1583  
+000020D8= 00000000                1584  adrValStart         DC.L     $00000000               * Value of starting address - set by user
+000020DC= 38 39 41 42 43 44 ...   1585  adrStrStart         DC.B     '89ABCDEF',0            * String hex value display for start address
+000020E5= FF                      1586  adrStsStart         DC.B     $FF                     * Status of starting address
+000020E6                          1587                                                       *   FF not set, 00 set, 01 length error, 02 hex error
+000020E6= 00000000                1588  adrValEnd           DC.L     $00000000               * Value of ending address - set by user
+000020EA= 38 39 41 42 43 44 ...   1589  adrStrEnd           DC.B     '89ABCDEF',0            * String hex value display for end address
+000020F3= FF                      1590  adrStsEnd           DC.B     $FF                     * Status of ending address
+000020F4                          1591                                                       *   FF not set, 00 set, 01 length error, 02 hex error
+000020F4                          1592  
+000020F4= 0000                    1593  opWord              DC.W     $0000                   * 16 bit instruction Word
+000020F6= 00                      1594  opID                DC.B     $00                     * First 4 bit value ID
+000020F7= 01                      1595  opErr               DC.B     $01                     * Error byte: If set to 1 then is DATA. default is error
+000020F8                          1596  
+000020F8= 00000000                1597  opValAdr            DC.L     $00000000               * Instruction address - used for calculation
+000020FC= 38 39 41 42 43 44 ...   1598  opStrAdr            DC.B     '89ABCDEF',0            * String address
+00002106= 00000000                1599  opNxtAdr            DC.L     $00000000               * Store next valid word in case instruction returns error
+0000210A                          1600  
+0000210A= 50 6C 61 63 65 68 ...   1601  opOutBuf            DC.B     'Placeholder 80 cols wide output buffer                                          '
+0000215A= 00000000                1602  opPtrNam            DC.L     $00000000               * Pointer to full text name e.g. 'MOVE'
+0000215E                          1603  
+0000215E= FF                      1604  opValSiz            DC.B     $FF                     * Instruction size value $FF=Not set, 1=Byte, 2=Word, 3=Long
+0000215F                          1605  
+0000215F= FF                      1606  opDstReg            DC.B     $FF                     * Destination Register Value
+00002160= FF                      1607  opDstMod            DC.B     $FF                     * Destination Mode Value
+00002161= FF                      1608  opSrcReg            DC.B     $FF                     * Source Register Value
+00002162= FF                      1609  opSrcMod            DC.B     $FF                     * Source Register Mode
+00002163                          1610  
+00002164= 00000000                1611  opDta1              DC.L     $00000000               * Data value one (most likely source)
+00002168= FF                      1612  opDta1T             DC.B     $FF                     * Data value one type ($FF not set, 0=byte, 1=word, 2=long)
+0000216A= 00000000                1613  opDta2              DC.L     $00000000               * Data value two (most likely destination)
+0000216E= FF                      1614  opDta2T             DC.B     $FF                     * Data value two type ($FF not set, 0=byte, 1=word, 2=long)
+0000216F= 30 30 30 30 00          1615  opStrDtaWrd         DC.B     '0000',0                * Data value string placeholder - dynamically built
+00002174= 30 30 30 30 30 30 ...   1616  opStrDtaLng         DC.B     '00000000',0            * Data value string placeholder - dynamically built
+0000217D                          1617  
+0000217D= 44 41 54 41 00          1618  opNam_DATA          DC.B     'DATA',0
+00002182= 4D 4F 56 45 00          1619  opNam_MOVE          DC.B     'MOVE',0                * String value for instruction
+00002187= 4D 4F 56 45 41 00       1620  opNam_MOVEA         DC.B     'MOVEA',0               * String value for instruction
+0000218D= 4C 45 41 00             1621  opNam_LEA           DC.B     'LEA',0                 * String value for instruction
+00002191= 4E 4F 54 00             1622  opNam_NOT           DC.B     'NOT',0                 * String value for instruction
+00002195= 4D 4F 56 45 4D 00       1623  opNam_MOVEM         DC.B     'MOVEM',0               * String value for instruction
+0000219B= 4E 4F 50 00             1624  opNam_NOP           DC.B     'NOP',0                 * String value for instruction
+0000219F= 52 54 53 00             1625  opNam_RTS           DC.B     'RTS',0                 * String value for instruction
+000021A3= 4A 53 52 00             1626  opNam_JSR           DC.B     'JSR',0                 * String value for instruction
+000021A7= 41 44 44 51 00          1627  opNam_ADDQ          DC.B     'ADDQ',0                * String value for instruction
+000021AC= 42 52 41 00             1628  opNam_BRA           DC.B     'BRA',0                 * String value for instruction
+000021B0= 42 45 51 00             1629  opNam_BEQ           DC.B     'BEQ',0                 * String value for instruction
+000021B4= 42 47 54 00             1630  opNam_BGT           DC.B     'BGT',0                 * String value for instruction
+000021B8= 42 4C 45 00             1631  opNam_BLE           DC.B     'BLE',0                 * String value for instruction
+000021BC= 4D 4F 56 45 51 00       1632  opNam_MOVEQ         DC.B     'MOVEQ',0               * String value for instruction
+000021C2= 4F 52 00                1633  opNam_OR            DC.B     'OR',0                  * String value for instruction
+000021C5= 53 55 42 00             1634  opNam_SUB           DC.B     'SUB',0                 * String value for instruction
+000021C9= 41 4E 44 00             1635  opNam_AND           DC.B     'AND',0                 * String value for instruction
+000021CD= 41 44 44 00             1636  opNam_ADD           DC.B     'ADD',0                 * String value for instruction
+000021D1= 41 44 44 41 00          1637  opNam_ADDA          DC.B     'ADDA',0                * String value for instruction
+000021D6= 41 53 4C 00             1638  opNam_ASL           DC.B     'ASL',0                 * String value for instruction
+000021DA= 41 53 52 00             1639  opNam_ASR           DC.B     'ASR',0                 * String value for instruction
+000021DE= 4C 53 4C 00             1640  opNam_LSL           DC.B     'LSL',0                 * String value for instruction
+000021E2= 4C 53 52 00             1641  opNam_LSR           DC.B     'LSR',0                 * String value for instruction
+000021E6= 52 4F 4C 00             1642  opNam_ROL           DC.B     'ROL',0                 * String value for instruction
+000021EA= 52 4F 52 00             1643  opNam_ROR           DC.B     'ROR',0                 * String value for instruction
+000021EE                          1644  
+000021EE= 2E 42 00                1645  opSizB              DC.B     '.B',0                  * String value for instruction size 'B'
+000021F1= 2E 57 00                1646  opSizW              DC.B     '.W',0                  * String value for instruction size 'W'
+000021F4= 2E 4C 00                1647  opSizL              DC.B     '.L',0                  * String value for instruction size 'L'
+000021F7                          1648  
+000021F7= 50 6C 61 63 65 68 ...   1649  msgInTemp           DC.B     'Placeholder for user input. 80 characters long is the max input limit...........',0
+00002248= 45 72 72 6F 72 00       1650  msgErr              DC.B     'Error',0               * Debug message
+0000224E                          1651  
+0000224E= 33 20 43 6F 72 65 ...   1652  msgHdr01            DC.B     '3 Cores disassembler',CR,LF,0
+00002265= 4D 65 6D 6F 72 79 ...   1653  msgHdr02a           DC.B     'Memory range:',0
+00002273= 20 74 6F 20 00          1654  msgHdr02b           DC.B     ' to ',0
+00002278                          1655  
+00002278= 20 2D 20 41 6C 6C ...   1656  msgStrIntro         DC.B     ' - All addresses must be 32 bit hexadecimal.',CR,LF,0
+000022A7= 20 2D 20 56 61 6C ...   1657  msgStrRange         DC.B     ' - Valid address range is 00000000 to 00FFFFED.',CR,LF,0
+000022D9= 20 2D 20 53 74 61 ...   1658  msgStrSize          DC.B     ' - Starting address should start on a word boundry',CR,LF,0
+0000230E= 20 20 20 40 20 58 ...   1659  msgStrSizeExmpl     DC.B     '   @ XXXXXXX(0,2,4,8,A,C,E).',CR,LF,0
+0000232D= 20 2D 20 41 64 64 ...   1660  msgStrNote          DC.B     ' - Addresses will be adjusted if out of order or out of range.',CR,LF,0
+0000236E= 20 20 20 28 61 75 ...   1661  msgStrNoteMore      DC.B     '   (automagically)',CR,LF,0
+00002383= 50 6C 65 61 73 65 ...   1662  msgStrAdr1          DC.B     'Please enter a starting address: ',0
+000023A5= 49 6E 76 61 6C 69 ...   1663  msgStrAdr1Err1      DC.B     'Invalid starting address length',CR,LF,0
+000023C7= 49 6E 76 61 6C 69 ...   1664  msgStrAdr1Err2      DC.B     'Invalid starting address hexadecimal value',CR,LF,0
+000023F4= 53 74 61 72 74 69 ...   1665  msgStrAdr1Scc       DC.B     'Starting address: ',0
+00002407= 50 6C 65 61 73 65 ...   1666  msgStrAdr2          DC.B     'Please enter an ending address: ',0
+00002428= 49 6E 76 61 6C 69 ...   1667  msgStrAdr2Err1      DC.B     'Invalid ending address length',CR,LF,0
+00002448= 49 6E 76 61 6C 69 ...   1668  msgStrAdr2Err2      DC.B     'Invalid ending address hexadecimal value',CR,LF,0
+00002473                          1669  
+00002473= 48 69 74 20 45 6E ...   1670  msgPage             DC.B     'Hit Enter to go to the next page',CR,LF,0
+00002496= 59 6F 75 20 68 61 ...   1671  msgEndMem01         DC.B     'You have reached the end of the memory sequence.',CR,LF,0
+000024C9= 20 20 20 20 20 20 ...   1672  msgEndMem02         DC.B     '         Y to continue or any other key to quit: ',0
+000024FB= 54 68 61 6E 6B 20 ...   1673  msgDone             DC.B     'Thank you for using 3 Cores disassembler!',0
+00002525                          1674  
+00002525= 2A 2A 2A 2A 2A 2A ...   1675  msgLine             DC.B     '**************************************************',CR,LF,0
+0000255A= 0D 0A 00                1676  msgNewLine          DC.B     CR,LF,0
+0000255D= 2C 00                   1677  opComma             DC.B     ',',0
+0000255F= 2E 00                   1678  opPeriod            DC.B     '.',0
+00002561= 20 00                   1679  opSpace             DC.B     ' ',0
+00002564= 0900                    1680  opTab               DC.W     $0900                  * Tab - doesn't work as expected
+00002566= 00                      1681  opBlank             DC.B     '',0
+00002567  =0000000D               1682  CR                  EQU      $0D                     * ASCII code for Carriage Return
+00002567  =0000000A               1683  LF                  EQU      $0A                     * ASCII code for Line Feed
+00002567                          1684  
+00002567                          1685                      END      $1000
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ADRSTREND           20EA
+ADRSTRSTART         20DC
+ADRSTSEND           20F3
+ADRSTSSTART         20E5
+ADRVALEND           20E6
+ADRVALSTART         20D8
+CR                  D
+FN_ASCII_LCLTR      1994
+FN_ASCII_NUM        1988
+FN_ASCII_UCLTR      198E
+FN_CPY_STR_DONE     19F2
+FN_CPY_STR_LOOP     19E4
+FN_DSP_DATA         15CA
+FN_DSP_DONE         1962
+FN_DSP_DTA1         1662
+FN_DSP_DTA1_00      16BA
+FN_DSP_DTA1_01      16CE
+FN_DSP_DTA1_02      16E2
+FN_DSP_DTA1_03      16FE
+FN_DSP_DTA1_04      171E
+FN_DSP_DTA1_07      173E
+FN_DSP_DTA1_BYT     1766
+FN_DSP_DTA1_ERR     17CC
+FN_DSP_DTA1_LNG     17AA
+FN_DSP_DTA1_WRD     1788
+FN_DSP_DTA2         17E8
+FN_DSP_DTA2_00      1840
+FN_DSP_DTA2_01      1854
+FN_DSP_DTA2_02      1868
+FN_DSP_DTA2_03      1884
+FN_DSP_DTA2_04      18A4
+FN_DSP_DTA2_07      18C4
+FN_DSP_DTA2_BYT     18EC
+FN_DSP_DTA2_ERR     1952
+FN_DSP_DTA2_LNG     1930
+FN_DSP_DTA2_WRD     190E
+FN_DSP_INSTR        15E6
+FN_DSP_OPR1         1656
+FN_DSP_OPR2         17DC
+FN_DSP_SIZB         1626
+FN_DSP_SIZL         1646
+FN_DSP_SIZW         1636
+FN_HEX_LTR          19AC
+FN_HEX_NUM          19A6
+FN_HEX_STR_DONE     19DE
+FN_HEX_STR_LOOP     19B2
+FN_ID4_CHECKD1      1CF0
+FN_ID4_CHECKD2      1D14
+FN_ID4_CHECKD3      1D44
+FN_ID4_DATA         203A
+FN_ID4_DONE         20C2
+FN_ID4_DTABYT       208A
+FN_ID4_DTAIMD       2062
+FN_ID4_DTALNG       20AE
+FN_ID4_DTAWRD       209C
+FN_ID4_ERROR        20C0
+FN_ID4_JSR          1D5C
+FN_ID4_JSR_SRC      1DF8
+FN_ID4_LEA          1E08
+FN_ID4_LEA_SRC      1E68
+FN_ID4_MOVEMMTOR    1EE8
+FN_ID4_MOVEMRTOM    1E78
+FN_ID4_MOVEM_SRC    1F54
+FN_ID4_NOP          1F64
+FN_ID4_NOT          1FA4
+FN_ID4_NOT_SRC      1FE0
+FN_ID4_RTS          1FFA
+FN_ID4_VERIFY_JSR   1D68
+FN_ID4_VERIFY_LEA   1E14
+FN_ID4_VERIFY_MMR   1EF4
+FN_ID4_VERIFY_MRM   1E84
+FN_ID4_VERIFY_NOP   1F70
+FN_ID4_VERIFY_NOT   1FB0
+FN_ID4_VERIFY_RTS   2006
+FN_ID5_DONE         20C4
+FN_ID6_DONE         20C6
+FN_ID7_DONE         20C8
+FN_ID8_DONE         20CA
+FN_ID9_DONE         20CC
+FN_IDA_DONE         20CE
+FN_IDB_DONE         20D0
+FN_IDC_DONE         20D2
+FN_IDD_DONE         20D4
+FN_IDE_DONE         20D6
+FN_IDX_DONE         19FA
+FN_MAIN_CHKAGN      1140
+FN_MAIN_CHKEND      1132
+FN_MAIN_CHKLIN      10FA
+FN_MAIN_CHKPAG      1110
+FN_MAIN_CONTINUE    1178
+FN_MAIN_DONE        117C
+FN_MAIN_DSP         10F4
+FN_MAIN_ERRINS      10EE
+FN_MAIN_LOOP        105C
+FN_MAIN_START       1006
+FN_MOVE_CHKDSTMOD   1BE4
+FN_MOVE_CHKDSTREG   1BF4
+FN_MOVE_CHKSRCREG   1B5E
+FN_MOVE_DONE        1C34
+FN_MOVE_DTADSTLNG   1C22
+FN_MOVE_DTADSTWRD   1C10
+FN_MOVE_DTASRCBYT   1BAE
+FN_MOVE_DTASRCIMD   1B86
+FN_MOVE_DTASRCLNG   1BD2
+FN_MOVE_DTASRCWRD   1BC0
+FN_MOVE_ERROR       1C3C
+FN_MOVE_INS01       1A7E
+FN_MOVE_INS02       1A8E
+FN_MOVE_SIZB        1B2A
+FN_MOVE_SIZL        1B42
+FN_MOVE_SIZW        1B36
+FN_MOVE_SRCMOD      1B4E
+FN_MOVE_VERIFY      1AA6
+FN_UI_CHKHEX        13DC
+FN_UI_CHKHEXASL     1430
+FN_UI_CHKHEXDONE    1418
+FN_UI_CHKHEXLOOP    13E2
+FN_UI_CHKHEXRDR     1432
+FN_UI_CHKLEN        13A8
+FN_UI_CHKVAL        14BC
+FN_UI_CHKVALCMP     14F0
+FN_UI_CHKVALEBIG    14EA
+FN_UI_CHKVALEMAX    14DC
+FN_UI_CHKVALSBIG    14D6
+FN_UI_CHKVALSMAX    14C8
+FN_UI_CHKVALSONE    1516
+FN_UI_CHKVALSWP     14FA
+FN_UI_CHKVALSWRD    1500
+FN_UI_DONE          1518
+FN_UI_DSPSTART      1258
+FN_UI_END           1350
+FN_UI_ENDE1         136C
+FN_UI_ENDE2         137C
+FN_UI_END_IN        138C
+FN_UI_HDRNEXT       127C
+FN_UI_LOOP          1226
+FN_UI_SETEHEX       1494
+FN_UI_SETEHEXI1     14A4
+FN_UI_SETEHEXI2     14B0
+FN_UI_SETELEN       13B4
+FN_UI_SETELENI1     13C4
+FN_UI_SETELENI2     13D0
+FN_UI_SETVHEX       143C
+FN_UI_SETVHEXI1     144C
+FN_UI_SETVHEXI2     1470
+FN_UI_START         12F8
+FN_UI_STARTE1       1314
+FN_UI_STARTE2       1324
+FN_UI_START_IN      1334
+LF                  A
+MAIN                1000
+MAXLINES            1A
+MSGDONE             24FB
+MSGENDMEM01         2496
+MSGENDMEM02         24C9
+MSGERR              2248
+MSGHDR01            224E
+MSGHDR02A           2265
+MSGHDR02B           2273
+MSGINTEMP           21F7
+MSGLINE             2525
+MSGNEWLINE          255A
+MSGPAGE             2473
+MSGSTRADR1          2383
+MSGSTRADR1ERR1      23A5
+MSGSTRADR1ERR2      23C7
+MSGSTRADR1SCC       23F4
+MSGSTRADR2          2407
+MSGSTRADR2ERR1      2428
+MSGSTRADR2ERR2      2448
+MSGSTRINTRO         2278
+MSGSTRNOTE          232D
+MSGSTRNOTEMORE      236E
+MSGSTRRANGE         22A7
+MSGSTRSIZE          22D9
+MSGSTRSIZEEXMPL     230E
+OPBLANK             2566
+OPCOMMA             255D
+OPDSTMOD            2160
+OPDSTREG            215F
+OPDTA1              2164
+OPDTA1T             2168
+OPDTA2              216A
+OPDTA2T             216E
+OPERR               20F7
+OPID                20F6
+OPNAM_ADD           21CD
+OPNAM_ADDA          21D1
+OPNAM_ADDQ          21A7
+OPNAM_AND           21C9
+OPNAM_ASL           21D6
+OPNAM_ASR           21DA
+OPNAM_BEQ           21B0
+OPNAM_BGT           21B4
+OPNAM_BLE           21B8
+OPNAM_BRA           21AC
+OPNAM_DATA          217D
+OPNAM_JSR           21A3
+OPNAM_LEA           218D
+OPNAM_LSL           21DE
+OPNAM_LSR           21E2
+OPNAM_MOVE          2182
+OPNAM_MOVEA         2187
+OPNAM_MOVEM         2195
+OPNAM_MOVEQ         21BC
+OPNAM_NOP           219B
+OPNAM_NOT           2191
+OPNAM_OR            21C2
+OPNAM_ROL           21E6
+OPNAM_ROR           21EA
+OPNAM_RTS           219F
+OPNAM_SUB           21C5
+OPNXTADR            2106
+OPOUTBUF            210A
+OPPERIOD            255F
+OPPTRNAM            215A
+OPSIZB              21EE
+OPSIZL              21F4
+OPSIZW              21F1
+OPSPACE             2561
+OPSRCMOD            2162
+OPSRCREG            2161
+OPSTRADR            20FC
+OPSTRDTALNG         2174
+OPSTRDTAWRD         216F
+OPTAB               2564
+OPVALADR            20F8
+OPVALSIZ            215E
+OPWORD              20F4
+SR_ASCII_HEX        1974
+SR_CNT_STR_BUF      19F4
+SR_CPY_STR_BUF      19E4
+SR_DSP_DISPLAY      1592
+SR_DSP_HEADER       1530
+SR_HEX_ASCII        199A
+SR_HEX_STR          19B2
+SR_ID3              19FC
+SR_ID4              1C3E
+SR_ID5              20C4
+SR_ID6              20C6
+SR_ID7              20C8
+SR_ID8              20CA
+SR_ID9              20CC
+SR_IDA              20CE
+SR_IDB              20D0
+SR_IDC              20D2
+SR_IDD              20D4
+SR_IDE              20D6
+SR_IDX              19F6
+SR_JUMP             1196
+SR_UI_INPUT         1216

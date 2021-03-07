@@ -92,15 +92,15 @@ SR_ID4              * This is to grab the first four that are already set, ID4
                     ** RTS: If DstReg=7, DstMod=1, SrcMod=6, SrcReg=5
                     **
                     ** ***************************************
-                    CMP.B   #0, DstMod
+                    CMP.B   #0, opDstMod
                     BEQ     Fn_ID4_NOT
-                    CMP.B   #1, DstMod
+                    CMP.B   #1, opDstMod
                     BEQ     Fn_ID4_CheckD1
-                    CMP.B   #2, DstMod
+                    CMP.B   #2, opDstMod
                     BEQ     Fn_ID4_CheckD2
-                    CMP.B   #3, DstMod
+                    CMP.B   #3, opDstMod
                     BEQ     Fn_ID4_CheckD3
-                    CMP.B   #7, DstMod
+                    CMP.B   #7, opDstMod
                     BEQ     Fn_ID4_LEA
                     BRA     Fn_ID4_Error
                     
@@ -155,11 +155,11 @@ Fn_ID4_CheckD3
 ** JSR
 ** ***************************************
 Fn_ID4_JSR          LEA     opNam_JSR,A3
-                    MOVE.L  A3, opPtrName
+                    MOVE.L  A3, opPtrNam
                     
-Fn_ID4_VERIFY_JSR   CMP.B   #7, opDestReg
+Fn_ID4_VERIFY_JSR   CMP.B   #7, opDstReg
                     BNE     Fn_ID4_Error
-                    CMP.B   #2, opDestMod
+                    CMP.B   #2, opDstMod
                     BNE     Fn_ID4_Error
                     
                     * Make sure dst reg is only 2,5,6,7 (not 0,1,3,4)
@@ -196,9 +196,9 @@ Fn_ID4_JSR_Src      CMP.B   #7, opSrcMod
 ** LEA
 ** ***************************************
 Fn_ID4_LEA          LEA     opNam_LEA,A3
-                    MOVE.L  A3, opPtrName
+                    MOVE.L  A3, opPtrNam
                     
-Fn_ID4_VERIFY_LEA   CMP.B   #7, opDestMod
+Fn_ID4_VERIFY_LEA   CMP.B   #7, opDstMod
                     BNE     Fn_ID4_Error
                     
                     * Make sure src mode is only 2,5,6,7 (not 0,1,3,4)
@@ -213,7 +213,7 @@ Fn_ID4_VERIFY_LEA   CMP.B   #7, opDestMod
                     
                     * Make sure src reg is between 0-7
                     CMP.B   #0, opSrcReg                * Destination register >= 0
-                    BLT     Fn_ID4VE_Error
+                    BLT     Fn_ID4_Error
                     CMP.B   #7, opSrcReg                * Destination register <= 7
                     BGT     Fn_ID4_Error
                     
@@ -225,14 +225,14 @@ Fn_ID4_LEA_Src      CMP.B   #7, opSrcMod
 ** MOVEM
 ** ***************************************
 Fn_ID4_MOVEMRtoM    LEA     opNam_MOVEM,A3
-                    MOVE.L  A3, opPtrName
+                    MOVE.L  A3, opPtrNam
                     
-Fn_ID4_VERIFY_MRM   CMP.B   #4, opDestReg
+Fn_ID4_VERIFY_MRM   CMP.B   #4, opDstReg
                     BNE     Fn_ID4_Error
                     
                     * Make sure dest mode is only 2 or 3
                     CMP.B   #3, opSrcReg                * Destination register > 2
-                    BLT     Fn_ID4VE_Error
+                    BLT     Fn_ID4_Error
                     CMP.B   #3, opSrcReg                * Destination register < 3
                     BGT     Fn_ID4_Error
                     
@@ -246,20 +246,20 @@ Fn_ID4_VERIFY_MRM   CMP.B   #4, opDestReg
                     
                     * Make sure src reg is between 0-7
                     CMP.B   #0, opSrcReg                * Destination register >= 0
-                    BLT     Fn_ID4VE_Error
+                    BLT     Fn_ID4_Error
                     CMP.B   #7, opSrcReg                * Destination register <= 7
                     BGT     Fn_ID4_Error
                     BRA Fn_ID4_MOVEM_Src
 
 FN_ID4_MOVEMMtoR    LEA     opNam_MOVEM,A3
-                    MOVE.L  A3, opPtrName
+                    MOVE.L  A3, opPtrNam
                     
-Fn_ID4_VERIFY_MRM   CMP.B   #6, opDestReg
+Fn_ID4_VERIFY_MMR   CMP.B   #6, opDstReg
                     BNE     Fn_ID4_Error
                     
                     * Make sure dest mode is only 2 or 3
                     CMP.B   #3, opSrcReg                * Destination register > 2
-                    BLT     Fn_ID4VE_Error
+                    BLT     Fn_ID4_Error
                     CMP.B   #3, opSrcReg                * Destination register < 3
                     BGT     Fn_ID4_Error
                     
@@ -273,7 +273,7 @@ Fn_ID4_VERIFY_MRM   CMP.B   #6, opDestReg
                     
                     * Make sure src reg is between 0-7
                     CMP.B   #0, opSrcReg                * Destination register >= 0
-                    BLT     Fn_ID4VE_Error
+                    BLT     Fn_ID4_Error
                     CMP.B   #7, opSrcReg                * Destination register <= 7
                     BGT     Fn_ID4_Error
                     
@@ -285,15 +285,15 @@ Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
 ** NOP
 ** ***************************************
 Fn_ID4_NOP          LEA     opNam_NOP,A3
-                    MOVE.L  A3, opPtrName
+                    MOVE.L  A3, opPtrNam
 
-Fn_ID4_VERIFY_NOP   CMP.B   #7,DestReg
+Fn_ID4_VERIFY_NOP   CMP.B   #7,opDstReg
                     BNE     Fn_ID4_Error
-                    CMP.B   #1, DestMod
+                    CMP.B   #1, opDstMod
                     BNE     Fn_ID4_Error
-                    CMP.B   #6, SrcMod
+                    CMP.B   #6, opSrcMod
                     BNE     Fn_ID4_Error
-                    CMP.B   #1, SrcReg
+                    CMP.B   #1, opSrcReg
                     BNE     Fn_ID4_Error
                     BRA     Fn_ID4_Done
 
@@ -302,9 +302,9 @@ Fn_ID4_VERIFY_NOP   CMP.B   #7,DestReg
 ** NOT
 ** ***************************************
 Fn_ID4_NOT          LEA     opNam_NOT,A3
-                    MOVE.L  A3, opPtrName
+                    MOVE.L  A3, opPtrNam
                     
-Fn_ID4_VERIFY_NOT   CMP.B   #3, opDestReg
+Fn_ID4_VERIFY_NOT   CMP.B   #3, opDstReg
                     BNE     Fn_ID4_Error
                     
                     * Make sure src mode is not 1
@@ -317,7 +317,7 @@ Fn_ID4_VERIFY_NOT   CMP.B   #3, opDestReg
                     CMP.B   #7, opSrcReg                * Destination register <= 7
                     BGT     Fn_ID4_Error
                     
-Fn_ID4_NOT_Src      MOVE.W  opDestMod,opID              * Dest mod holds the size (move it)
+Fn_ID4_NOT_Src      MOVE.W  opDstMod,opID              * Dest mod holds the size (move it)
                     CMP.B   #7, opSrcMod
                     BEQ     Fn_ID4_Data
                     BRA     Fn_ID4_Done
@@ -326,15 +326,15 @@ Fn_ID4_NOT_Src      MOVE.W  opDestMod,opID              * Dest mod holds the siz
 ** RTS
 ** ***************************************
 Fn_ID4_RTS          LEA    opNam_RTS,A3
-                    MOVE.L A3, opPtrName
+                    MOVE.L A3, opPtrNam
                     
-Fn_ID4_VERIFY_RTS   CMP.B   #7,DestReg
+Fn_ID4_VERIFY_RTS   CMP.B   #7,opDstReg
                     BNE     Fn_ID4_Error
-                    CMP.B   #1, DestMod
+                    CMP.B   #1, opDstMod
                     BNE     Fn_ID4_Error
-                    CMP.B   #6, SrcMod
+                    CMP.B   #6, opSrcMod
                     BNE     Fn_ID4_Error
-                    CMP.B   #5, SrcReg
+                    CMP.B   #5, opSrcReg
                     BNE     Fn_ID4_Error
                     BRA     Fn_ID4_Done
 
@@ -375,6 +375,7 @@ Fn_ID4_Error                                             * Exit out if error - m
                     RTS                                  * Return to main
 
 Fn_ID4_Done         RTS
+
 
 
 *~Font name~Courier New~
