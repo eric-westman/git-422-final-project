@@ -51,6 +51,7 @@ SR_IDC				* This is to grab the first four that are already set, ID4
 					** ea, Dn - 0,1,2
 					** Dn, ea - 4,5,6
 					LEA     opNam_AND,A3
+                    MOVE.L  A3, opPtrNam
 					CMP.B	#3,opDstMod
 					BLT		Fn_IDC_Case1
 					CMP.B   #7,opDstMod

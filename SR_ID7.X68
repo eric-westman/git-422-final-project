@@ -40,6 +40,7 @@ SR_ID7              * This is to grab the first four that are already set, ID7
                     MOVE.B  D3, opDta2
 
 					LEA     opNam_MOVEQ,A3
+                    MOVE.L  A3, opPtrNam
 					* Set appropriate data
 					MOVE.B	#1, opDta2T
 					MOVE.B  #7, opSrcMod

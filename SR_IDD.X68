@@ -61,6 +61,7 @@ SR_IDD				* This is to grab the first four that are already set, ID4
 					BRA     Fn_IDD_Error
 
 Fn_IDD_Case1		LEA     opNam_ADD,A3
+                    MOVE.L  A3, opPtrNam
 					MOVE.B  opDstMod,opID
 					MOVE.B  opSrcMod,opDstMod
 					MOVE.B  opDstReg,D6
@@ -73,6 +74,7 @@ Fn_IDD_Case1		LEA     opNam_ADD,A3
                     BRA     Fn_IDD_Done
 
 Fn_IDD_Case2		LEA     opNam_ADD,A3
+                    MOVE.L  A3, opPtrNam
 					MOVE.B  opDstMod,opID
 					SUB.B   #4,opID
 					MOVE.B  #0,opDstMod

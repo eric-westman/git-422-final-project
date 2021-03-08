@@ -46,15 +46,19 @@ SR_ID6              * This is to grab the first four that are already set, ID6
 					BRA     Fn_ID6_ERROR
 
 Fn_ID6_BRA			LEA     opNam_BRA,A3
+                    MOVE.L  A3, opPtrNam
 					BRA 	Fn_ID6_Displacement
 					
 Fn_ID6_BEQ			LEA     opNam_BEQ,A3
+                    MOVE.L  A3, opPtrNam
 					BRA 	Fn_ID6_Displacement
 					
 Fn_ID6_BGT			LEA     opNam_BGT,A3
+                    MOVE.L  A3, opPtrNam
 					BRA 	Fn_ID6_Displacement
 					
 Fn_ID6_BLE			LEA     opNam_BLE,A3
+                    MOVE.L  A3, opPtrNam
 					
 Fn_ID6_Displacement	CMP.B	#$00,opDstMod
 					BEQ		Fn_ID6_Dsplcmnt16

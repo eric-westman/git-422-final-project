@@ -295,6 +295,8 @@ Fn_ID4_VERIFY_NOP   CMP.B   #7,opDstReg
                     BNE     Fn_ID4_Error
                     CMP.B   #1, opSrcReg
                     BNE     Fn_ID4_Error
+					MOVE.B  #$FF, opDstMod
+					MOVE.B	#$FF,opSrcMod
                     BRA     Fn_ID4_Done
 
 
@@ -336,6 +338,8 @@ Fn_ID4_VERIFY_RTS   CMP.B   #7,opDstReg
                     BNE     Fn_ID4_Error
                     CMP.B   #5, opSrcReg
                     BNE     Fn_ID4_Error
+					MOVE.B  #$FF, opDstMod
+					MOVE.B	#$FF,opSrcMod
                     BRA     Fn_ID4_Done
 
 ** ***************************************

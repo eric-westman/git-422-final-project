@@ -49,6 +49,7 @@ SR_ID5              * This is to grab the first four that are already set, ID5
 					
 					** Set name
 					LEA     opNam_ADDQ,A3
+                    MOVE.L  A3, opPtrNam
 					
 Fn_ID5_VERIFY		* Make sure src mod is between 0-7
                     CMP.B   #0, opSrcMod                * Destination register >= 0
