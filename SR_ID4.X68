@@ -279,7 +279,7 @@ Fn_ID4_VERIFY_MMR   CMP.B   #6, opDstReg
                     
 Fn_ID4_MOVEM_Src    CMP.B   #7, opSrcMod
                     BEQ     Fn_ID4_Data
-                    BRA     Fn_ID4_Done
+                    BRA     Fn_ID4_GrabMask
 
 ** ***************************************
 ** NOP
@@ -366,6 +366,35 @@ Fn_ID4_DtaWrd       MOVE.W  (A2)+, opDta2               * Load word and incremen
 Fn_ID4_DtaLng       MOVE.L  (A2)+, opDta2               * Load long and increment address count
                     MOVE.B  #2, opDta2T                 * Set Data 1 type as 2=Long
                     BRA     Fn_ID4_Done
+** Seperate for MoveM
+Fn_ID4_Data_MVM     CMP.B   #0, opSrcReg                * Check is source register is 0
+                    BEQ     Fn_ID4_DtaWrd_MVM           * Load next word
+                    CMP.B   #1, opSrcReg                * Check if source register is 1
+                    BEQ     Fn_ID4_DtaLng_MVM           * Load next long
+                    CMP.B   #4, opSrcReg                * Check if source register is 4 (immediate value)
+                    BEQ     Fn_ID4_DtaImd_MVM           * Load first word into word one
+                    BRA     FN_ID4_Error                * Invalid register value
+                    
+Fn_ID4_DtaImd_MVM   CMP.B   #1, opID                    * opID = 0 - size is byte
+                    BEQ     Fn_ID4_DtaByt_MVM            * Load next byte
+                    CMP.B   #3, opID                     * opID = 3 - size is word
+                    BEQ     Fn_ID4_DtaWrd_MVM            * Load next word
+                    CMP.B   #2, opID                     * opID = 0 - size is long
+                    BEQ     Fn_ID4_DtaLng_MVM            * Load next
+                    BRA     Fn_ID4_Error                 * Invalid opID (this should never happen) long
+
+Fn_ID4_DtaByt_MVM   MOVE.W  (A2)+, opDta2               * Load byte and increment address count (note .W for byte)
+                    MOVE.B  #0, opDta2T                 * Set Data 1 type as 0=Byte
+                    BRA     Fn_ID4_GrabMask
+Fn_ID4_DtaWrd_MVM   MOVE.W  (A2)+, opDta2               * Load word and increment address count
+                    MOVE.B  #1, opDta2T                 * Set Data 1 type as 1=Word
+                    BRA     Fn_ID4_GrabMask
+Fn_ID4_DtaLng_MVM   MOVE.L  (A2)+, opDta2               * Load long and increment address count
+                    MOVE.B  #2, opDta2T                 * Set Data 1 type as 2=Long
+                    BRA     Fn_ID4_GrabMask
+					
+Fn_ID4_GrabMask		MOVE.W  (A2)+, opMask
+					BRA     Fn_ID4_Done
 
 ** ***************************************
 ** GLOBALS
